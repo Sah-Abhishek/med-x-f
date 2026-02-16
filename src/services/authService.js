@@ -3,9 +3,9 @@ import api from './api';
 /**
  * Login with username and password
  */
-export const login = async (username, password) => {
+export const login = async (email, password) => {
   const response = await api.post('/auth/login', {
-    username,
+    email: email,
     password
   });
   return response.data;

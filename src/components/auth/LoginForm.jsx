@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const LoginForm = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
   const { login, loading } = useAuth();
@@ -14,12 +14,12 @@ const LoginForm = () => {
     e.preventDefault();
     setLocalError('');
 
-    if (!username || !password) {
-      setLocalError('Please enter both username and password');
+    if (!email || !password) {
+      setLocalError('Please enter both email and password');
       return;
     }
 
-    const result = await login(username, password);
+    const result = await login(email, password);
 
     if (result.success) {
       navigate('/dashboard');
@@ -50,18 +50,18 @@ const LoginForm = () => {
         )}
 
         <div>
-          <label htmlFor="username" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Username
+          <label htmlFor="email" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            email
           </label>
           <input
             type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 bg-white/[0.05] border border-white/[0.08] rounded-[var(--radius-md)] text-white text-sm placeholder-slate-500 focus:border-[var(--color-accent)]/50 focus:ring-1 focus:ring-[var(--color-accent)]/30 focus:bg-white/[0.07] transition-all duration-200"
-            placeholder="Enter your username"
+            placeholder="Enter your Email"
             disabled={loading}
-            autoComplete="username"
+            autoComplete="Email"
           />
         </div>
 
@@ -114,7 +114,7 @@ const LoginForm = () => {
               <button
                 key={cred.role}
                 type="button"
-                onClick={() => { setUsername(cred.user); setPassword(cred.pass); }}
+                onClick={() => { setEmail(cred.user); setPassword(cred.pass); }}
                 className="flex flex-col items-start px-3 py-2.5 rounded-[var(--radius-sm)] bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.1] transition-all duration-200 cursor-pointer group"
               >
                 <span className="text-[11px] font-semibold text-slate-300 group-hover:text-white transition-colors">{cred.role}</span>
