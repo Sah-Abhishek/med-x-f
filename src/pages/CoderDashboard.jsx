@@ -1,0 +1,654 @@
+import { useState, useEffect, useMemo, useRef } from "react";
+
+const API_URL = "https://uat-app.valerionhealth.com/charts?priority=Critical&page=1&size=10&column=MilestoneId&direction=ASC&client=0&location=0";
+
+// Mock data matching the API response for demo
+const MOCK_DATA = {
+  success: true,
+  data: {
+    counts: { Critical: 4, High: 0, Medium: 103, Low: 0, done: 0 },
+    charts: [
+      {
+        Id: 11683, SNo: 1, DateOfService: "04/23/2024", ReceivedDate: "04/23/2024",
+        chart_no: "4353455", Worklist: "TestIp", Client: "CIOX",
+        Location: "Eastern Ohio Regional Hospital", Specialty: "Inpatient",
+        SubSpecialty: "First Sub Speciality", Status: "Complete",
+        Milestone: "Ready to Code", Process: "Coding", Priority: "Critical",
+        CoderFirstName: "Codingflow", CoderLastName: "Coder 2",
+        coder_image_url: "https://valerion-health-app.s3.us-east-2.amazonaws.com/user-images/PP-Codingflow-Coder%202-31-1697109710.JPG",
+        UserFirstName: "cODER", UserLastName: "coder1", UserImageUrl: null,
+        AuditorFirstName: null, AuditorLastName: null, auditor_image_url: null,
+        FollowUpCoderFirstName: null, FollowUpCoderLastName: null, follow_up_coder_image_url: null,
+        FollowUpAuditorFirstName: null, FollowUpAuditorLastName: null, follow_up_auditor_image_url: null,
+        qc_status: null, date_of_coder_allocation: null, date_of_auditor_allocation: null,
+      },
+      {
+        Id: 8615, SNo: 2, DateOfService: "07/03/2023", ReceivedDate: "07/04/2023",
+        chart_no: "4454", Worklist: "Test_Aging111", Client: "CIOX",
+        Location: "Taylor Regional Hospital", Specialty: "Ambulatory Surgery",
+        SubSpecialty: "First Sub Speciality", Status: "Complete",
+        Milestone: "Ready to Code", Process: "Coding", Priority: "Critical",
+        CoderFirstName: "Codingflow", CoderLastName: "Coder 2",
+        coder_image_url: "https://valerion-health-app.s3.us-east-2.amazonaws.com/user-images/PP-Codingflow-Coder%202-31-1697109710.JPG",
+        UserFirstName: "cODER", UserLastName: "coder1", UserImageUrl: null,
+        AuditorFirstName: null, AuditorLastName: null, auditor_image_url: null,
+        FollowUpCoderFirstName: null, FollowUpCoderLastName: null, follow_up_coder_image_url: null,
+        FollowUpAuditorFirstName: null, FollowUpAuditorLastName: null, follow_up_auditor_image_url: null,
+        qc_status: null, date_of_coder_allocation: null, date_of_auditor_allocation: null,
+      },
+      {
+        Id: 9295, SNo: 3, DateOfService: "03/04/2024", ReceivedDate: "03/04/2024",
+        chart_no: null, Worklist: "test-vol-12", Client: "CIOX",
+        Location: "Eastern Ohio Regional Hospital", Specialty: "Clinical",
+        SubSpecialty: null, Status: "Open", Milestone: "Ready to Code",
+        Process: "Coding", Priority: "Critical",
+        CoderFirstName: null, CoderLastName: null, coder_image_url: null,
+        UserFirstName: "cODER", UserLastName: "coder1", UserImageUrl: null,
+        AuditorFirstName: null, AuditorLastName: null, auditor_image_url: null,
+        FollowUpCoderFirstName: null, FollowUpCoderLastName: null, follow_up_coder_image_url: null,
+        FollowUpAuditorFirstName: null, FollowUpAuditorLastName: null, follow_up_auditor_image_url: null,
+        qc_status: null, date_of_coder_allocation: null, date_of_auditor_allocation: null,
+      },
+      {
+        Id: 9296, SNo: 4, DateOfService: "03/04/2024", ReceivedDate: "03/04/2024",
+        chart_no: null, Worklist: "test-vol-12", Client: "CIOX",
+        Location: "Eastern Ohio Regional Hospital", Specialty: "Clinical",
+        SubSpecialty: null, Status: "Open", Milestone: "Coding in Progress",
+        Process: "Coding", Priority: "Critical",
+        CoderFirstName: null, CoderLastName: null, coder_image_url: null,
+        UserFirstName: "cODER", UserLastName: "coder1", UserImageUrl: null,
+        AuditorFirstName: null, AuditorLastName: null, auditor_image_url: null,
+        FollowUpCoderFirstName: null, FollowUpCoderLastName: null, follow_up_coder_image_url: null,
+        FollowUpAuditorFirstName: null, FollowUpAuditorLastName: null, follow_up_auditor_image_url: null,
+        qc_status: null, date_of_coder_allocation: null, date_of_auditor_allocation: null,
+      },
+    ],
+  },
+};
+
+const Avatar = ({ src, name, size = 36 }) => {
+  const [err, setErr] = useState(false);
+  if (!src || err) {
+    if (!name) return null;
+    const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: "50%",
+        background: "linear-gradient(135deg, #f5a623, #f7c948)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "#fff", fontSize: size * 0.38, fontWeight: 700, flexShrink: 0,
+      }}>{initials}</div>
+    );
+  }
+  return (
+    <img src={src} alt={name || ""} onError={() => setErr(true)}
+      style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+  );
+};
+
+const StatusBadge = ({ status }) => {
+  const isComplete = status === "Complete";
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: "3px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+      background: isComplete ? "#e8f8ef" : "#fff8e1",
+      color: isComplete ? "#1b9e4b" : "#e6a817",
+      border: `1px solid ${isComplete ? "#b7ebc9" : "#ffe082"}`,
+    }}>
+      <span style={{
+        width: 6, height: 6, borderRadius: "50%",
+        background: isComplete ? "#1b9e4b" : "#e6a817",
+      }} />
+      {status}
+    </span>
+  );
+};
+
+const MilestoneBadge = ({ milestone }) => {
+  const isProgress = milestone === "Coding in Progress";
+  return (
+    <span style={{
+      display: "inline-block", padding: "3px 12px", borderRadius: 20,
+      fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+      background: isProgress ? "#fff3e0" : "#e3f2fd",
+      color: isProgress ? "#e65100" : "#1565c0",
+      border: `1px solid ${isProgress ? "#ffcc80" : "#90caf9"}`,
+    }}>{milestone}</span>
+  );
+};
+
+const COLUMNS = [
+  { key: "checkbox", label: "", width: 40, alwaysVisible: true },
+  { key: "Worklist", label: "WORKLIST #", width: 110 },
+  { key: "SNo", label: "S. NO.", width: 55 },
+  { key: "Client", label: "CLIENT", width: 65 },
+  { key: "Location", label: "LOCATION", width: 140 },
+  { key: "Specialty", label: "PRIMARY SPECIALITY", width: 120 },
+  { key: "chart_no", label: "CHART #", width: 90 },
+  { key: "DateOfService", label: "DATE OF SERVICE", width: 115 },
+  { key: "OriginalCoder", label: "ORIGINAL CODER", width: 90 },
+  { key: "FollowUpCoder", label: "FOLLOW UP CODER", width: 90 },
+  { key: "OriginalAuditor", label: "ORIGINAL AUDITOR", width: 90 },
+  { key: "AllocatedUser", label: "ALLOCATED USER", width: 90 },
+  { key: "Status", label: "CHART STATUS", width: 100 },
+  { key: "Milestone", label: "MILESTONE", width: 140 },
+  { key: "qc_status", label: "QC STATUS", width: 80 },
+  { key: "Process", label: "PROCESS", width: 80 },
+  { key: "ReceivedDate", label: "RECEIVED DATE", width: 115 },
+  { key: "SubSpecialty", label: "SUB SPECIALTY", width: 120 },
+  { key: "date_of_coder_allocation", label: "DATE OF CODER ALLOCATION", width: 130 },
+  { key: "date_of_auditor_allocation", label: "DATE OF AUDITOR ALLOCATION", width: 140 },
+];
+
+export default function MyToDoList() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("Critical");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [sortCol, setSortCol] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
+
+  // Column visibility state — all visible by default
+  const [visibleColumns, setVisibleColumns] = useState(
+    () => new Set(COLUMNS.map(c => c.key))
+  );
+  const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
+  const columnsDropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (columnsDropdownRef.current && !columnsDropdownRef.current.contains(e.target)) {
+        setColumnsDropdownOpen(false);
+      }
+    };
+    if (columnsDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [columnsDropdownOpen]);
+
+  const toggleColumnVisibility = (key) => {
+    setVisibleColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const selectAllColumns = () => {
+    setVisibleColumns(new Set(COLUMNS.map(c => c.key)));
+  };
+
+  const deselectAllColumns = () => {
+    // Keep only alwaysVisible columns
+    setVisibleColumns(new Set(COLUMNS.filter(c => c.alwaysVisible).map(c => c.key)));
+  };
+
+  // Filtered columns based on visibility
+  const displayedColumns = useMemo(
+    () => COLUMNS.filter(col => col.alwaysVisible || visibleColumns.has(col.key)),
+    [visibleColumns]
+  );
+
+  const toggleableColumns = COLUMNS.filter(c => !c.alwaysVisible);
+  const allToggleableVisible = toggleableColumns.every(c => visibleColumns.has(c.key));
+  const noneToggleableVisible = toggleableColumns.every(c => !visibleColumns.has(c.key));
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(API_URL, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (json.success) {
+          setData(json.data);
+        } else {
+          throw new Error("API returned success: false");
+        }
+      } catch (e) {
+        console.warn("API fetch failed, using mock data:", e.message);
+        setData(MOCK_DATA.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const tabs = useMemo(() => {
+    if (!data) return [];
+    return [
+      { key: "Critical", count: data.counts.Critical },
+      { key: "High", count: data.counts.High },
+      { key: "Medium", count: data.counts.Medium },
+      { key: "Low", count: data.counts.Low },
+      { key: "Done", count: data.counts.done },
+    ];
+  }, [data]);
+
+  const charts = data?.charts || [];
+  const totalPages = Math.max(1, Math.ceil(charts.length / pageSize));
+
+  const toggleRow = (id) => {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedRows.size === charts.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(charts.map(c => c.Id)));
+    }
+  };
+
+  const renderCell = (chart, col) => {
+    switch (col.key) {
+      case "checkbox":
+        return (
+          <input type="checkbox" checked={selectedRows.has(chart.Id)}
+            onChange={() => toggleRow(chart.Id)}
+            style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#f5a623" }} />
+        );
+      case "SNo":
+        return <span style={{ color: "#f5a623", fontWeight: 700 }}>{chart.SNo}</span>;
+      case "chart_no":
+        return chart.chart_no
+          ? <span style={{ color: "#f5a623", fontWeight: 600, cursor: "pointer" }}>{chart.chart_no}</span>
+          : <span style={{ color: "#ccc" }}>—</span>;
+      case "OriginalCoder":
+        return chart.CoderFirstName ? (
+          <Avatar src={chart.coder_image_url} name={`${chart.CoderFirstName} ${chart.CoderLastName}`} />
+        ) : null;
+      case "FollowUpCoder":
+        return chart.FollowUpCoderFirstName ? (
+          <Avatar src={chart.follow_up_coder_image_url} name={`${chart.FollowUpCoderFirstName} ${chart.FollowUpCoderLastName}`} />
+        ) : null;
+      case "OriginalAuditor":
+        return chart.AuditorFirstName ? (
+          <Avatar src={chart.auditor_image_url} name={`${chart.AuditorFirstName} ${chart.AuditorLastName}`} />
+        ) : null;
+      case "AllocatedUser":
+        return chart.UserFirstName ? (
+          <Avatar src={chart.UserImageUrl} name={`${chart.UserFirstName} ${chart.UserLastName}`} />
+        ) : null;
+      case "Status":
+        return <StatusBadge status={chart.Status} />;
+      case "Milestone":
+        return <MilestoneBadge milestone={chart.Milestone} />;
+      case "SubSpecialty":
+        return chart.SubSpecialty || <span style={{ color: "#ccc" }}>—</span>;
+      case "qc_status":
+        return chart.qc_status || <span style={{ color: "#ccc" }}>—</span>;
+      case "date_of_coder_allocation":
+        return chart.date_of_coder_allocation || <span style={{ color: "#ccc" }}>—</span>;
+      case "date_of_auditor_allocation":
+        return chart.date_of_auditor_allocation || <span style={{ color: "#ccc" }}>—</span>;
+      default:
+        return chart[col.key] || <span style={{ color: "#ccc" }}>—</span>;
+    }
+  };
+
+  const visibleCount = toggleableColumns.filter(c => visibleColumns.has(c.key)).length;
+
+  return (
+    <div style={{
+      fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
+      background: "#f7f8fa", minHeight: "100vh", padding: "24px 28px",
+    }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+      {/* Header */}
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1a1d23", margin: "0 0 20px 0", letterSpacing: "-0.3px" }}>
+        My To-do List
+      </h1>
+
+      {/* Tabs + Actions Bar */}
+      <div style={{
+        background: "#fff", borderRadius: 14, border: "1px solid #e8eaed",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden",
+      }}>
+        {/* Top bar */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 20px", borderBottom: "1px solid #f0f1f3",
+        }}>
+          {/* Priority Tabs */}
+          <div style={{ display: "flex", gap: 0 }}>
+            {tabs.map(tab => (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+                padding: "14px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+                background: "none", border: "none", position: "relative",
+                color: activeTab === tab.key ? "#1a1d23" : "#8c919a",
+                borderBottom: activeTab === tab.key ? "2.5px solid #f5a623" : "2.5px solid transparent",
+                transition: "all 0.15s ease",
+              }}>
+                {tab.key} ({tab.count})
+              </button>
+            ))}
+          </div>
+
+          {/* Right actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} style={{
+              padding: "7px 12px", borderRadius: 8, border: "1px solid #e0e2e6",
+              fontSize: 13, color: "#4a4f58", cursor: "pointer", background: "#fff",
+            }}>
+              {[10, 25, 50].map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+
+            {/* Columns button with dropdown */}
+            <div ref={columnsDropdownRef} style={{ position: "relative" }}>
+              <button
+                onClick={() => setColumnsDropdownOpen(prev => !prev)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "8px 16px", borderRadius: 8,
+                  border: columnsDropdownOpen ? "1px solid #f5a623" : "1px solid #e0e2e6",
+                  background: columnsDropdownOpen ? "#fffbf0" : "#fff",
+                  fontSize: 13, fontWeight: 500, color: "#4a4f58",
+                  cursor: "pointer", transition: "all 0.15s ease",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5h6M11 9h6M11 13h4M5 5l2 2L5 9M5 13l2 2-2 2" /></svg>
+                Columns
+                {!allToggleableVisible && (
+                  <span style={{
+                    background: "#f5a623", color: "#fff", fontSize: 10, fontWeight: 700,
+                    borderRadius: 10, padding: "1px 6px", marginLeft: 2, lineHeight: "16px",
+                  }}>
+                    {visibleCount}
+                  </span>
+                )}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                  style={{ marginLeft: 2, transform: columnsDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {/* Dropdown panel */}
+              {columnsDropdownOpen && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 6px)", right: 0,
+                  width: 280, maxHeight: 420, overflowY: "auto",
+                  background: "#fff", borderRadius: 12,
+                  border: "1px solid #e8eaed",
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+                  zIndex: 1000,
+                  animation: "columnsFadeIn 0.15s ease",
+                }}>
+                  <style>{`
+                    @keyframes columnsFadeIn {
+                      from { opacity: 0; transform: translateY(-4px); }
+                      to { opacity: 1; transform: translateY(0); }
+                    }
+                    .col-item:hover { background: #fafbfc !important; }
+                  `}</style>
+
+                  {/* Header */}
+                  <div style={{
+                    padding: "12px 16px 10px", borderBottom: "1px solid #f0f1f3",
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                  }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1d23" }}>
+                      Toggle Columns
+                    </span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={selectAllColumns} style={{
+                        background: "none", border: "none", fontSize: 12, fontWeight: 600,
+                        color: allToggleableVisible ? "#b0b5be" : "#f5a623",
+                        cursor: allToggleableVisible ? "default" : "pointer",
+                        padding: "2px 0",
+                      }}>
+                        Show All
+                      </button>
+                      <span style={{ color: "#e0e2e6" }}>|</span>
+                      <button onClick={deselectAllColumns} style={{
+                        background: "none", border: "none", fontSize: 12, fontWeight: 600,
+                        color: noneToggleableVisible ? "#b0b5be" : "#f5a623",
+                        cursor: noneToggleableVisible ? "default" : "pointer",
+                        padding: "2px 0",
+                      }}>
+                        Hide All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Column list */}
+                  <div style={{ padding: "4px 0" }}>
+                    {toggleableColumns.map(col => {
+                      const isVisible = visibleColumns.has(col.key);
+                      return (
+                        <label
+                          key={col.key}
+                          className="col-item"
+                          style={{
+                            display: "flex", alignItems: "center", gap: 10,
+                            padding: "9px 16px", cursor: "pointer",
+                            transition: "background 0.1s",
+                            borderRadius: 0,
+                          }}
+                        >
+                          {/* Custom checkbox */}
+                          <div
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleColumnVisibility(col.key);
+                            }}
+                            style={{
+                              width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                              border: isVisible ? "2px solid #f5a623" : "2px solid #d0d3d9",
+                              background: isVisible ? "#f5a623" : "#fff",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              transition: "all 0.15s ease",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {isVisible && (
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 6L9 17l-5-5" />
+                              </svg>
+                            )}
+                          </div>
+                          <span style={{
+                            fontSize: 13, fontWeight: 500,
+                            color: isVisible ? "#1a1d23" : "#8c919a",
+                            userSelect: "none",
+                          }}>
+                            {col.label}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 8, border: "1px solid #e0e2e6",
+              background: "#fff", fontSize: 13, fontWeight: 500, color: "#6b47dc",
+              cursor: "pointer",
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" /></svg>
+              Filter
+            </button>
+
+            <button style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 10, border: "none",
+              background: "linear-gradient(135deg, #f5a623, #f7b731)",
+              fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+              Reallocation
+            </button>
+
+            <button style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 10, border: "2px solid #1a1d23",
+              background: "#fff", fontSize: 13, fontWeight: 600, color: "#1a1d23",
+              cursor: "pointer",
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
+              Add Chart
+            </button>
+          </div>
+        </div>
+
+        {/* Loading state */}
+        {loading && (
+          <div style={{ padding: 60, textAlign: "center", color: "#8c919a" }}>
+            <div style={{
+              width: 32, height: 32, border: "3px solid #f0f1f3",
+              borderTopColor: "#f5a623", borderRadius: "50%",
+              animation: "spin 0.8s linear infinite", margin: "0 auto 12px",
+            }} />
+            Loading charts...
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+
+        {/* Table */}
+        {!loading && (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{
+              width: "100%", borderCollapse: "collapse",
+              minWidth: displayedColumns.reduce((sum, c) => sum + c.width, 0),
+            }}>
+              <thead>
+                <tr style={{ background: "#fafbfc" }}>
+                  {displayedColumns.map(col => (
+                    <th key={col.key} style={{
+                      padding: "12px 14px", fontSize: 10.5, fontWeight: 700,
+                      color: "#8c919a", textAlign: "left", textTransform: "uppercase",
+                      letterSpacing: "0.6px", whiteSpace: "nowrap",
+                      borderBottom: "1px solid #f0f1f3",
+                      width: col.width,
+                    }}>
+                      {col.key === "checkbox" ? (
+                        <input type="checkbox" onChange={toggleAll}
+                          checked={charts.length > 0 && selectedRows.size === charts.length}
+                          style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#f5a623" }} />
+                      ) : (
+                        <span style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 3 }}>
+                          {col.label}
+                          <svg width="8" height="10" viewBox="0 0 8 10" fill="none" style={{ opacity: 0.3 }}>
+                            <path d="M4 0L7 4H1L4 0Z" fill="#8c919a" />
+                            <path d="M4 10L1 6H7L4 10Z" fill="#8c919a" />
+                          </svg>
+                        </span>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {charts.length === 0 ? (
+                  <tr>
+                    <td colSpan={displayedColumns.length} style={{
+                      padding: 60, textAlign: "center", color: "#b0b5be", fontSize: 14,
+                    }}>
+                      No charts found for this priority level.
+                    </td>
+                  </tr>
+                ) : (
+                  charts.map((chart, idx) => (
+                    <tr key={chart.Id} style={{
+                      borderBottom: "1px solid #f4f5f7",
+                      background: selectedRows.has(chart.Id) ? "#fffbf0" : idx % 2 === 0 ? "#fff" : "#fdfdfe",
+                      transition: "background 0.1s",
+                    }}
+                      onMouseEnter={e => { if (!selectedRows.has(chart.Id)) e.currentTarget.style.background = "#fafbfc"; }}
+                      onMouseLeave={e => { if (!selectedRows.has(chart.Id)) e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#fdfdfe"; }}
+                    >
+                      {displayedColumns.map(col => (
+                        <td key={col.key} style={{
+                          padding: "16px 14px", fontSize: 13, color: "#3a3f48",
+                          whiteSpace: col.key === "Location" ? "normal" : "nowrap",
+                          verticalAlign: "middle",
+                        }}>
+                          {renderCell(chart, col)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && charts.length > 0 && (
+          <div style={{
+            display: "flex", justifyContent: "center", alignItems: "center",
+            padding: "16px 20px", gap: 6, borderTop: "1px solid #f0f1f3",
+          }}>
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+              style={{
+                width: 32, height: 32, borderRadius: 8, border: "1px solid #e0e2e6",
+                background: "#fff", cursor: currentPage === 1 ? "default" : "pointer",
+                opacity: currentPage === 1 ? 0.4 : 1, display: "flex", alignItems: "center",
+                justifyContent: "center", color: "#6b7280",
+              }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button key={i + 1} onClick={() => setCurrentPage(i + 1)} style={{
+                width: 32, height: 32, borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: currentPage === i + 1 ? "none" : "1px solid #e0e2e6",
+                background: currentPage === i + 1 ? "linear-gradient(135deg, #f5a623, #f7b731)" : "#fff",
+                color: currentPage === i + 1 ? "#fff" : "#6b7280",
+                cursor: "pointer", boxShadow: currentPage === i + 1 ? "0 2px 6px rgba(245,166,35,0.3)" : "none",
+              }}>{i + 1}</button>
+            ))}
+
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+              style={{
+                width: 32, height: 32, borderRadius: 8, border: "1px solid #e0e2e6",
+                background: "#fff", cursor: currentPage === totalPages ? "default" : "pointer",
+                opacity: currentPage === totalPages ? 0.4 : 1, display: "flex", alignItems: "center",
+                justifyContent: "center", color: "#6b7280",
+              }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+            </button>
+          </div>
+        )}
+
+        {/* Horizontal scrollbar indicator */}
+        {!loading && (
+          <div style={{
+            height: 4, background: "#f0f1f3", margin: "0 20px 12px",
+            borderRadius: 2, overflow: "hidden",
+          }}>
+            <div style={{
+              height: "100%", width: "70%",
+              background: "linear-gradient(90deg, #f5a623, #f7c948)",
+              borderRadius: 2,
+            }} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
