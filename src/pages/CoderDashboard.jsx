@@ -122,14 +122,16 @@ export default function MyToDoList() {
   const fetchCharts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.post(CHARTS_BASE_URL, {
-        priority: activeTab,
-        page: currentPage,
-        size: pageSize,
-        column: sortCol,
-        direction: sortDir,
-        client: 0,
-        location: 0,
+      const response = await api.post(CHARTS_BASE_URL, null, {
+        params: {
+          priority: activeTab,
+          page: currentPage,
+          size: pageSize,
+          column: sortCol,
+          direction: sortDir,
+          client: 0,
+          location: 0,
+        },
       });
       const data = response.data;
       if (data.success) {
