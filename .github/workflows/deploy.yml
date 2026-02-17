@@ -1,9 +1,7 @@
 name: Deploy to EC2
-
 on:
   push:
-    branches: [master]  # change if your branch is different
-
+    branches: [master]
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,3 +18,29 @@ jobs:
             npm install
             npm run build
             pm2 restart med-x-frontend
+
+      - name: Notify Discord - Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "✅ Deployment Successful",
+                "description": "**Repo:** ${{ github.repository }}\n**Branch:** ${{ github.ref_name }}\n**Commit:** ${{ github.event.head_commit.message }}\n**By:** ${{ github.actor }}",
+                "color": 65280
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Notify Discord - Failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "❌ Deployment Failed",
+                "description": "**Repo:** ${{ github.repository }}\n**Branch:** ${{ github.ref_name }}\n**Commit:** ${{ github.event.head_commit.message }}\n**By:** ${{ github.actor }}",
+                "color": 16711680
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK }}
