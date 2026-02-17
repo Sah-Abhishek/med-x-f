@@ -35,7 +35,7 @@ export const useAuthStore = create((set, get) => ({
 
   fetchProfile: async () => {
     try {
-      const response = await api.get('/users/profile');
+      const response = await api.get('https://uat-app.valerionhealth.com/users/profile');
       const data = response.data;
       if (data.success) {
         set({ profile: data.data });
