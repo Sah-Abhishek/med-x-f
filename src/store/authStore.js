@@ -25,12 +25,25 @@ function extractUser(decoded, attending) {
   };
 }
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: null,
   token: null,
+  profile: null,
   loading: true,
   error: null,
   isAuthenticated: false,
+
+  fetchProfile: async () => {
+    try {
+      const response = await api.get('/users/profile');
+      const data = response.data;
+      if (data.success) {
+        set({ profile: data.data });
+      }
+    } catch {
+      // Profile fetch is non-critical
+    }
+  },
 
   login: async (email, password) => {
     try {
@@ -44,6 +57,10 @@ export const useAuthStore = create((set) => ({
 
         localStorage.setItem('token', data.token);
         set({ user, token: data.token, isAuthenticated: true, loading: false });
+
+        // Fetch profile in background after login
+        get().fetchProfile();
+
         return { success: true, user };
       }
 
@@ -58,7 +75,7 @@ export const useAuthStore = create((set) => ({
 
   logout: () => {
     localStorage.removeItem('token');
-    set({ user: null, token: null, isAuthenticated: false, error: null });
+    set({ user: null, token: null, profile: null, isAuthenticated: false, error: null });
   },
 
   initialize: () => {
@@ -69,6 +86,10 @@ export const useAuthStore = create((set) => ({
         if (decoded.exp * 1000 > Date.now()) {
           const user = extractUser(decoded);
           set({ user, token, isAuthenticated: true, loading: false });
+
+          // Fetch profile in background on init
+          get().fetchProfile();
+
           return;
         }
       } catch {
