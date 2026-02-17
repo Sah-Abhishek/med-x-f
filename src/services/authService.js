@@ -1,33 +1,6 @@
 import api from './api';
 
 /**
- * Login with username and password
- */
-export const login = async (email, password) => {
-  const response = await api.post('/auth/login', {
-    email: email,
-    password
-  });
-  return response.data;
-};
-
-/**
- * Logout current user
- */
-export const logout = async () => {
-  const response = await api.post('/auth/logout');
-  return response.data;
-};
-
-/**
- * Get current user information
- */
-export const getMe = async () => {
-  const response = await api.get('/auth/me');
-  return response.data;
-};
-
-/**
  * Get all users (admin only)
  */
 export const getAllUsers = async () => {
