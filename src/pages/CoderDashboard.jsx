@@ -101,10 +101,13 @@ const COLUMNS = [
 
 const PRIORITY_TABS = ["Critical", "High", "Medium", "Low", "Done"];
 
+const USER_STATS_URL = "/charts/user-stats";
+
 export default function MyToDoList() {
   const [charts, setCharts] = useState([]);
   const [counts, setCounts] = useState({ Critical: 0, High: 0, Medium: 0, Low: 0, done: 0 });
   const [loading, setLoading] = useState(true);
+  const [userStats, setUserStats] = useState(null);
   const [activeTab, setActiveTab] = useState("Critical");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,10 +149,27 @@ export default function MyToDoList() {
     }
   }, [activeTab, currentPage, pageSize, sortCol, sortDir]);
 
+  const fetchUserStats = useCallback(async () => {
+    try {
+      const response = await api.get(USER_STATS_URL, {
+        params: { client: 0, location: 0 },
+      });
+      if (response.data.success) {
+        setUserStats(response.data.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch user stats:", e.message);
+    }
+  }, []);
+
   // Re-fetch when any query param changes
   useEffect(() => {
     fetchCharts();
   }, [fetchCharts]);
+
+  useEffect(() => {
+    fetchUserStats();
+  }, [fetchUserStats]);
 
   // Reset to page 1 when tab or pageSize changes
   const handleTabChange = (tab) => {
@@ -291,6 +311,139 @@ export default function MyToDoList() {
         fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
       }}>
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+        {/* User Stats Cards */}
+        {userStats && (
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 20,
+            marginBottom: 24,
+          }}>
+            {/* Ready to Code Card */}
+            <div style={{
+              background: "#fff",
+              borderRadius: 14,
+              border: "1px solid #e8eaed",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              padding: "20px 24px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              minHeight: 140,
+              position: "relative",
+            }}>
+              <div style={{ color: "#94a3b8", fontSize: 22, marginBottom: 8 }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="4" cy="6" r="1.5" fill="#94a3b8" />
+                  <circle cx="4" cy="12" r="1.5" fill="#94a3b8" />
+                  <circle cx="4" cy="18" r="1.5" fill="#94a3b8" />
+                  <line x1="9" y1="6" x2="20" y2="6" />
+                  <line x1="9" y1="12" x2="20" y2="12" />
+                  <line x1="9" y1="18" x2="20" y2="18" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 36, fontWeight: 700, color: "#0ea5e9", lineHeight: 1 }}>
+                  {userStats.milestones?.ready_to_code ?? 0}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#0ea5e9", marginTop: 4 }}>
+                  Ready to Code
+                </div>
+              </div>
+              <div style={{
+                position: "absolute", bottom: 16, right: 20,
+                fontSize: 12, color: "#94a3b8", fontWeight: 500,
+              }}>
+                All Time Count
+              </div>
+            </div>
+
+            {/* Complete Card */}
+            <div style={{
+              background: "#fff",
+              borderRadius: 14,
+              border: "1px solid #e8eaed",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              padding: "20px 24px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 140,
+              position: "relative",
+            }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 8 }}>
+                <span style={{ fontSize: 36, fontWeight: 700, color: "#10b981", lineHeight: 1 }}>
+                  {userStats.complete_status ?? 0}
+                </span>
+                <span style={{ fontSize: 16, fontWeight: 600, color: "#10b981" }}>
+                  Complete
+                </span>
+              </div>
+              <div style={{ margin: "8px 0" }}>
+                <svg width="80" height="60" viewBox="0 0 80 60" fill="none">
+                  <rect x="30" y="5" width="30" height="45" rx="4" fill="#e0f2fe" stroke="#93c5fd" strokeWidth="1"/>
+                  <circle cx="45" cy="20" r="3" fill="#93c5fd"/>
+                  <line x1="38" y1="30" x2="52" y2="30" stroke="#93c5fd" strokeWidth="1.5"/>
+                  <line x1="38" y1="35" x2="48" y2="35" stroke="#93c5fd" strokeWidth="1.5"/>
+                  <circle cx="25" cy="22" r="8" fill="#fce7f3" stroke="#f9a8d4" strokeWidth="1"/>
+                  <path d="M22 22 L24 24 L28 20" stroke="#10b981" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="20" cy="15" r="5" fill="#fecdd3"/>
+                  <circle cx="20" cy="12" r="3" fill="#1e293b"/>
+                </svg>
+              </div>
+              <div style={{
+                fontSize: 12, color: "#94a3b8", fontWeight: 500,
+              }}>
+                Today's Count
+              </div>
+            </div>
+
+            {/* Incomplete Card */}
+            <div style={{
+              background: "#fff",
+              borderRadius: 14,
+              border: "1px solid #e8eaed",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              padding: "20px 24px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 140,
+              position: "relative",
+            }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 8 }}>
+                <span style={{ fontSize: 36, fontWeight: 700, color: "#f43f5e", lineHeight: 1 }}>
+                  {userStats.incomplete_status ?? 0}
+                </span>
+                <span style={{ fontSize: 16, fontWeight: 600, color: "#f43f5e" }}>
+                  Incomplete
+                </span>
+              </div>
+              <div style={{ margin: "8px 0" }}>
+                <svg width="80" height="60" viewBox="0 0 80 60" fill="none">
+                  <rect x="35" y="15" width="25" height="35" rx="3" fill="#e0f2fe" stroke="#93c5fd" strokeWidth="1"/>
+                  <line x1="40" y1="25" x2="55" y2="25" stroke="#93c5fd" strokeWidth="1.5"/>
+                  <line x1="40" y1="30" x2="50" y2="30" stroke="#93c5fd" strokeWidth="1.5"/>
+                  <line x1="40" y1="35" x2="52" y2="35" stroke="#93c5fd" strokeWidth="1.5"/>
+                  <circle cx="25" cy="20" r="5" fill="#1e293b"/>
+                  <circle cx="25" cy="17" r="3" fill="#64748b"/>
+                  <rect x="20" y="25" width="10" height="15" rx="3" fill="#1e293b"/>
+                  <circle cx="60" cy="12" r="2" fill="#93c5fd"/>
+                  <circle cx="55" cy="8" r="1.5" fill="#c4b5fd"/>
+                  <line x1="62" y1="18" x2="68" y2="12" stroke="#93c5fd" strokeWidth="1"/>
+                </svg>
+              </div>
+              <div style={{
+                fontSize: 12, color: "#94a3b8", fontWeight: 500,
+              }}>
+                Today's Count
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1a1d23", margin: "0 0 20px 0", letterSpacing: "-0.3px" }}>
