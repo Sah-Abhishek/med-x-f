@@ -37,8 +37,6 @@ api.interceptors.response.use(
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
-      } else if (status === 403) {
-        window.location.href = '/unauthorized';
       }
     } else if (error.request) {
       console.error('Network error:', error.message);
