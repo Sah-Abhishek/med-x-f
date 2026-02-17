@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useRole } from '../../hooks/useRole';
 import { PERMISSIONS } from '../../utils/rolePermissions';
@@ -33,9 +34,22 @@ const AuditIcon = () => (
   </svg>
 );
 
+const ChevronIcon = ({ isCollapsed }) => (
+  <svg
+    className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    strokeWidth={2}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+  </svg>
+);
+
 const Sidebar = () => {
   const location = useLocation();
   const { hasPermission } = useRole();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
     { name: 'Dashboard', path: ROUTES.DASHBOARD, icon: DashboardIcon, show: true },
@@ -46,27 +60,45 @@ const Sidebar = () => {
   ].filter((item) => item.show);
 
   return (
-    <aside className="w-[260px] bg-[var(--color-sidebar)] flex flex-col shrink-0">
+    <aside
+      className={`bg-[var(--color-sidebar)] flex flex-col shrink-0 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-[72px]' : 'w-[260px]'
+        }`}
+    >
       {/* Logo */}
-      <div className="h-16 flex items-center gap-3 px-6 border-b border-white/[0.06]">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-accent)] to-sky-400 flex items-center justify-center shadow-[0_2px_8px_rgba(14,165,233,0.35)]">
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
+      <div className="h-16 flex items-center gap-3 px-6 border-b border-white/[0.06] relative">
+        <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center w-full' : ''}`}>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--color-accent)] to-sky-400 flex items-center justify-center shadow-[0_2px_8px_rgba(14,165,233,0.35)] shrink-0">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          {!isCollapsed && (
+            <div>
+              <span className="text-[15px] font-bold text-white tracking-tight">MedEx</span>
+              <span className="block text-[10px] text-slate-500 font-medium tracking-wide uppercase">Platform</span>
+            </div>
+          )}
         </div>
-        <div>
-          <span className="text-[15px] font-bold text-white tracking-tight">MedEx</span>
-          <span className="block text-[10px] text-slate-500 font-medium tracking-wide uppercase">Platform</span>
-        </div>
+
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={`absolute ${isCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-2'} top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-[var(--color-sidebar-hover)] hover:bg-[var(--color-sidebar-active)] text-slate-400 hover:text-[var(--color-accent)] flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100`}
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <ChevronIcon isCollapsed={isCollapsed} />
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4">
-        <div className="mb-2 px-3">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-            Navigation
-          </span>
-        </div>
+      <nav className="flex-1 px-3 py-4 group">
+        {!isCollapsed && (
+          <div className="mb-2 px-3">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              Navigation
+            </span>
+          </div>
+        )}
         <ul className="space-y-0.5">
           {menuItems.map((item) => {
             const isActive =
@@ -78,18 +110,22 @@ const Sidebar = () => {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] transition-all duration-200 group ${
-                    isActive
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] transition-all duration-200 group/item ${isActive
                       ? 'bg-[var(--color-sidebar-active)] text-[var(--color-accent)]'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--color-sidebar-hover)]'
-                  }`}
+                    } ${isCollapsed ? 'justify-center' : ''}`}
+                  title={isCollapsed ? item.name : ''}
                 >
-                  <span className={`flex-shrink-0 ${isActive ? 'text-[var(--color-accent)]' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                  <span className={`flex-shrink-0 ${isActive ? 'text-[var(--color-accent)]' : 'text-slate-500 group-hover/item:text-slate-300'}`}>
                     <Icon />
                   </span>
-                  <span className="text-[13px] font-medium">{item.name}</span>
-                  {isActive && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
+                  {!isCollapsed && (
+                    <>
+                      <span className="text-[13px] font-medium">{item.name}</span>
+                      {isActive && (
+                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
+                      )}
+                    </>
                   )}
                 </Link>
               </li>
@@ -100,9 +136,11 @@ const Sidebar = () => {
 
       {/* Footer */}
       <div className="px-4 py-4 border-t border-white/[0.06]">
-        <div className="flex items-center gap-2 px-2">
+        <div className={`flex items-center gap-2 px-2 ${isCollapsed ? 'justify-center' : ''}`}>
           <div className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
-          <span className="text-[11px] text-slate-500 font-medium">System Online</span>
+          {!isCollapsed && (
+            <span className="text-[11px] text-slate-500 font-medium">System Online</span>
+          )}
         </div>
       </div>
     </aside>
