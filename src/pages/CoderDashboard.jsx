@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import DashboardLayout from "../layouts/DashboardLayout";
 
 const API_URL = "https://uat-app.valerionhealth.com/charts?priority=Critical&page=1&size=10&column=MilestoneId&direction=ASC&client=0&location=0";
 
@@ -308,9 +309,9 @@ export default function MyToDoList() {
   const visibleCount = toggleableColumns.filter(c => visibleColumns.has(c.key)).length;
 
   return (
+    <DashboardLayout>
     <div style={{
       fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
-      background: "#f7f8fa", minHeight: "100vh", padding: "24px 28px",
     }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
@@ -650,5 +651,6 @@ export default function MyToDoList() {
         )}
       </div>
     </div>
+    </DashboardLayout>
   );
 }

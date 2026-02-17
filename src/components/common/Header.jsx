@@ -7,6 +7,7 @@ const Header = () => {
   const { user, logout } = useAuth();
   const profile = useAuthStore((s) => s.profile);
   const [showProfile, setShowProfile] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const profileRef = useRef(null);
   const timeoutRef = useRef(null);
 
@@ -73,8 +74,8 @@ const Header = () => {
               </div>
 
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-accent)] to-sky-600 flex items-center justify-center text-white text-[11px] font-bold tracking-tight overflow-hidden ring-2 ring-[var(--color-accent)]/20">
-                {profile?.image_url ? (
-                  <img src={profile.image_url} alt="" className="w-full h-full object-cover" />
+                {profile?.image_url && !imgError ? (
+                  <img src={profile.image_url} alt="" className="w-full h-full object-cover" onError={() => setImgError(true)} />
                 ) : (
                   getInitials(displayName)
                 )}
@@ -93,8 +94,8 @@ const Header = () => {
                 <div className="bg-gradient-to-r from-[var(--color-accent)] to-sky-600 px-5 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-bold shrink-0 overflow-hidden">
-                      {profile.image_url ? (
-                        <img src={profile.image_url} alt="" className="w-full h-full object-cover" />
+                      {profile.image_url && !imgError ? (
+                        <img src={profile.image_url} alt="" className="w-full h-full object-cover" onError={() => setImgError(true)} />
                       ) : (
                         getInitials(displayName)
                       )}
