@@ -16,7 +16,7 @@ jobs:
           password: ${{ secrets.EC2_PASSWORD }}
           script: |
             cd /root/workspace/med-x/med-x-f
-            git pull origin main
+            git pull origin master
             npm install
             npm run build
             pm2 restart med-x-frontend
