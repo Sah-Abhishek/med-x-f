@@ -81,14 +81,14 @@ const Sidebar = () => {
         </div>
 
         {/* Toggle Button */}
+        {/* Toggle Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`absolute ${isCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-2'} top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-[var(--color-sidebar-hover)] hover:bg-[var(--color-sidebar-active)] text-slate-400 hover:text-[var(--color-accent)] flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100`}
+          className={`absolute ${isCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-2'} top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-[var(--color-accent)] flex items-center justify-center transition-all duration-200 shadow-lg border border-white/10`}
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <ChevronIcon isCollapsed={isCollapsed} />
-        </button>
-      </div>
+        </button> </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 group">
@@ -111,8 +111,8 @@ const Sidebar = () => {
                 <Link
                   to={item.path}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] transition-all duration-200 group/item ${isActive
-                      ? 'bg-[var(--color-sidebar-active)] text-[var(--color-accent)]'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--color-sidebar-hover)]'
+                    ? 'bg-[var(--color-sidebar-active)] text-[var(--color-accent)]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--color-sidebar-hover)]'
                     } ${isCollapsed ? 'justify-center' : ''}`}
                   title={isCollapsed ? item.name : ''}
                 >
