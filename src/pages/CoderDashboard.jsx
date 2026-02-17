@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
 
-const CHARTS_BASE_URL = "https://uat-app.valerionhealth.com/charts";
+const CHARTS_BASE_URL = "https://uat-app.valerionhealth.com/charts/";
 
 // Map table column keys to API sort column names
 const SORT_COLUMN_MAP = {
