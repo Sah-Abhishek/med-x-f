@@ -122,16 +122,14 @@ export default function MyToDoList() {
   const fetchCharts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get(CHARTS_BASE_URL, {
-        params: {
-          priority: activeTab,
-          page: currentPage,
-          size: pageSize,
-          column: sortCol,
-          direction: sortDir,
-          client: 0,
-          location: 0,
-        },
+      const response = await api.post(CHARTS_BASE_URL, {
+        priority: activeTab,
+        page: currentPage,
+        size: pageSize,
+        column: sortCol,
+        direction: sortDir,
+        client: 0,
+        location: 0,
       });
       const data = response.data;
       if (data.success) {
@@ -287,91 +285,91 @@ export default function MyToDoList() {
 
   return (
     <DashboardLayout>
-    <div style={{
-      fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
-    }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-      {/* Header */}
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1a1d23", margin: "0 0 20px 0", letterSpacing: "-0.3px" }}>
-        My To-do List
-      </h1>
-
-      {/* Tabs + Actions Bar */}
       <div style={{
-        background: "#fff", borderRadius: 14, border: "1px solid #e8eaed",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden",
+        fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
       }}>
-        {/* Top bar */}
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+        {/* Header */}
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1a1d23", margin: "0 0 20px 0", letterSpacing: "-0.3px" }}>
+          My To-do List
+        </h1>
+
+        {/* Tabs + Actions Bar */}
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 20px", borderBottom: "1px solid #f0f1f3",
+          background: "#fff", borderRadius: 14, border: "1px solid #e8eaed",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden",
         }}>
-          {/* Priority Tabs */}
-          <div style={{ display: "flex", gap: 0 }}>
-            {tabs.map(tab => (
-              <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
-                padding: "14px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
-                background: "none", border: "none", position: "relative",
-                color: activeTab === tab.key ? "#1a1d23" : "#8c919a",
-                borderBottom: activeTab === tab.key ? "2.5px solid #f5a623" : "2.5px solid transparent",
-                transition: "all 0.15s ease",
-              }}>
-                {tab.key} ({tab.count})
-              </button>
-            ))}
-          </div>
-
-          {/* Right actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <select value={pageSize} onChange={e => handlePageSizeChange(Number(e.target.value))} style={{
-              padding: "7px 12px", borderRadius: 8, border: "1px solid #e0e2e6",
-              fontSize: 13, color: "#4a4f58", cursor: "pointer", background: "#fff",
-            }}>
-              {[10, 25, 50].map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-
-            {/* Columns button with dropdown */}
-            <div ref={columnsDropdownRef} style={{ position: "relative" }}>
-              <button
-                onClick={() => setColumnsDropdownOpen(prev => !prev)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "8px 16px", borderRadius: 8,
-                  border: columnsDropdownOpen ? "1px solid #f5a623" : "1px solid #e0e2e6",
-                  background: columnsDropdownOpen ? "#fffbf0" : "#fff",
-                  fontSize: 13, fontWeight: 500, color: "#4a4f58",
-                  cursor: "pointer", transition: "all 0.15s ease",
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5h6M11 9h6M11 13h4M5 5l2 2L5 9M5 13l2 2-2 2" /></svg>
-                Columns
-                {!allToggleableVisible && (
-                  <span style={{
-                    background: "#f5a623", color: "#fff", fontSize: 10, fontWeight: 700,
-                    borderRadius: 10, padding: "1px 6px", marginLeft: 2, lineHeight: "16px",
-                  }}>
-                    {visibleCount}
-                  </span>
-                )}
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                  style={{ marginLeft: 2, transform: columnsDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </button>
-
-              {/* Dropdown panel */}
-              {columnsDropdownOpen && (
-                <div style={{
-                  position: "absolute", top: "calc(100% + 6px)", right: 0,
-                  width: 280, maxHeight: 420, overflowY: "auto",
-                  background: "#fff", borderRadius: 12,
-                  border: "1px solid #e8eaed",
-                  boxShadow: "0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
-                  zIndex: 1000,
-                  animation: "columnsFadeIn 0.15s ease",
+          {/* Top bar */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "0 20px", borderBottom: "1px solid #f0f1f3",
+          }}>
+            {/* Priority Tabs */}
+            <div style={{ display: "flex", gap: 0 }}>
+              {tabs.map(tab => (
+                <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
+                  padding: "14px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+                  background: "none", border: "none", position: "relative",
+                  color: activeTab === tab.key ? "#1a1d23" : "#8c919a",
+                  borderBottom: activeTab === tab.key ? "2.5px solid #f5a623" : "2.5px solid transparent",
+                  transition: "all 0.15s ease",
                 }}>
-                  <style>{`
+                  {tab.key} ({tab.count})
+                </button>
+              ))}
+            </div>
+
+            {/* Right actions */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <select value={pageSize} onChange={e => handlePageSizeChange(Number(e.target.value))} style={{
+                padding: "7px 12px", borderRadius: 8, border: "1px solid #e0e2e6",
+                fontSize: 13, color: "#4a4f58", cursor: "pointer", background: "#fff",
+              }}>
+                {[10, 25, 50].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+
+              {/* Columns button with dropdown */}
+              <div ref={columnsDropdownRef} style={{ position: "relative" }}>
+                <button
+                  onClick={() => setColumnsDropdownOpen(prev => !prev)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "8px 16px", borderRadius: 8,
+                    border: columnsDropdownOpen ? "1px solid #f5a623" : "1px solid #e0e2e6",
+                    background: columnsDropdownOpen ? "#fffbf0" : "#fff",
+                    fontSize: 13, fontWeight: 500, color: "#4a4f58",
+                    cursor: "pointer", transition: "all 0.15s ease",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5h6M11 9h6M11 13h4M5 5l2 2L5 9M5 13l2 2-2 2" /></svg>
+                  Columns
+                  {!allToggleableVisible && (
+                    <span style={{
+                      background: "#f5a623", color: "#fff", fontSize: 10, fontWeight: 700,
+                      borderRadius: 10, padding: "1px 6px", marginLeft: 2, lineHeight: "16px",
+                    }}>
+                      {visibleCount}
+                    </span>
+                  )}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                    style={{ marginLeft: 2, transform: columnsDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+
+                {/* Dropdown panel */}
+                {columnsDropdownOpen && (
+                  <div style={{
+                    position: "absolute", top: "calc(100% + 6px)", right: 0,
+                    width: 280, maxHeight: 420, overflowY: "auto",
+                    background: "#fff", borderRadius: 12,
+                    border: "1px solid #e8eaed",
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+                    zIndex: 1000,
+                    animation: "columnsFadeIn 0.15s ease",
+                  }}>
+                    <style>{`
                     @keyframes columnsFadeIn {
                       from { opacity: 0; transform: translateY(-4px); }
                       to { opacity: 1; transform: translateY(0); }
@@ -379,250 +377,250 @@ export default function MyToDoList() {
                     .col-item:hover { background: #fafbfc !important; }
                   `}</style>
 
-                  {/* Header */}
-                  <div style={{
-                    padding: "12px 16px 10px", borderBottom: "1px solid #f0f1f3",
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                  }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1d23" }}>
-                      Toggle Columns
-                    </span>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={selectAllColumns} style={{
-                        background: "none", border: "none", fontSize: 12, fontWeight: 600,
-                        color: allToggleableVisible ? "#b0b5be" : "#f5a623",
-                        cursor: allToggleableVisible ? "default" : "pointer",
-                        padding: "2px 0",
-                      }}>
-                        Show All
-                      </button>
-                      <span style={{ color: "#e0e2e6" }}>|</span>
-                      <button onClick={deselectAllColumns} style={{
-                        background: "none", border: "none", fontSize: 12, fontWeight: 600,
-                        color: noneToggleableVisible ? "#b0b5be" : "#f5a623",
-                        cursor: noneToggleableVisible ? "default" : "pointer",
-                        padding: "2px 0",
-                      }}>
-                        Hide All
-                      </button>
+                    {/* Header */}
+                    <div style={{
+                      padding: "12px 16px 10px", borderBottom: "1px solid #f0f1f3",
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                    }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1d23" }}>
+                        Toggle Columns
+                      </span>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={selectAllColumns} style={{
+                          background: "none", border: "none", fontSize: 12, fontWeight: 600,
+                          color: allToggleableVisible ? "#b0b5be" : "#f5a623",
+                          cursor: allToggleableVisible ? "default" : "pointer",
+                          padding: "2px 0",
+                        }}>
+                          Show All
+                        </button>
+                        <span style={{ color: "#e0e2e6" }}>|</span>
+                        <button onClick={deselectAllColumns} style={{
+                          background: "none", border: "none", fontSize: 12, fontWeight: 600,
+                          color: noneToggleableVisible ? "#b0b5be" : "#f5a623",
+                          cursor: noneToggleableVisible ? "default" : "pointer",
+                          padding: "2px 0",
+                        }}>
+                          Hide All
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Column list */}
-                  <div style={{ padding: "4px 0" }}>
-                    {toggleableColumns.map(col => {
-                      const isVisible = visibleColumns.has(col.key);
-                      return (
-                        <label
-                          key={col.key}
-                          className="col-item"
-                          style={{
-                            display: "flex", alignItems: "center", gap: 10,
-                            padding: "9px 16px", cursor: "pointer",
-                            transition: "background 0.1s",
-                            borderRadius: 0,
-                          }}
-                        >
-                          <div
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toggleColumnVisibility(col.key);
-                            }}
+                    {/* Column list */}
+                    <div style={{ padding: "4px 0" }}>
+                      {toggleableColumns.map(col => {
+                        const isVisible = visibleColumns.has(col.key);
+                        return (
+                          <label
+                            key={col.key}
+                            className="col-item"
                             style={{
-                              width: 18, height: 18, borderRadius: 5, flexShrink: 0,
-                              border: isVisible ? "2px solid #f5a623" : "2px solid #d0d3d9",
-                              background: isVisible ? "#f5a623" : "#fff",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              transition: "all 0.15s ease",
-                              cursor: "pointer",
+                              display: "flex", alignItems: "center", gap: 10,
+                              padding: "9px 16px", cursor: "pointer",
+                              transition: "background 0.1s",
+                              borderRadius: 0,
                             }}
                           >
-                            {isVisible && (
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 6L9 17l-5-5" />
-                              </svg>
-                            )}
-                          </div>
-                          <span style={{
-                            fontSize: 13, fontWeight: 500,
-                            color: isVisible ? "#1a1d23" : "#8c919a",
+                            <div
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleColumnVisibility(col.key);
+                              }}
+                              style={{
+                                width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                                border: isVisible ? "2px solid #f5a623" : "2px solid #d0d3d9",
+                                background: isVisible ? "#f5a623" : "#fff",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                transition: "all 0.15s ease",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {isVisible && (
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                              )}
+                            </div>
+                            <span style={{
+                              fontSize: 13, fontWeight: 500,
+                              color: isVisible ? "#1a1d23" : "#8c919a",
+                              userSelect: "none",
+                            }}>
+                              {col.label}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 8, border: "1px solid #e0e2e6",
+                background: "#fff", fontSize: 13, fontWeight: 500, color: "#6b47dc",
+                cursor: "pointer",
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" /></svg>
+                Filter
+              </button>
+
+              <button style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 10, border: "none",
+                background: "linear-gradient(135deg, #f5a623, #f7b731)",
+                fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                Reallocation
+              </button>
+
+              <button style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 10, border: "2px solid #1a1d23",
+                background: "#fff", fontSize: 13, fontWeight: 600, color: "#1a1d23",
+                cursor: "pointer",
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
+                Add Chart
+              </button>
+            </div>
+          </div>
+
+          {/* Loading state */}
+          {loading && (
+            <div style={{ padding: 60, textAlign: "center", color: "#8c919a" }}>
+              <div style={{
+                width: 32, height: 32, border: "3px solid #f0f1f3",
+                borderTopColor: "#f5a623", borderRadius: "50%",
+                animation: "spin 0.8s linear infinite", margin: "0 auto 12px",
+              }} />
+              Loading charts...
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+          )}
+
+          {/* Table */}
+          {!loading && (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{
+                width: "100%", borderCollapse: "collapse",
+                minWidth: displayedColumns.reduce((sum, c) => sum + c.width, 0),
+              }}>
+                <thead>
+                  <tr style={{ background: "#fafbfc" }}>
+                    {displayedColumns.map(col => {
+                      const isSortable = !!SORT_COLUMN_MAP[col.key];
+                      const isActiveSortCol = col.key === activeSortKey;
+                      return (
+                        <th key={col.key}
+                          onClick={() => isSortable && handleSort(col.key)}
+                          style={{
+                            padding: "12px 14px", fontSize: 10.5, fontWeight: 700,
+                            color: "#8c919a", textAlign: "left", textTransform: "uppercase",
+                            letterSpacing: "0.6px", whiteSpace: "nowrap",
+                            borderBottom: "1px solid #f0f1f3",
+                            width: col.width,
+                            cursor: isSortable ? "pointer" : "default",
                             userSelect: "none",
                           }}>
-                            {col.label}
-                          </span>
-                        </label>
+                          {col.key === "checkbox" ? (
+                            <input type="checkbox" onChange={toggleAll}
+                              checked={charts.length > 0 && selectedRows.size === charts.length}
+                              style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#f5a623" }} />
+                          ) : (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                              {col.label}
+                              {isSortable && (
+                                <svg width="8" height="10" viewBox="0 0 8 10" fill="none">
+                                  <path d="M4 0L7 4H1L4 0Z" fill={isActiveSortCol && sortDir === "ASC" ? "#f5a623" : "#ccc"} />
+                                  <path d="M4 10L1 6H7L4 10Z" fill={isActiveSortCol && sortDir === "DESC" ? "#f5a623" : "#ccc"} />
+                                </svg>
+                              )}
+                            </span>
+                          )}
+                        </th>
                       );
                     })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <button style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 16px", borderRadius: 8, border: "1px solid #e0e2e6",
-              background: "#fff", fontSize: 13, fontWeight: 500, color: "#6b47dc",
-              cursor: "pointer",
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" /></svg>
-              Filter
-            </button>
-
-            <button style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 16px", borderRadius: 10, border: "none",
-              background: "linear-gradient(135deg, #f5a623, #f7b731)",
-              fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-              Reallocation
-            </button>
-
-            <button style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 16px", borderRadius: 10, border: "2px solid #1a1d23",
-              background: "#fff", fontSize: 13, fontWeight: 600, color: "#1a1d23",
-              cursor: "pointer",
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
-              Add Chart
-            </button>
-          </div>
-        </div>
-
-        {/* Loading state */}
-        {loading && (
-          <div style={{ padding: 60, textAlign: "center", color: "#8c919a" }}>
-            <div style={{
-              width: 32, height: 32, border: "3px solid #f0f1f3",
-              borderTopColor: "#f5a623", borderRadius: "50%",
-              animation: "spin 0.8s linear infinite", margin: "0 auto 12px",
-            }} />
-            Loading charts...
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        )}
-
-        {/* Table */}
-        {!loading && (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{
-              width: "100%", borderCollapse: "collapse",
-              minWidth: displayedColumns.reduce((sum, c) => sum + c.width, 0),
-            }}>
-              <thead>
-                <tr style={{ background: "#fafbfc" }}>
-                  {displayedColumns.map(col => {
-                    const isSortable = !!SORT_COLUMN_MAP[col.key];
-                    const isActiveSortCol = col.key === activeSortKey;
-                    return (
-                      <th key={col.key}
-                        onClick={() => isSortable && handleSort(col.key)}
-                        style={{
-                          padding: "12px 14px", fontSize: 10.5, fontWeight: 700,
-                          color: "#8c919a", textAlign: "left", textTransform: "uppercase",
-                          letterSpacing: "0.6px", whiteSpace: "nowrap",
-                          borderBottom: "1px solid #f0f1f3",
-                          width: col.width,
-                          cursor: isSortable ? "pointer" : "default",
-                          userSelect: "none",
-                        }}>
-                        {col.key === "checkbox" ? (
-                          <input type="checkbox" onChange={toggleAll}
-                            checked={charts.length > 0 && selectedRows.size === charts.length}
-                            style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#f5a623" }} />
-                        ) : (
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                            {col.label}
-                            {isSortable && (
-                              <svg width="8" height="10" viewBox="0 0 8 10" fill="none">
-                                <path d="M4 0L7 4H1L4 0Z" fill={isActiveSortCol && sortDir === "ASC" ? "#f5a623" : "#ccc"} />
-                                <path d="M4 10L1 6H7L4 10Z" fill={isActiveSortCol && sortDir === "DESC" ? "#f5a623" : "#ccc"} />
-                              </svg>
-                            )}
-                          </span>
-                        )}
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                {charts.length === 0 ? (
-                  <tr>
-                    <td colSpan={displayedColumns.length} style={{
-                      padding: 60, textAlign: "center", color: "#b0b5be", fontSize: 14,
-                    }}>
-                      No charts found for this priority level.
-                    </td>
                   </tr>
-                ) : (
-                  charts.map((chart, idx) => (
-                    <tr key={chart.Id} style={{
-                      borderBottom: "1px solid #f4f5f7",
-                      background: selectedRows.has(chart.Id) ? "#fffbf0" : idx % 2 === 0 ? "#fff" : "#fdfdfe",
-                      transition: "background 0.1s",
-                    }}
-                      onMouseEnter={e => { if (!selectedRows.has(chart.Id)) e.currentTarget.style.background = "#fafbfc"; }}
-                      onMouseLeave={e => { if (!selectedRows.has(chart.Id)) e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#fdfdfe"; }}
-                    >
-                      {displayedColumns.map(col => (
-                        <td key={col.key} style={{
-                          padding: "16px 14px", fontSize: 13, color: "#3a3f48",
-                          whiteSpace: col.key === "Location" ? "normal" : "nowrap",
-                          verticalAlign: "middle",
-                        }}>
-                          {renderCell(chart, col)}
-                        </td>
-                      ))}
+                </thead>
+                <tbody>
+                  {charts.length === 0 ? (
+                    <tr>
+                      <td colSpan={displayedColumns.length} style={{
+                        padding: 60, textAlign: "center", color: "#b0b5be", fontSize: 14,
+                      }}>
+                        No charts found for this priority level.
+                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  ) : (
+                    charts.map((chart, idx) => (
+                      <tr key={chart.Id} style={{
+                        borderBottom: "1px solid #f4f5f7",
+                        background: selectedRows.has(chart.Id) ? "#fffbf0" : idx % 2 === 0 ? "#fff" : "#fdfdfe",
+                        transition: "background 0.1s",
+                      }}
+                        onMouseEnter={e => { if (!selectedRows.has(chart.Id)) e.currentTarget.style.background = "#fafbfc"; }}
+                        onMouseLeave={e => { if (!selectedRows.has(chart.Id)) e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#fdfdfe"; }}
+                      >
+                        {displayedColumns.map(col => (
+                          <td key={col.key} style={{
+                            padding: "16px 14px", fontSize: 13, color: "#3a3f48",
+                            whiteSpace: col.key === "Location" ? "normal" : "nowrap",
+                            verticalAlign: "middle",
+                          }}>
+                            {renderCell(chart, col)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-        {/* Pagination */}
-        {!loading && totalPages > 1 && (
-          <div style={{
-            display: "flex", justifyContent: "center", alignItems: "center",
-            padding: "16px 20px", gap: 6, borderTop: "1px solid #f0f1f3",
-          }}>
-            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-              style={{
-                width: 32, height: 32, borderRadius: 8, border: "1px solid #e0e2e6",
-                background: "#fff", cursor: currentPage === 1 ? "default" : "pointer",
-                opacity: currentPage === 1 ? 0.4 : 1, display: "flex", alignItems: "center",
-                justifyContent: "center", color: "#6b7280",
-              }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
-            </button>
+          {/* Pagination */}
+          {!loading && totalPages > 1 && (
+            <div style={{
+              display: "flex", justifyContent: "center", alignItems: "center",
+              padding: "16px 20px", gap: 6, borderTop: "1px solid #f0f1f3",
+            }}>
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                style={{
+                  width: 32, height: 32, borderRadius: 8, border: "1px solid #e0e2e6",
+                  background: "#fff", cursor: currentPage === 1 ? "default" : "pointer",
+                  opacity: currentPage === 1 ? 0.4 : 1, display: "flex", alignItems: "center",
+                  justifyContent: "center", color: "#6b7280",
+                }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
 
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button key={i + 1} onClick={() => setCurrentPage(i + 1)} style={{
-                width: 32, height: 32, borderRadius: 8, fontSize: 13, fontWeight: 600,
-                border: currentPage === i + 1 ? "none" : "1px solid #e0e2e6",
-                background: currentPage === i + 1 ? "linear-gradient(135deg, #f5a623, #f7b731)" : "#fff",
-                color: currentPage === i + 1 ? "#fff" : "#6b7280",
-                cursor: "pointer", boxShadow: currentPage === i + 1 ? "0 2px 6px rgba(245,166,35,0.3)" : "none",
-              }}>{i + 1}</button>
-            ))}
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button key={i + 1} onClick={() => setCurrentPage(i + 1)} style={{
+                  width: 32, height: 32, borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  border: currentPage === i + 1 ? "none" : "1px solid #e0e2e6",
+                  background: currentPage === i + 1 ? "linear-gradient(135deg, #f5a623, #f7b731)" : "#fff",
+                  color: currentPage === i + 1 ? "#fff" : "#6b7280",
+                  cursor: "pointer", boxShadow: currentPage === i + 1 ? "0 2px 6px rgba(245,166,35,0.3)" : "none",
+                }}>{i + 1}</button>
+              ))}
 
-            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-              style={{
-                width: 32, height: 32, borderRadius: 8, border: "1px solid #e0e2e6",
-                background: "#fff", cursor: currentPage === totalPages ? "default" : "pointer",
-                opacity: currentPage === totalPages ? 0.4 : 1, display: "flex", alignItems: "center",
-                justifyContent: "center", color: "#6b7280",
-              }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-            </button>
-          </div>
-        )}
+              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                style={{
+                  width: 32, height: 32, borderRadius: 8, border: "1px solid #e0e2e6",
+                  background: "#fff", cursor: currentPage === totalPages ? "default" : "pointer",
+                  opacity: currentPage === totalPages ? 0.4 : 1, display: "flex", alignItems: "center",
+                  justifyContent: "center", color: "#6b7280",
+                }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </DashboardLayout>
   );
 }
