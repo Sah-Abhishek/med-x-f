@@ -32,7 +32,7 @@ const LoginForm = () => {
     <div className="fade-in">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white tracking-tight mb-1.5">
-          Welcome back
+          Welcome Back
         </h1>
         <p className="text-sm text-slate-400">
           Sign in to access your medical examination dashboard
