@@ -4,16 +4,18 @@ import { API_URL } from '../utils/constants';
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Important: Send cookies with requests
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Request interceptor
+// Request interceptor - attach Bearer token
 api.interceptors.request.use(
   (config) => {
-    // You can add additional headers or logic here
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -27,23 +29,18 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle common errors
     if (error.response) {
-      // Server responded with error status
-      const { status, data } = error.response;
+      const { status } = error.response;
 
       if (status === 401) {
-        // Unauthorized - token expired or invalid
-        // Redirect to login if not already there
+        localStorage.removeItem('token');
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
       } else if (status === 403) {
-        // Forbidden - insufficient permissions
         window.location.href = '/unauthorized';
       }
     } else if (error.request) {
-      // Request was made but no response received
       console.error('Network error:', error.message);
     }
 
