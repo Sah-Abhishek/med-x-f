@@ -107,9 +107,9 @@ const LoginForm = () => {
           <div className="grid grid-cols-2 gap-2">
             {[
               { role: 'Admin', user: 'admin', pass: 'admin123' },
-              { role: 'Lead', user: 'teamlead1', pass: 'lead123' },
-              { role: 'Coder', user: 'coder1', pass: 'code123' },
-              { role: 'Auditor', user: 'auditor1', pass: 'audit123' },
+              { role: 'Lead', user: 'tl.medex@helionext.com', pass: 'lazy@123' },
+              { role: 'Coder', user: 'coder1.medex@helionext.com', pass: 'lazy@123' },
+              { role: 'Auditor', user: 'auditor1.medex@helionext.com', pass: 'lazy@123' },
             ].map((cred) => (
               <button
                 key={cred.role}
