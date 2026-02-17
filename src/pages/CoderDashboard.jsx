@@ -1,70 +1,27 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
+import api from "../services/api";
 
-const API_URL = "https://uat-app.valerionhealth.com/charts?priority=Critical&page=1&size=10&column=MilestoneId&direction=ASC&client=0&location=0";
+const CHARTS_BASE_URL = "https://uat-app.valerionhealth.com/charts";
 
-// Mock data matching the API response for demo
-const MOCK_DATA = {
-  success: true,
-  data: {
-    counts: { Critical: 4, High: 0, Medium: 103, Low: 0, done: 0 },
-    charts: [
-      {
-        Id: 11683, SNo: 1, DateOfService: "04/23/2024", ReceivedDate: "04/23/2024",
-        chart_no: "4353455", Worklist: "TestIp", Client: "CIOX",
-        Location: "Eastern Ohio Regional Hospital", Specialty: "Inpatient",
-        SubSpecialty: "First Sub Speciality", Status: "Complete",
-        Milestone: "Ready to Code", Process: "Coding", Priority: "Critical",
-        CoderFirstName: "Codingflow", CoderLastName: "Coder 2",
-        coder_image_url: "https://valerion-health-app.s3.us-east-2.amazonaws.com/user-images/PP-Codingflow-Coder%202-31-1697109710.JPG",
-        UserFirstName: "cODER", UserLastName: "coder1", UserImageUrl: null,
-        AuditorFirstName: null, AuditorLastName: null, auditor_image_url: null,
-        FollowUpCoderFirstName: null, FollowUpCoderLastName: null, follow_up_coder_image_url: null,
-        FollowUpAuditorFirstName: null, FollowUpAuditorLastName: null, follow_up_auditor_image_url: null,
-        qc_status: null, date_of_coder_allocation: null, date_of_auditor_allocation: null,
-      },
-      {
-        Id: 8615, SNo: 2, DateOfService: "07/03/2023", ReceivedDate: "07/04/2023",
-        chart_no: "4454", Worklist: "Test_Aging111", Client: "CIOX",
-        Location: "Taylor Regional Hospital", Specialty: "Ambulatory Surgery",
-        SubSpecialty: "First Sub Speciality", Status: "Complete",
-        Milestone: "Ready to Code", Process: "Coding", Priority: "Critical",
-        CoderFirstName: "Codingflow", CoderLastName: "Coder 2",
-        coder_image_url: "https://valerion-health-app.s3.us-east-2.amazonaws.com/user-images/PP-Codingflow-Coder%202-31-1697109710.JPG",
-        UserFirstName: "cODER", UserLastName: "coder1", UserImageUrl: null,
-        AuditorFirstName: null, AuditorLastName: null, auditor_image_url: null,
-        FollowUpCoderFirstName: null, FollowUpCoderLastName: null, follow_up_coder_image_url: null,
-        FollowUpAuditorFirstName: null, FollowUpAuditorLastName: null, follow_up_auditor_image_url: null,
-        qc_status: null, date_of_coder_allocation: null, date_of_auditor_allocation: null,
-      },
-      {
-        Id: 9295, SNo: 3, DateOfService: "03/04/2024", ReceivedDate: "03/04/2024",
-        chart_no: null, Worklist: "test-vol-12", Client: "CIOX",
-        Location: "Eastern Ohio Regional Hospital", Specialty: "Clinical",
-        SubSpecialty: null, Status: "Open", Milestone: "Ready to Code",
-        Process: "Coding", Priority: "Critical",
-        CoderFirstName: null, CoderLastName: null, coder_image_url: null,
-        UserFirstName: "cODER", UserLastName: "coder1", UserImageUrl: null,
-        AuditorFirstName: null, AuditorLastName: null, auditor_image_url: null,
-        FollowUpCoderFirstName: null, FollowUpCoderLastName: null, follow_up_coder_image_url: null,
-        FollowUpAuditorFirstName: null, FollowUpAuditorLastName: null, follow_up_auditor_image_url: null,
-        qc_status: null, date_of_coder_allocation: null, date_of_auditor_allocation: null,
-      },
-      {
-        Id: 9296, SNo: 4, DateOfService: "03/04/2024", ReceivedDate: "03/04/2024",
-        chart_no: null, Worklist: "test-vol-12", Client: "CIOX",
-        Location: "Eastern Ohio Regional Hospital", Specialty: "Clinical",
-        SubSpecialty: null, Status: "Open", Milestone: "Coding in Progress",
-        Process: "Coding", Priority: "Critical",
-        CoderFirstName: null, CoderLastName: null, coder_image_url: null,
-        UserFirstName: "cODER", UserLastName: "coder1", UserImageUrl: null,
-        AuditorFirstName: null, AuditorLastName: null, auditor_image_url: null,
-        FollowUpCoderFirstName: null, FollowUpCoderLastName: null, follow_up_coder_image_url: null,
-        FollowUpAuditorFirstName: null, FollowUpAuditorLastName: null, follow_up_auditor_image_url: null,
-        qc_status: null, date_of_coder_allocation: null, date_of_auditor_allocation: null,
-      },
-    ],
-  },
+// Map table column keys to API sort column names
+const SORT_COLUMN_MAP = {
+  SNo: "SNo",
+  Worklist: "Worklist",
+  Client: "Client",
+  Location: "Location",
+  Specialty: "Specialty",
+  chart_no: "chart_no",
+  DateOfService: "DateOfService",
+  ReceivedDate: "ReceivedDate",
+  Status: "Status",
+  Milestone: "MilestoneId",
+  Process: "Process",
+  Priority: "Priority",
+  SubSpecialty: "SubSpecialty",
+  qc_status: "qc_status",
+  date_of_coder_allocation: "date_of_coder_allocation",
+  date_of_auditor_allocation: "date_of_auditor_allocation",
 };
 
 const Avatar = ({ src, name, size = 36 }) => {
@@ -142,23 +99,81 @@ const COLUMNS = [
   { key: "date_of_auditor_allocation", label: "DATE OF AUDITOR ALLOCATION", width: 140 },
 ];
 
+const PRIORITY_TABS = ["Critical", "High", "Medium", "Low", "Done"];
+
 export default function MyToDoList() {
-  const [data, setData] = useState(null);
+  const [charts, setCharts] = useState([]);
+  const [counts, setCounts] = useState({ Critical: 0, High: 0, Medium: 0, Low: 0, done: 0 });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("Critical");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState(new Set());
-  const [sortCol, setSortCol] = useState(null);
-  const [sortDir, setSortDir] = useState("asc");
+  const [sortCol, setSortCol] = useState("MilestoneId");
+  const [sortDir, setSortDir] = useState("ASC");
 
-  // Column visibility state — all visible by default
+  // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState(
     () => new Set(COLUMNS.map(c => c.key))
   );
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const columnsDropdownRef = useRef(null);
+
+  const fetchCharts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(CHARTS_BASE_URL, {
+        params: {
+          priority: activeTab,
+          page: currentPage,
+          size: pageSize,
+          column: sortCol,
+          direction: sortDir,
+          client: 0,
+          location: 0,
+        },
+      });
+      const data = response.data;
+      if (data.success) {
+        setCharts(data.data.charts || []);
+        setCounts(data.data.counts || {});
+      }
+    } catch (e) {
+      console.error("Failed to fetch charts:", e.message);
+      setCharts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, currentPage, pageSize, sortCol, sortDir]);
+
+  // Re-fetch when any query param changes
+  useEffect(() => {
+    fetchCharts();
+  }, [fetchCharts]);
+
+  // Reset to page 1 when tab or pageSize changes
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    setSelectedRows(new Set());
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
+  const handleSort = (colKey) => {
+    const apiCol = SORT_COLUMN_MAP[colKey];
+    if (!apiCol) return;
+    if (sortCol === apiCol) {
+      setSortDir(prev => prev === "ASC" ? "DESC" : "ASC");
+    } else {
+      setSortCol(apiCol);
+      setSortDir("ASC");
+    }
+    setCurrentPage(1);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -176,25 +191,14 @@ export default function MyToDoList() {
   const toggleColumnVisibility = (key) => {
     setVisibleColumns(prev => {
       const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   };
 
-  const selectAllColumns = () => {
-    setVisibleColumns(new Set(COLUMNS.map(c => c.key)));
-  };
+  const selectAllColumns = () => setVisibleColumns(new Set(COLUMNS.map(c => c.key)));
+  const deselectAllColumns = () => setVisibleColumns(new Set(COLUMNS.filter(c => c.alwaysVisible).map(c => c.key)));
 
-  const deselectAllColumns = () => {
-    // Keep only alwaysVisible columns
-    setVisibleColumns(new Set(COLUMNS.filter(c => c.alwaysVisible).map(c => c.key)));
-  };
-
-  // Filtered columns based on visibility
   const displayedColumns = useMemo(
     () => COLUMNS.filter(col => col.alwaysVisible || visibleColumns.has(col.key)),
     [visibleColumns]
@@ -204,44 +208,14 @@ export default function MyToDoList() {
   const allToggleableVisible = toggleableColumns.every(c => visibleColumns.has(c.key));
   const noneToggleableVisible = toggleableColumns.every(c => !visibleColumns.has(c.key));
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(API_URL, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (json.success) {
-          setData(json.data);
-        } else {
-          throw new Error("API returned success: false");
-        }
-      } catch (e) {
-        console.warn("API fetch failed, using mock data:", e.message);
-        setData(MOCK_DATA.data);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  // Total count for the active tab (API uses lowercase "done")
+  const activeTabCount = activeTab === "Done" ? (counts.done ?? 0) : (counts[activeTab] ?? 0);
+  const totalPages = Math.max(1, Math.ceil(activeTabCount / pageSize));
 
-  const tabs = useMemo(() => {
-    if (!data) return [];
-    return [
-      { key: "Critical", count: data.counts.Critical },
-      { key: "High", count: data.counts.High },
-      { key: "Medium", count: data.counts.Medium },
-      { key: "Low", count: data.counts.Low },
-      { key: "Done", count: data.counts.done },
-    ];
-  }, [data]);
-
-  const charts = data?.charts || [];
-  const totalPages = Math.max(1, Math.ceil(charts.length / pageSize));
+  const tabs = PRIORITY_TABS.map(key => ({
+    key,
+    count: key === "Done" ? (counts.done ?? 0) : (counts[key] ?? 0),
+  }));
 
   const toggleRow = (id) => {
     setSelectedRows(prev => {
@@ -308,6 +282,9 @@ export default function MyToDoList() {
 
   const visibleCount = toggleableColumns.filter(c => visibleColumns.has(c.key)).length;
 
+  // Find which API column name maps to which table key for sort indicator
+  const activeSortKey = Object.entries(SORT_COLUMN_MAP).find(([, v]) => v === sortCol)?.[0];
+
   return (
     <DashboardLayout>
     <div style={{
@@ -333,7 +310,7 @@ export default function MyToDoList() {
           {/* Priority Tabs */}
           <div style={{ display: "flex", gap: 0 }}>
             {tabs.map(tab => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+              <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
                 padding: "14px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
                 background: "none", border: "none", position: "relative",
                 color: activeTab === tab.key ? "#1a1d23" : "#8c919a",
@@ -347,7 +324,7 @@ export default function MyToDoList() {
 
           {/* Right actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} style={{
+            <select value={pageSize} onChange={e => handlePageSizeChange(Number(e.target.value))} style={{
               padding: "7px 12px", borderRadius: 8, border: "1px solid #e0e2e6",
               fontSize: 13, color: "#4a4f58", cursor: "pointer", background: "#fff",
             }}>
@@ -446,7 +423,6 @@ export default function MyToDoList() {
                             borderRadius: 0,
                           }}
                         >
-                          {/* Custom checkbox */}
                           <div
                             onClick={(e) => {
                               e.preventDefault();
@@ -537,29 +513,39 @@ export default function MyToDoList() {
             }}>
               <thead>
                 <tr style={{ background: "#fafbfc" }}>
-                  {displayedColumns.map(col => (
-                    <th key={col.key} style={{
-                      padding: "12px 14px", fontSize: 10.5, fontWeight: 700,
-                      color: "#8c919a", textAlign: "left", textTransform: "uppercase",
-                      letterSpacing: "0.6px", whiteSpace: "nowrap",
-                      borderBottom: "1px solid #f0f1f3",
-                      width: col.width,
-                    }}>
-                      {col.key === "checkbox" ? (
-                        <input type="checkbox" onChange={toggleAll}
-                          checked={charts.length > 0 && selectedRows.size === charts.length}
-                          style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#f5a623" }} />
-                      ) : (
-                        <span style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 3 }}>
-                          {col.label}
-                          <svg width="8" height="10" viewBox="0 0 8 10" fill="none" style={{ opacity: 0.3 }}>
-                            <path d="M4 0L7 4H1L4 0Z" fill="#8c919a" />
-                            <path d="M4 10L1 6H7L4 10Z" fill="#8c919a" />
-                          </svg>
-                        </span>
-                      )}
-                    </th>
-                  ))}
+                  {displayedColumns.map(col => {
+                    const isSortable = !!SORT_COLUMN_MAP[col.key];
+                    const isActiveSortCol = col.key === activeSortKey;
+                    return (
+                      <th key={col.key}
+                        onClick={() => isSortable && handleSort(col.key)}
+                        style={{
+                          padding: "12px 14px", fontSize: 10.5, fontWeight: 700,
+                          color: "#8c919a", textAlign: "left", textTransform: "uppercase",
+                          letterSpacing: "0.6px", whiteSpace: "nowrap",
+                          borderBottom: "1px solid #f0f1f3",
+                          width: col.width,
+                          cursor: isSortable ? "pointer" : "default",
+                          userSelect: "none",
+                        }}>
+                        {col.key === "checkbox" ? (
+                          <input type="checkbox" onChange={toggleAll}
+                            checked={charts.length > 0 && selectedRows.size === charts.length}
+                            style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#f5a623" }} />
+                        ) : (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                            {col.label}
+                            {isSortable && (
+                              <svg width="8" height="10" viewBox="0 0 8 10" fill="none">
+                                <path d="M4 0L7 4H1L4 0Z" fill={isActiveSortCol && sortDir === "ASC" ? "#f5a623" : "#ccc"} />
+                                <path d="M4 10L1 6H7L4 10Z" fill={isActiveSortCol && sortDir === "DESC" ? "#f5a623" : "#ccc"} />
+                              </svg>
+                            )}
+                          </span>
+                        )}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -599,7 +585,7 @@ export default function MyToDoList() {
         )}
 
         {/* Pagination */}
-        {!loading && charts.length > 0 && (
+        {!loading && totalPages > 1 && (
           <div style={{
             display: "flex", justifyContent: "center", alignItems: "center",
             padding: "16px 20px", gap: 6, borderTop: "1px solid #f0f1f3",
@@ -633,20 +619,6 @@ export default function MyToDoList() {
               }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
             </button>
-          </div>
-        )}
-
-        {/* Horizontal scrollbar indicator */}
-        {!loading && (
-          <div style={{
-            height: 4, background: "#f0f1f3", margin: "0 20px 12px",
-            borderRadius: 2, overflow: "hidden",
-          }}>
-            <div style={{
-              height: "100%", width: "70%",
-              background: "linear-gradient(90deg, #f5a623, #f7c948)",
-              borderRadius: 2,
-            }} />
           </div>
         )}
       </div>
