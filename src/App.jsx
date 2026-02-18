@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import TeamLeadDashboard from './pages/TeamLeadDashboard';
 import CoderDashboard from './pages/CoderDashboard';
+import ProcessChart from './pages/ProcessChart';
 import AuditorDashboard from './pages/AuditorDashboard';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
@@ -61,6 +62,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.CODER]}>
               <CoderDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/process-chart/:id"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.CODER]}>
+              <ProcessChart />
             </ProtectedRoute>
           }
         />

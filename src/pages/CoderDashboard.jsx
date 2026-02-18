@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
 
@@ -104,6 +105,7 @@ const PRIORITY_TABS = ["Critical", "High", "Medium", "Low", "Done"];
 const USER_STATS_URL = "/charts/user-stats";
 
 export default function MyToDoList() {
+  const navigate = useNavigate();
   const [charts, setCharts] = useState([]);
   const [counts, setCounts] = useState({ Critical: 0, High: 0, Medium: 0, Low: 0, done: 0 });
   const [loading, setLoading] = useState(true);
@@ -262,10 +264,10 @@ export default function MyToDoList() {
             style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#f5a623" }} />
         );
       case "SNo":
-        return <span style={{ color: "#f5a623", fontWeight: 700 }}>{chart.SNo}</span>;
+        return <span onClick={() => navigate(`/process-chart/${chart.Id}`)} style={{ color: "#f5a623", fontWeight: 700, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>{chart.SNo}</span>;
       case "chart_no":
         return chart.chart_no
-          ? <span style={{ color: "#f5a623", fontWeight: 600, cursor: "pointer" }}>{chart.chart_no}</span>
+          ? <span onClick={() => navigate(`/process-chart/${chart.Id}`)} style={{ color: "#f5a623", fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>{chart.chart_no}</span>
           : <span style={{ color: "#ccc" }}>—</span>;
       case "OriginalCoder":
         return chart.CoderFirstName ? (
