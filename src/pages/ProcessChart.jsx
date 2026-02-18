@@ -1,7 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
+import {
+  FileText, File as FileIcon, FileImage, Layers,
+  ClipboardPaste, X, Plus, Trash2, Upload,
+} from "lucide-react";
 
 /* ── SVG Icon components ── */
 const IconBuilding = () => (
@@ -202,6 +206,157 @@ export default function ProcessChart() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerStartTime, setTimerStartTime] = useState(null);
   const [timerStopTime, setTimerStopTime] = useState(null);
+
+  // Upload section state
+  const [activeTab] = useState("coding"); // default tab context
+  const [dragActive, setDragActive] = useState({ document: false, image: false });
+  const [uploads, setUploads] = useState({
+    coding: { documents: [], imageGroups: [], texts: [] },
+  });
+  const [stagedImages, setStagedImages] = useState([]);
+  const [groupLabel, setGroupLabel] = useState("");
+  const [textInput, setTextInput] = useState("");
+
+  const currentUploads = uploads[activeTab] || { documents: [], imageGroups: [], texts: [] };
+  const currentTab = { icon: Upload, label: "Coding" };
+
+  const getTabColor = (tab, variant) => {
+    const colors = {
+      light: "bg-amber-50",
+      border: "border-amber-200",
+      text: "text-amber-700",
+    };
+    return colors[variant] || "";
+  };
+
+  const acceptedDocumentTypes = ".pdf,.doc,.docx";
+
+  const getFileTypeInfo = (type) => {
+    if (type === "application/pdf") return { label: "PDF", color: "text-red-600", bgColor: "bg-red-50" };
+    if (type?.includes("word") || type?.includes("doc")) return { label: "DOC", color: "text-blue-600", bgColor: "bg-blue-50" };
+    return { label: "FILE", color: "text-slate-600", bgColor: "bg-slate-50" };
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1048576).toFixed(1) + " MB";
+  };
+
+  const handleDrag = (e, zone, active) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive((prev) => ({ ...prev, [zone]: active }));
+  };
+
+  const processFiles = (files, type) => {
+    const fileArray = Array.from(files);
+    if (type === "documents") {
+      const newDocs = fileArray.map((f) => ({
+        id: Date.now() + Math.random(),
+        name: f.name,
+        size: formatFileSize(f.size),
+        type: f.type,
+        file: f,
+      }));
+      setUploads((prev) => ({
+        ...prev,
+        [activeTab]: {
+          ...prev[activeTab],
+          documents: [...prev[activeTab].documents, ...newDocs],
+        },
+      }));
+    } else if (type === "images") {
+      const newImages = fileArray.map((f) => ({
+        id: Date.now() + Math.random(),
+        name: f.name,
+        size: f.size,
+        file: f,
+        preview: URL.createObjectURL(f),
+      }));
+      setStagedImages((prev) => [...prev, ...newImages]);
+    }
+  };
+
+  const handleDrop = (e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive({ document: false, image: false });
+    if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files, type);
+  };
+
+  const handleFileInput = (e, type) => {
+    if (e.target.files?.length) processFiles(e.target.files, type);
+    e.target.value = "";
+  };
+
+  const removeItem = (type, itemId) => {
+    setUploads((prev) => ({
+      ...prev,
+      [activeTab]: {
+        ...prev[activeTab],
+        [type]: prev[activeTab][type].filter((item) => item.id !== itemId),
+      },
+    }));
+  };
+
+  const removeStagedImage = (imgId) => {
+    setStagedImages((prev) => {
+      const img = prev.find((i) => i.id === imgId);
+      if (img?.preview) URL.revokeObjectURL(img.preview);
+      return prev.filter((i) => i.id !== imgId);
+    });
+  };
+
+  const addImageGroup = () => {
+    if (stagedImages.length === 0) return;
+    const group = {
+      id: Date.now(),
+      label: groupLabel || `Group ${currentUploads.imageGroups.length + 1}`,
+      images: stagedImages,
+      totalSize: stagedImages.reduce((sum, img) => sum + img.size, 0),
+    };
+    setUploads((prev) => ({
+      ...prev,
+      [activeTab]: {
+        ...prev[activeTab],
+        imageGroups: [...prev[activeTab].imageGroups, group],
+      },
+    }));
+    setStagedImages([]);
+    setGroupLabel("");
+  };
+
+  const removeImageGroup = (groupId) => {
+    setUploads((prev) => {
+      const group = prev[activeTab].imageGroups.find((g) => g.id === groupId);
+      group?.images.forEach((img) => { if (img.preview) URL.revokeObjectURL(img.preview); });
+      return {
+        ...prev,
+        [activeTab]: {
+          ...prev[activeTab],
+          imageGroups: prev[activeTab].imageGroups.filter((g) => g.id !== groupId),
+        },
+      };
+    });
+  };
+
+  const addTextEntry = () => {
+    if (!textInput.trim()) return;
+    const entry = {
+      id: Date.now(),
+      text: textInput.trim(),
+      preview: textInput.trim().slice(0, 120) + (textInput.trim().length > 120 ? "..." : ""),
+    };
+    setUploads((prev) => ({
+      ...prev,
+      [activeTab]: {
+        ...prev[activeTab],
+        texts: [...prev[activeTab].texts, entry],
+      },
+    }));
+    setTextInput("");
+  };
 
   const fetchChart = useCallback(async () => {
     setLoading(true);
@@ -455,6 +610,258 @@ export default function ProcessChart() {
                   <div>
                     <div style={{ fontWeight: 600 }}>Time</div>
                     <div>{formatTimeShort(timerSeconds)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Upload Header Text */}
+            <div style={{ marginBottom: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1a1d23", margin: 0 }}>
+                Upload medical documents to generate AI insights
+              </h3>
+            </div>
+
+            {/* Upload Section */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden" style={{ marginBottom: 20 }}>
+              <div className={`px-6 py-4 ${getTabColor(activeTab, 'light')} border-b ${getTabColor(activeTab, 'border')}`}>
+                <div className="flex items-center gap-3">
+                  {React.createElement(currentTab.icon, { className: `w-5 h-5 ${getTabColor(activeTab, 'text')}` })}
+                  <div>
+                    <h2 className={`font-semibold ${getTabColor(activeTab, 'text')}`}>{currentTab.label} Upload</h2>
+                    <p className="text-sm text-slate-500">Add documents (PDF, Word), grouped images, or paste clinical text</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                  {/* Document Upload (PDF + Word) */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-50 to-blue-50 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-slate-600" />
+                        </div>
+                        <span className="font-medium text-slate-800 text-sm">Document Upload</span>
+                      </div>
+                      {currentUploads.documents.length > 0 && <span className="text-xs text-slate-500">{currentUploads.documents.length} file(s)</span>}
+                    </div>
+
+                    <div
+                      className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer hover:border-slate-400 hover:bg-slate-50/50 ${dragActive.document ? 'border-slate-400 bg-slate-50/50' : 'border-slate-200'}`}
+                      onDragEnter={(e) => handleDrag(e, 'document', true)}
+                      onDragLeave={(e) => handleDrag(e, 'document', false)}
+                      onDragOver={(e) => handleDrag(e, 'document', true)}
+                      onDrop={(e) => handleDrop(e, 'documents')}
+                    >
+                      <input
+                        type="file"
+                        accept={acceptedDocumentTypes}
+                        multiple
+                        onChange={(e) => handleFileInput(e, 'documents')}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <FileIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm text-slate-600 font-medium">Drop documents here</p>
+                      <p className="text-xs text-slate-400 mt-1">PDF or Word (.doc, .docx)</p>
+                    </div>
+
+                    {currentUploads.documents.length > 0 && (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {currentUploads.documents.map((file) => {
+                          const fileInfo = getFileTypeInfo(file.type);
+                          return (
+                            <div key={file.id} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg group">
+                              <div className={`w-6 h-6 rounded flex items-center justify-center ${fileInfo.bgColor}`}>
+                                <FileText className={`w-3.5 h-3.5 ${fileInfo.color}`} />
+                              </div>
+                              <span className="text-xs text-slate-700 truncate flex-1">{file.name}</span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${fileInfo.bgColor} ${fileInfo.color}`}>
+                                {fileInfo.label}
+                              </span>
+                              <span className="text-xs text-slate-400">{file.size}</span>
+                              <button onClick={() => removeItem('documents', file.id)} className="p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Image Upload with Grouping */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                          <Layers className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <span className="font-medium text-slate-800 text-sm">Image Groups</span>
+                      </div>
+                      {currentUploads.imageGroups.length > 0 && (
+                        <span className="text-xs text-slate-500">{currentUploads.imageGroups.length} group(s)</span>
+                      )}
+                    </div>
+
+                    {/* Staging Area */}
+                    <div className={`border-2 rounded-xl transition-all ${stagedImages.length > 0 ? 'border-blue-300 bg-blue-50/30' : 'border-dashed border-slate-200'}`}>
+                      {/* Drop Zone */}
+                      <div
+                        className={`relative p-4 text-center transition-all cursor-pointer hover:bg-blue-50/50 ${dragActive.image ? 'bg-blue-50/50' : ''}`}
+                        onDragEnter={(e) => handleDrag(e, 'image', true)}
+                        onDragLeave={(e) => handleDrag(e, 'image', false)}
+                        onDragOver={(e) => handleDrag(e, 'image', true)}
+                        onDrop={(e) => handleDrop(e, 'images')}
+                      >
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.tiff,.webp"
+                          multiple
+                          onChange={(e) => handleFileInput(e, 'images')}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <FileImage className="w-6 h-6 text-blue-300 mx-auto mb-1" />
+                        <p className="text-sm text-slate-600 font-medium">
+                          {stagedImages.length > 0 ? 'Add more images' : 'Drop images here'}
+                        </p>
+                        <p className="text-xs text-slate-400">Multi-page documents</p>
+                      </div>
+
+                      {/* Staged Images Preview */}
+                      {stagedImages.length > 0 && (
+                        <div className="border-t border-blue-200 p-3 space-y-3">
+                          <div className="flex items-center gap-2 text-xs text-blue-700 font-medium">
+                            <Layers className="w-3.5 h-3.5" />
+                            <span>Staging: {stagedImages.length} image(s)</span>
+                          </div>
+
+                          {/* Thumbnail Grid */}
+                          <div className="grid grid-cols-4 gap-2">
+                            {stagedImages.map((img) => (
+                              <div key={img.id} className="relative group">
+                                <img
+                                  src={img.preview}
+                                  alt={img.name}
+                                  className="w-full h-14 object-cover rounded-lg border border-blue-200"
+                                />
+                                <button
+                                  onClick={() => removeStagedImage(img.id)}
+                                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Group Label & Add Button */}
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Group label (optional)"
+                              value={groupLabel}
+                              onChange={(e) => setGroupLabel(e.target.value)}
+                              className="flex-1 px-3 py-1.5 text-xs border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            />
+                            <button
+                              onClick={addImageGroup}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              Add Group
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Added Image Groups */}
+                    {currentUploads.imageGroups.length > 0 && (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {currentUploads.imageGroups.map((group) => (
+                          <div key={group.id} className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 group">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <Layers className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm font-medium text-slate-800">{group.label}</span>
+                              </div>
+                              <button
+                                onClick={() => removeImageGroup(group.id)}
+                                className="p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {group.images.slice(0, 4).map((img) => (
+                                <img
+                                  key={img.id}
+                                  src={img.preview}
+                                  alt={img.name}
+                                  className="w-10 h-10 object-cover rounded-md border border-blue-200"
+                                />
+                              ))}
+                              {group.images.length > 4 && (
+                                <div className="w-10 h-10 rounded-md bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
+                                  +{group.images.length - 4}
+                                </div>
+                              )}
+                              <span className="ml-auto text-xs text-slate-500">
+                                {group.images.length} page(s) • {(group.totalSize / 1024).toFixed(0)} KB
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Text Paste */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                          <ClipboardPaste className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <span className="font-medium text-slate-800 text-sm">Clinical Text</span>
+                      </div>
+                      {currentUploads.texts.length > 0 && <span className="text-xs text-slate-500">{currentUploads.texts.length} entry(s)</span>}
+                    </div>
+
+                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-3 transition-all focus-within:border-emerald-400 focus-within:bg-emerald-50/20">
+                      <textarea
+                        value={textInput}
+                        onChange={(e) => setTextInput(e.target.value)}
+                        placeholder="Paste clinical text here..."
+                        className="w-full h-20 text-sm text-slate-700 placeholder-slate-400 bg-transparent resize-none outline-none"
+                      />
+                      <div className="flex justify-end pt-2 border-t border-slate-100">
+                        <button
+                          onClick={addTextEntry}
+                          disabled={!textInput.trim()}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Add Entry
+                        </button>
+                      </div>
+                    </div>
+
+                    {currentUploads.texts.length > 0 && (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {currentUploads.texts.map((entry) => (
+                          <div key={entry.id} className="flex items-start gap-2 p-2 bg-slate-50 rounded-lg group">
+                            <ClipboardPaste className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-xs text-slate-700 flex-1 line-clamp-2">{entry.preview}</span>
+                            <button onClick={() => removeItem('texts', entry.id)} className="p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
