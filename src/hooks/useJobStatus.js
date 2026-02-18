@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-
-const WS_URL = 'wss://ai.safentro.com/api/ws';
+import { MEDX_WS_URL } from '../utils/constants';
 
 export function useJobStatus(jobId) {
   const [status, setStatus] = useState(null);
@@ -14,7 +13,7 @@ export function useJobStatus(jobId) {
   const connect = useCallback(() => {
     if (!jobId) return;
 
-    const ws = new WebSocket(WS_URL);
+    const ws = new WebSocket(MEDX_WS_URL);
     wsRef.current = ws;
 
     ws.onopen = () => {

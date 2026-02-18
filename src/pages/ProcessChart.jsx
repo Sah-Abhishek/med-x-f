@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
+import { MEDX_API_URL } from "../utils/constants";
 import { useChartsStore } from "../store/chartsStore";
 import { useJobStatus } from "../hooks/useJobStatus";
 import axios from "axios";
@@ -370,7 +371,7 @@ export default function ProcessChart() {
   };
 
   // Document processing API
-  const DOCUMENT_PROCESS_URL = "https://ai.safentro.com/api/documents/process";
+  const DOCUMENT_PROCESS_URL = `${MEDX_API_URL}/documents/process`;
   const [uploadStatus, setUploadStatus] = useState(null); // null | 'uploading' | 'success' | 'error'
   const [uploadResult, setUploadResult] = useState(null);
   const [uploadError, setUploadError] = useState(null);
@@ -421,6 +422,7 @@ export default function ProcessChart() {
         label: doc.name,
       }));
 
+      formData.append("sessionId", chart?.id?.toString() || "");
       formData.append("documentType", "ed-notes");
       formData.append("mrn", chart?.MR_No || "");
       formData.append("chartNumber", chart?.ChartNo || "");
