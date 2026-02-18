@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
 import { useChartsStore } from "../store/chartsStore";
+import axios from "axios";
 import {
   FileText, File as FileIcon, FileImage, Layers,
-  ClipboardPaste, X, Plus, Trash2, Upload,
+  ClipboardPaste, X, Plus, Trash2, Upload, Loader2, CheckCircle2, AlertCircle,
 } from "lucide-react";
 
 /* ── SVG Icon components ── */
@@ -364,6 +365,66 @@ export default function ProcessChart() {
       },
     }));
     setTextInput("");
+  };
+
+  // Document processing API
+  const DOCUMENT_PROCESS_URL = "https://ai.safentro.com/api/documents/process";
+  const [uploadStatus, setUploadStatus] = useState(null); // null | 'uploading' | 'success' | 'error'
+  const [uploadResult, setUploadResult] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+
+  const processDocuments = async () => {
+    const docs = currentUploads.documents;
+    if (docs.length === 0) return;
+
+    setUploadStatus("uploading");
+    setUploadResult(null);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+
+      // Append each file
+      docs.forEach((doc) => {
+        formData.append("files", doc.file);
+      });
+
+      // Build transactions array
+      const transactions = docs.map((doc, idx) => ({
+        type: doc.type === "application/pdf" ? "pdf" : "doc",
+        fileIndex: idx,
+        label: doc.name,
+      }));
+
+      formData.append("documentType", "ed-notes");
+      formData.append("mrn", chart?.MR_No || "");
+      formData.append("chartNumber", chart?.ChartNo || "");
+      formData.append("facility", chart?.Facility || "");
+      formData.append("specialty", chart?.Specialty || "");
+      formData.append("dateOfService", chart?.DateOfService || "");
+      formData.append("provider", "");
+      formData.append("transactions", JSON.stringify(transactions));
+
+      const token = localStorage.getItem("token");
+      const response = await axios.post(DOCUMENT_PROCESS_URL, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (response.data.success) {
+        setUploadStatus("success");
+        setUploadResult(response.data);
+      } else {
+        setUploadStatus("error");
+        setUploadError(response.data.message || "Upload failed");
+      }
+    } catch (e) {
+      console.error("Document upload failed:", e);
+      setUploadStatus("error");
+      setUploadError(e.response?.data?.message || e.message || "Upload failed");
+    }
   };
 
   const fetchChart = useCallback(async () => {
@@ -877,6 +938,41 @@ export default function ProcessChart() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Process Documents Button & Status */}
+                <div className="mt-5 flex items-center gap-4">
+                  <button
+                    onClick={processDocuments}
+                    disabled={currentUploads.documents.length === 0 || uploadStatus === "uploading"}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
+                  >
+                    {uploadStatus === "uploading" ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" />
+                        Process Documents
+                      </>
+                    )}
+                  </button>
+
+                  {uploadStatus === "success" && uploadResult && (
+                    <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{uploadResult.message} — Job: <span className="font-mono text-xs">{uploadResult.jobId?.slice(0, 8)}...</span></span>
+                    </div>
+                  )}
+
+                  {uploadStatus === "error" && (
+                    <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 px-4 py-2 rounded-xl border border-red-200">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{uploadError}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
