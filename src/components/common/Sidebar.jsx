@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useRole } from '../../hooks/useRole';
 import { PERMISSIONS } from '../../utils/rolePermissions';
 import { ROUTES } from '../../utils/constants';
+import { useChartsStore } from '../../store/chartsStore';
 
 const DashboardIcon = () => (
   <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
@@ -49,7 +49,8 @@ const ChevronIcon = ({ isCollapsed }) => (
 const Sidebar = () => {
   const location = useLocation();
   const { hasPermission } = useRole();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isCollapsed = useChartsStore((s) => s.sidebarCollapsed);
+  const toggleSidebar = useChartsStore((s) => s.toggleSidebar);
 
   const menuItems = [
     { name: 'Dashboard', path: ROUTES.DASHBOARD, icon: DashboardIcon, show: true },
@@ -83,7 +84,7 @@ const Sidebar = () => {
         {/* Toggle Button */}
         {/* Toggle Button */}
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={toggleSidebar}
           className={`absolute ${isCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-2'} top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-[var(--color-accent)] flex items-center justify-center transition-all duration-200 shadow-lg border border-white/10`}
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >

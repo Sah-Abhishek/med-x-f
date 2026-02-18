@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
+import { useChartsStore } from "../store/chartsStore";
 import {
   FileText, File as FileIcon, FileImage, Layers,
   ClipboardPaste, X, Plus, Trash2, Upload,
@@ -200,6 +201,13 @@ export default function ProcessChart() {
   const [chart, setChart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Chart navigation from Zustand store
+  const getPrevId = useChartsStore((s) => s.getPrevId);
+  const getNextId = useChartsStore((s) => s.getNextId);
+  const currentId = Number(id);
+  const prevId = getPrevId(currentId);
+  const nextId = getNextId(currentId);
 
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -461,24 +469,30 @@ export default function ProcessChart() {
 
         {/* Previous / Next Chart buttons */}
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-          <button onClick={() => navigate(-1)} style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "10px 20px", borderRadius: 10, border: "none",
-            background: "linear-gradient(135deg, #f5a623, #f7b731)",
-            color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
-          }}>
+          <button
+            onClick={() => prevId != null ? navigate(`/process-chart/${prevId}`) : navigate('/coder')}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "10px 20px", borderRadius: 10, border: "none",
+              background: "linear-gradient(135deg, #f5a623, #f7b731)",
+              color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
+            }}
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-            Previous Chart
+            {prevId != null ? "Previous Chart" : "Back to Dashboard"}
           </button>
-          <button style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "10px 20px", borderRadius: 10, border: "none",
-            background: "linear-gradient(135deg, #f5a623, #f7b731)",
-            color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
-          }}>
-            Next Chart
+          <button
+            onClick={() => nextId != null ? navigate(`/process-chart/${nextId}`) : navigate('/coder')}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "10px 20px", borderRadius: 10, border: "none",
+              background: "linear-gradient(135deg, #f5a623, #f7b731)",
+              color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
+            }}
+          >
+            {nextId != null ? "Next Chart" : "Back to Dashboard"}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
           </button>
         </div>

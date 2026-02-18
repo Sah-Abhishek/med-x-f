@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
+import { useChartsStore } from "../store/chartsStore";
 
 const CHARTS_BASE_URL = "/charts/";
 
@@ -110,19 +111,31 @@ export default function MyToDoList() {
   const [counts, setCounts] = useState({ Critical: 0, High: 0, Medium: 0, Low: 0, done: 0 });
   const [loading, setLoading] = useState(true);
   const [userStats, setUserStats] = useState(null);
-  const [activeTab, setActiveTab] = useState("Critical");
-  const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [sortCol, setSortCol] = useState("MilestoneId");
   const [sortDir, setSortDir] = useState("ASC");
 
-  // Column visibility state
+  // Zustand store for persisted preferences & chart navigation
+  const activeTab = useChartsStore((s) => s.activeTab);
+  const setActiveTab = useChartsStore((s) => s.setActiveTab);
+  const pageSize = useChartsStore((s) => s.pageSize);
+  const setPageSize = useChartsStore((s) => s.setPageSize);
+  const storedVisibleColumns = useChartsStore((s) => s.visibleColumns);
+  const setStoredVisibleColumns = useChartsStore((s) => s.setVisibleColumns);
+  const setChartIds = useChartsStore((s) => s.setChartIds);
+
+  // Column visibility state — derived from store
   const [visibleColumns, setVisibleColumns] = useState(
-    () => new Set(COLUMNS.map(c => c.key))
+    () => new Set(storedVisibleColumns)
   );
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const columnsDropdownRef = useRef(null);
+
+  // Sync visibleColumns to store whenever it changes
+  useEffect(() => {
+    setStoredVisibleColumns([...visibleColumns]);
+  }, [visibleColumns, setStoredVisibleColumns]);
 
   const fetchCharts = useCallback(async () => {
     setLoading(true);
@@ -140,8 +153,11 @@ export default function MyToDoList() {
       });
       const data = response.data;
       if (data.success) {
-        setCharts(data.data.charts || []);
+        const chartsData = data.data.charts || [];
+        setCharts(chartsData);
         setCounts(data.data.counts || {});
+        // Store chart IDs for prev/next navigation in ProcessChart
+        setChartIds(chartsData.map((c) => c.Id));
       }
     } catch (e) {
       console.error("Failed to fetch charts:", e.message);
