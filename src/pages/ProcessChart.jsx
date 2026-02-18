@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
-import { API_URL } from "../utils/constants";
-
-const CHART_API_BASE = API_URL.replace("/ai", "/charts");
 
 const Avatar = ({ src, name, size = 40 }) => {
   const [err, setErr] = useState(false);
@@ -136,7 +133,7 @@ export default function ProcessChart() {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get(`/${id}`, { baseURL: CHART_API_BASE });
+      const response = await api.get(`/charts/${id}`);
       if (response.data.success) {
         setChart(response.data.data);
       } else {
