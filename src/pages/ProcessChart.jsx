@@ -405,6 +405,7 @@ export default function ProcessChart() {
   const [customCodes, setCustomCodes] = useState([]); // user-added codes
   const [addingCode, setAddingCode] = useState(false); // whether the add-code form is open
   const [newCodeForm, setNewCodeForm] = useState({ code: '', description: '', type: 'icd', category: 'Secondary' });
+  const [submitPopupOpen, setSubmitPopupOpen] = useState(false); // review & submit popup
 
   // WebSocket job status tracking
   const jobId = uploadResult?.jobId || null;
@@ -2131,16 +2132,29 @@ export default function ProcessChart() {
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={() => { setReviewPopupOpen(false); setEditingCode(null); }}
-                  style={{
-                    width: 32, height: 32, borderRadius: 8, border: "none",
-                    background: "rgba(255,255,255,0.1)", color: "#94a3b8", cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}
-                >
-                  <X style={{ width: 16, height: 16 }} />
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    onClick={() => setSubmitPopupOpen(true)}
+                    style={{
+                      padding: "7px 16px", borderRadius: 8, border: "none",
+                      background: "linear-gradient(135deg, #10b981, #059669)",
+                      color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 6,
+                    }}
+                  >
+                    <CheckCircle2 style={{ width: 14, height: 14 }} /> Review & Submit
+                  </button>
+                  <button
+                    onClick={() => { setReviewPopupOpen(false); setEditingCode(null); }}
+                    style={{
+                      width: 32, height: 32, borderRadius: 8, border: "none",
+                      background: "rgba(255,255,255,0.1)", color: "#94a3b8", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                  >
+                    <X style={{ width: 16, height: 16 }} />
+                  </button>
+                </div>
               </div>
 
               {/* ── Body ── */}
@@ -2490,14 +2504,16 @@ export default function ProcessChart() {
                                 style={{
                                   display: "inline-flex", alignItems: "center", gap: 5,
                                   padding: "6px 12px", borderRadius: 8,
-                                  border: `1.5px solid ${style.border}`,
+                                  border: code._isCustom ? `2px dashed #d946ef` : `1.5px solid ${style.border}`,
                                   background: style.bg, color: style.color,
                                   fontSize: 12, fontWeight: 600, cursor: "pointer",
                                   transition: "all 0.15s",
                                   outline: selectedCode?._key === code._key ? `2px solid #f59e0b` : "none",
                                   outlineOffset: 1,
+                                  boxShadow: code._isCustom ? "0 0 0 1px rgba(217, 70, 239, 0.15)" : "none",
                                 }}
                               >
+                                {code._isCustom && <Plus style={{ width: 10, height: 10 }} />}
                                 {getStatusIcon(code)}
                                 {displayCode}
                               </button>
@@ -2610,7 +2626,15 @@ export default function ProcessChart() {
                             </div>
 
                             {/* Action Buttons */}
-                            {editingCode?._key !== selectedCode._key ? (
+                            {selectedCode._isCustom ? (
+                              <div style={{
+                                display: "flex", alignItems: "center", gap: 8, padding: "10px 12px",
+                                background: "#fdf4ff", borderRadius: 8, border: "1.5px dashed #d946ef",
+                              }}>
+                                <Plus style={{ width: 14, height: 14, color: "#a21caf" }} />
+                                <span style={{ fontSize: 12, fontWeight: 600, color: "#86198f" }}>Manually added code</span>
+                              </div>
+                            ) : editingCode?._key !== selectedCode._key ? (
                               <div style={{ display: "flex", gap: 8 }}>
                                 <button
                                   onClick={() => handleAccept(selectedCode)}
@@ -2751,6 +2775,174 @@ export default function ProcessChart() {
                     ) : null}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      {/* ── Review & Submit Popup ── */}
+      {submitPopupOpen && (() => {
+        const str = (val) => { if (val == null) return ''; if (typeof val === 'string') return val; return String(val); };
+        const getCode = (item) => str(item?.icd_10_code || item?.code || item?.cpt_code || item?._code || '');
+        const getDesc = (item) => str(item?.description || item?.finding || item?._desc || '');
+
+        // Build final codes list (accepted + edited + custom, exclude rejected)
+        const finalCodes = [];
+        const dc = aiData?.diagnosisCodes;
+
+        const addIfNotRejected = (item, category, key, type) => {
+          const decision = codeDecisions[key];
+          if (decision?.status === 'rejected') return;
+          finalCodes.push({
+            code: decision?.editedCode || getCode(item),
+            description: decision?.editedDesc || getDesc(item),
+            category,
+            type,
+            status: decision?.status || 'pending',
+            isCustom: false,
+          });
+        };
+
+        if (dc?.principal_diagnosis) addIfNotRejected(dc.principal_diagnosis, 'Principal', 'principal-0', 'icd');
+        dc?.primary_diagnosis?.forEach((dx, i) => addIfNotRejected(dx, 'Primary', `primary-${i}`, 'icd'));
+        dc?.secondary_diagnoses?.forEach((dx, i) => addIfNotRejected(dx, 'Secondary', `secondary-${i}`, 'icd'));
+        dc?.reason_for_admit?.forEach((dx, i) => addIfNotRejected(dx, 'Reason for Admit', `admit-${i}`, 'icd'));
+        dc?.ed_em_level?.forEach((em, i) => addIfNotRejected(em, 'E/M Level', `em-${i}`, 'icd'));
+        aiData?.procedures?.forEach((proc, i) => addIfNotRejected(proc, 'Procedure', `proc-${i}`, 'cpt'));
+
+        // Custom codes
+        customCodes.forEach((cc) => {
+          finalCodes.push({
+            code: cc._code,
+            description: cc._desc,
+            category: cc._category,
+            type: cc._type,
+            status: 'added',
+            isCustom: true,
+          });
+        });
+
+        const statusLabel = (s) => {
+          if (s === 'accepted') return { text: 'Accepted', bg: '#dcfce7', color: '#166534' };
+          if (s === 'edited') return { text: 'Edited', bg: '#dbeafe', color: '#1e40af' };
+          if (s === 'added') return { text: 'Added', bg: '#fdf4ff', color: '#86198f' };
+          return { text: 'Pending', bg: '#f8fafc', color: '#94a3b8' };
+        };
+
+        return (
+          <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => setSubmitPopupOpen(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-[600px] max-h-[80vh] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{
+                padding: "16px 24px", background: "#1a1d23", borderRadius: "16px 16px 0 0",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+              }}>
+                <div>
+                  <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 700, margin: 0 }}>Review & Submit</h3>
+                  <p style={{ color: "#94a3b8", fontSize: 11, margin: "4px 0 0" }}>
+                    {finalCodes.length} codes will be submitted
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSubmitPopupOpen(false)}
+                  style={{
+                    width: 32, height: 32, borderRadius: 8, border: "none",
+                    background: "rgba(255,255,255,0.1)", color: "#94a3b8", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  <X style={{ width: 16, height: 16 }} />
+                </button>
+              </div>
+
+              {/* Code List */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+                {finalCodes.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8" }}>
+                    <p style={{ fontSize: 13 }}>No codes to submit</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {finalCodes.map((fc, i) => {
+                      const sl = statusLabel(fc.status);
+                      return (
+                        <div key={i} style={{
+                          display: "flex", alignItems: "flex-start", gap: 12,
+                          padding: "12px 14px", borderRadius: 10,
+                          background: fc.isCustom ? "#fdf4ff" : "#f8fafc",
+                          border: fc.isCustom ? "1.5px dashed #d946ef" : "1px solid #e2e8f0",
+                        }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>{fc.code}</span>
+                              <span style={{
+                                fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4,
+                                background: fc.type === 'cpt' ? '#ecfdf5' : '#eff6ff',
+                                color: fc.type === 'cpt' ? '#047857' : '#1d4ed8',
+                                textTransform: "uppercase",
+                              }}>
+                                {fc.type === 'cpt' ? 'CPT' : 'ICD-10'}
+                              </span>
+                              <span style={{
+                                fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4,
+                                background: sl.bg, color: sl.color, textTransform: "uppercase",
+                              }}>
+                                {sl.text}
+                              </span>
+                            </div>
+                            <p style={{ fontSize: 12, color: "#475569", margin: 0, lineHeight: 1.5 }}>
+                              {fc.description || 'No description'}
+                            </p>
+                            <span style={{ fontSize: 10, color: "#94a3b8", marginTop: 4, display: "inline-block" }}>
+                              {fc.category}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div style={{
+                padding: "16px 24px", borderTop: "1px solid #e2e8f0",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <button
+                  onClick={() => setSubmitPopupOpen(false)}
+                  style={{
+                    padding: "9px 20px", borderRadius: 8,
+                    border: "1px solid #e2e8f0", background: "#fff", color: "#64748b",
+                    fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  Back to Review
+                </button>
+                <button
+                  onClick={() => {
+                    // Future: call backend API with finalCodes
+                    alert('Codes submitted successfully!');
+                    setSubmitPopupOpen(false);
+                    setReviewPopupOpen(false);
+                  }}
+                  disabled={finalCodes.length === 0}
+                  style={{
+                    padding: "9px 24px", borderRadius: 8, border: "none",
+                    background: finalCodes.length > 0 ? "linear-gradient(135deg, #10b981, #059669)" : "#e2e8f0",
+                    color: finalCodes.length > 0 ? "#fff" : "#94a3b8",
+                    fontSize: 13, fontWeight: 700, cursor: finalCodes.length > 0 ? "pointer" : "not-allowed",
+                    display: "flex", alignItems: "center", gap: 6,
+                  }}
+                >
+                  <CheckCircle2 style={{ width: 15, height: 15 }} /> Final Submit
+                </button>
               </div>
             </div>
           </div>
