@@ -1027,10 +1027,9 @@ export default function ProcessChart() {
                     )}
                   </div>
 
-                  {/* Job Status Tracker */}
+                  {/* Live Job Status Tracker (during active upload) */}
                   {uploadResult && jobId && (
                     <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 space-y-4">
-                      {/* Header */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-semibold text-slate-800">AI Processing Status</span>
@@ -1050,7 +1049,6 @@ export default function ProcessChart() {
                         </div>
                       </div>
 
-                      {/* Phase Progress Bar */}
                       <div className="flex items-center gap-1">
                         {PHASES.map((ph, idx) => {
                           const isActive = idx === currentPhaseIndex;
@@ -1079,7 +1077,6 @@ export default function ProcessChart() {
                         })}
                       </div>
 
-                      {/* Status Message */}
                       {jobMessage && (
                         <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg ${
                           jobStatus === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
@@ -1092,41 +1089,144 @@ export default function ProcessChart() {
                           <span>{jobMessage}</span>
                         </div>
                       )}
+                    </div>
+                  )}
 
-                      {/* Uploaded Documents List with View buttons */}
-                      {uploadResult.documents?.length > 0 && (
-                        <div className="space-y-2">
-                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Uploaded Documents</span>
-                          {uploadResult.documents.map((doc) => (
-                            <div key={doc.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200">
-                              <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
-                                <FileText className="w-4 h-4 text-red-500" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-800 truncate">{doc.filename}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">{doc.documentType}</span>
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                    doc.status === 'uploaded' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                                  }`}>
-                                    {doc.status}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 font-mono">{doc.transactionId}</span>
-                                </div>
-                              </div>
-                              {doc.s3Url && (
-                                <button
-                                  onClick={() => setDocViewerUrl(doc.s3Url)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 border border-blue-200 transition-colors flex-shrink-0"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                  View Document
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                  {/* AI Status & Uploaded Documents (from saved session data) */}
+                  {aiData && (
+                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                      {/* AI Status Header */}
+                      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                            aiData.aiStatus === 'ready' ? 'bg-emerald-50' :
+                            aiData.aiStatus === 'failed' ? 'bg-red-50' :
+                            aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50' :
+                            'bg-slate-50'
+                          }`}>
+                            {aiData.aiStatus === 'ready' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> :
+                             aiData.aiStatus === 'failed' ? <AlertCircle className="w-5 h-5 text-red-500" /> :
+                             aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? <Loader2 className="w-5 h-5 text-amber-500 animate-spin" /> :
+                             <Clock className="w-5 h-5 text-slate-400" />}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-slate-800">AI Processing</h4>
+                            <p className="text-xs text-slate-500">
+                              {aiData.aiStatus === 'ready' ? 'Completed — AI results available' :
+                               aiData.aiStatus === 'failed' ? 'Failed — processing encountered an error' :
+                               aiData.aiStatus === 'processing' ? 'Processing — AI is analyzing documents' :
+                               aiData.aiStatus === 'queued' ? 'Queued — waiting for processing' :
+                               aiData.aiStatus === 'submitted' ? 'Submitted — codes sent to NextCode' :
+                               `Status: ${aiData.aiStatus}`}
+                            </p>
+                          </div>
+                        </div>
+                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                          aiData.aiStatus === 'ready' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          aiData.aiStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
+                          aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          aiData.aiStatus === 'submitted' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          'bg-slate-50 text-slate-600 border border-slate-200'
+                        }`}>
+                          {aiData.aiStatus?.toUpperCase()}
+                        </span>
+                      </div>
+
+                      {/* Error Message */}
+                      {aiData.aiStatus === 'failed' && aiData.lastError && (
+                        <div className="mx-5 mt-4 flex items-start gap-2 text-sm text-red-700 bg-red-50 px-4 py-3 rounded-lg border border-red-200">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium">Processing Error</p>
+                            <p className="text-xs mt-0.5 text-red-600">{aiData.lastError}</p>
+                            {aiData.retryCount > 0 && (
+                              <p className="text-xs mt-1 text-red-500">Retried {aiData.retryCount} time(s)</p>
+                            )}
+                          </div>
                         </div>
                       )}
+
+                      {/* Uploaded Documents List */}
+                      {aiData.documents?.length > 0 && (
+                        <div className="p-5 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                              Uploaded Documents
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              {aiData.documents.length} file{aiData.documents.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            {aiData.documents.map((doc) => {
+                              const isPdf = doc.mimeType === 'application/pdf';
+                              const isWord = doc.mimeType?.includes('word') || doc.mimeType?.includes('doc');
+                              const isImage = doc.mimeType?.startsWith('image/');
+                              const fileTypeLabel = isPdf ? 'PDF' : isWord ? 'DOC' : isImage ? 'IMG' : 'FILE';
+                              const fileTypeColor = isPdf ? 'text-red-600 bg-red-50' : isWord ? 'text-blue-600 bg-blue-50' : isImage ? 'text-purple-600 bg-purple-50' : 'text-slate-600 bg-slate-50';
+                              const iconColor = isPdf ? 'bg-red-50' : isWord ? 'bg-blue-50' : isImage ? 'bg-purple-50' : 'bg-slate-50';
+                              const iconTextColor = isPdf ? 'text-red-500' : isWord ? 'text-blue-500' : isImage ? 'text-purple-500' : 'text-slate-500';
+
+                              return (
+                                <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 group hover:border-slate-200 transition-colors">
+                                  <div className={`w-9 h-9 rounded-lg ${iconColor} flex items-center justify-center flex-shrink-0`}>
+                                    {isImage ? <FileImage className={`w-4 h-4 ${iconTextColor}`} /> : <FileText className={`w-4 h-4 ${iconTextColor}`} />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-slate-800 truncate">{doc.filename}</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${fileTypeColor}`}>
+                                        {fileTypeLabel}
+                                      </span>
+                                      <span className="text-[10px] text-slate-400">
+                                        {doc.fileSize < 1024 ? doc.fileSize + ' B' :
+                                         doc.fileSize < 1048576 ? (doc.fileSize / 1024).toFixed(1) + ' KB' :
+                                         (doc.fileSize / 1048576).toFixed(1) + ' MB'}
+                                      </span>
+                                      {doc.ocrStatus && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                          doc.ocrStatus === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                                          doc.ocrStatus === 'failed' ? 'bg-red-50 text-red-600' :
+                                          'bg-amber-50 text-amber-600'
+                                        }`}>
+                                          OCR: {doc.ocrStatus}
+                                        </span>
+                                      )}
+                                      {doc.transactionId && (
+                                        <span className="text-[10px] text-slate-400 font-mono">{doc.transactionId}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {doc.s3Url && (
+                                    <button
+                                      onClick={() => setDocViewerUrl(doc.s3Url)}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 border border-blue-200 transition-colors flex-shrink-0"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                      View
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* No documents yet */}
+                      {(!aiData.documents || aiData.documents.length === 0) && (
+                        <div className="p-5 text-center">
+                          <p className="text-sm text-slate-400">No documents uploaded yet</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Loading state for AI data */}
+                  {aiDataLoading && !aiData && (
+                    <div className="flex items-center gap-2 text-sm text-slate-500 py-3">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Loading session data...</span>
                     </div>
                   )}
                 </div>
