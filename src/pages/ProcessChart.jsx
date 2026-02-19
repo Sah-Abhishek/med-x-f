@@ -1937,19 +1937,35 @@ export default function ProcessChart() {
 
         // Collect all codes into a flat list with category labels
         const allCodes = [];
+        // Principal diagnosis (single object)
+        if (aiData?.diagnosisCodes?.principal_diagnosis) {
+          const dx = aiData.diagnosisCodes.principal_diagnosis;
+          allCodes.push({ ...dx, _category: 'Principal', _key: 'principal-0', _code: getCode(dx), _desc: getDesc(dx), _type: 'icd' });
+        }
         if (aiData?.diagnosisCodes?.primary_diagnosis) {
           aiData.diagnosisCodes.primary_diagnosis.forEach((dx, i) => {
-            allCodes.push({ ...dx, _category: 'Primary', _key: `primary-${i}`, _code: getCode(dx), _desc: getDesc(dx) });
+            allCodes.push({ ...dx, _category: 'Primary', _key: `primary-${i}`, _code: getCode(dx), _desc: getDesc(dx), _type: 'icd' });
           });
         }
         if (aiData?.diagnosisCodes?.secondary_diagnoses) {
           aiData.diagnosisCodes.secondary_diagnoses.forEach((dx, i) => {
-            allCodes.push({ ...dx, _category: 'Secondary', _key: `secondary-${i}`, _code: getCode(dx), _desc: getDesc(dx) });
+            allCodes.push({ ...dx, _category: 'Secondary', _key: `secondary-${i}`, _code: getCode(dx), _desc: getDesc(dx), _type: 'icd' });
+          });
+        }
+        if (aiData?.diagnosisCodes?.reason_for_admit) {
+          aiData.diagnosisCodes.reason_for_admit.forEach((dx, i) => {
+            allCodes.push({ ...dx, _category: 'Reason for Admit', _key: `admit-${i}`, _code: getCode(dx), _desc: getDesc(dx), _type: 'icd' });
           });
         }
         if (aiData?.diagnosisCodes?.ed_em_level) {
           aiData.diagnosisCodes.ed_em_level.forEach((em, i) => {
-            allCodes.push({ ...em, _category: 'E/M Level', _key: `em-${i}`, _code: getCode(em), _desc: getDesc(em) });
+            allCodes.push({ ...em, _category: 'E/M Level', _key: `em-${i}`, _code: getCode(em), _desc: getDesc(em), _type: 'icd' });
+          });
+        }
+        // Procedures (CPT codes)
+        if (aiData?.procedures) {
+          aiData.procedures.forEach((proc, i) => {
+            allCodes.push({ ...proc, _category: 'Procedure', _key: `proc-${i}`, _code: getCode(proc), _desc: str(proc.description || proc.procedure_name || ''), _type: 'cpt' });
           });
         }
 
@@ -2123,7 +2139,7 @@ export default function ProcessChart() {
                 <div style={{ width: "40%", display: "flex", flexDirection: "column", background: "#fff" }}>
                   {/* Header */}
                   <div style={{ padding: "14px 20px", borderBottom: "1px solid #e2e8f0" }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", margin: 0 }}>ICD Codes</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", margin: 0 }}>ICD & CPT Codes</h3>
                     <p style={{ fontSize: 11, color: "#94a3b8", margin: "4px 0 0" }}>
                       {allCodes.length} codes &middot; {Object.keys(codeDecisions).length} reviewed
                     </p>
@@ -2198,10 +2214,54 @@ export default function ProcessChart() {
                               <div style={{ fontSize: 13, color: "#475569", marginTop: 4, lineHeight: 1.5 }}>
                                 {codeDecisions[selectedCode._key]?.editedDesc || selectedCode._desc || 'No description'}
                               </div>
-                              {(selectedCode.finding || selectedCode.evidence) && (
-                                <div style={{ fontSize: 12, color: "#64748b", marginTop: 8, padding: "8px 10px", background: "#fff", borderRadius: 8, border: "1px solid #e2e8f0" }}>
-                                  <span style={{ fontWeight: 600, color: "#94a3b8", fontSize: 10, textTransform: "uppercase" }}>Evidence: </span>
-                                  {str(selectedCode.finding || selectedCode.evidence)}
+                              {/* Procedure name (for CPT codes) */}
+                              {selectedCode.procedure_name && (
+                                <div style={{ fontSize: 12, color: "#0d9488", marginTop: 4 }}>
+                                  {str(selectedCode.procedure_name)}
+                                </div>
+                              )}
+                              {/* Procedure findings */}
+                              {selectedCode.findings?.length > 0 && (
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                                  {selectedCode.findings.map((f, i) => (
+                                    <span key={i} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, background: "#f0fdfa", border: "1px solid #99f6e4", color: "#0f766e" }}>
+                                      {str(f)}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {/* Evidence */}
+                              {selectedCode.evidence && (
+                                <div style={{ marginTop: 8 }}>
+                                  {(Array.isArray(selectedCode.evidence) ? selectedCode.evidence : [selectedCode.evidence]).map((ev, i) => (
+                                    <div key={i} style={{ fontSize: 12, color: "#64748b", padding: "8px 10px", background: "#fff", borderRadius: 8, border: "1px solid #e2e8f0", marginBottom: 6 }}>
+                                      <span style={{ fontWeight: 600, color: "#94a3b8", fontSize: 10, textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                                        Evidence {Array.isArray(selectedCode.evidence) && selectedCode.evidence.length > 1 ? `#${i + 1}` : ''}
+                                        {ev.document_name ? ` — ${ev.document_name}` : ''}
+                                      </span>
+                                      <span style={{ fontStyle: "italic", lineHeight: 1.5 }}>"{str(ev.exact_text || ev)}"</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {/* AI Reasoning */}
+                              {selectedCode.ai_reasoning && (
+                                <div style={{ fontSize: 12, color: "#64748b", marginTop: 6, padding: "8px 10px", background: "#fffbeb", borderRadius: 8, border: "1px solid #fef3c7" }}>
+                                  <span style={{ fontWeight: 600, color: "#b45309", fontSize: 10, textTransform: "uppercase", display: "block", marginBottom: 4 }}>AI Reasoning</span>
+                                  {str(selectedCode.ai_reasoning)}
+                                </div>
+                              )}
+                              {/* Confidence */}
+                              {selectedCode.confidence && (
+                                <div style={{ marginTop: 8 }}>
+                                  <span style={{
+                                    display: "inline-block", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
+                                    background: selectedCode.confidence === 'high' ? '#dcfce7' : selectedCode.confidence === 'medium' ? '#fef3c7' : '#fef2f2',
+                                    color: selectedCode.confidence === 'high' ? '#166534' : selectedCode.confidence === 'medium' ? '#92400e' : '#991b1b',
+                                    textTransform: "uppercase", letterSpacing: 0.5,
+                                  }}>
+                                    {selectedCode.confidence} confidence
+                                  </span>
                                 </div>
                               )}
                             </div>
