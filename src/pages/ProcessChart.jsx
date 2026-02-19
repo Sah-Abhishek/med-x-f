@@ -1756,13 +1756,111 @@ export default function ProcessChart() {
                         {aiData.codingNotes && Object.keys(aiData.codingNotes).length > 0 && (
                           <div className="bg-white rounded-xl border border-slate-200 p-5">
                             <h4 className="text-sm font-semibold text-slate-800 mb-3">Coding Notes</h4>
-                            <div className="space-y-3">
-                              {Object.entries(aiData.codingNotes).map(([key, value]) => (
-                                <div key={key}>
-                                  <p className="text-xs font-semibold text-slate-500 capitalize mb-1">{key.replace(/_/g, ' ')}</p>
-                                  <p className="text-sm text-slate-700 leading-relaxed">{str(value)}</p>
+                            <div className="space-y-4">
+                              {/* Coding Tips */}
+                              {aiData.codingNotes.coding_tips?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-indigo-600 mb-2">Coding Tips</p>
+                                  <div className="space-y-2">
+                                    {aiData.codingNotes.coding_tips.map((item, i) => (
+                                      <div key={i} className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                                        <p className="text-sm text-slate-800 font-medium">{str(item.tip)}</p>
+                                        {item.related_code && (
+                                          <p className="text-xs text-slate-500 mt-1">
+                                            <span className="font-medium">Related Code:</span> <span className="font-mono bg-white px-1.5 py-0.5 rounded text-indigo-700">{str(item.related_code)}</span>
+                                          </p>
+                                        )}
+                                        {item.potential_impact && (
+                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Impact:</span> {str(item.potential_impact)}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                              ))}
+                              )}
+
+                              {/* Compliance Alerts */}
+                              {aiData.codingNotes.compliance_alerts?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-amber-600 mb-2">Compliance Alerts</p>
+                                  <div className="space-y-2">
+                                    {aiData.codingNotes.compliance_alerts.map((item, i) => (
+                                      <div key={i} className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+                                        <div className="flex items-start gap-2">
+                                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                            item.severity === 'high' ? 'bg-red-100 text-red-700' :
+                                            item.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                            'bg-slate-100 text-slate-600'
+                                          }`}>{str(item.severity)}</span>
+                                          <p className="text-sm text-slate-800 font-medium">{str(item.alert)}</p>
+                                        </div>
+                                        {item.regulation && (
+                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Regulation:</span> {str(item.regulation)}</p>
+                                        )}
+                                        {item.recommended_action && (
+                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Action:</span> {str(item.recommended_action)}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Documentation Gaps */}
+                              {aiData.codingNotes.documentation_gaps?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-rose-600 mb-2">Documentation Gaps</p>
+                                  <div className="space-y-2">
+                                    {aiData.codingNotes.documentation_gaps.map((item, i) => (
+                                      <div key={i} className="bg-rose-50 rounded-lg p-3 border border-rose-100">
+                                        <div className="flex items-start gap-2">
+                                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                                            item.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                            item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                            'bg-slate-100 text-slate-600'
+                                          }`}>{str(item.priority)}</span>
+                                          <p className="text-sm text-slate-800 font-medium">{str(item.gap)}</p>
+                                        </div>
+                                        {item.impact && (
+                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Impact:</span> {str(item.impact)}</p>
+                                        )}
+                                        {item.suggestion && (
+                                          <p className="text-xs text-emerald-700 mt-1 bg-emerald-50 px-2 py-1 rounded"><span className="font-medium">Suggestion:</span> {str(item.suggestion)}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Physician Queries Needed */}
+                              {aiData.codingNotes.physician_queries_needed?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-violet-600 mb-2">Physician Queries Needed</p>
+                                  <div className="space-y-2">
+                                    {aiData.codingNotes.physician_queries_needed.map((item, i) => (
+                                      <div key={i} className="bg-violet-50 rounded-lg p-3 border border-violet-100">
+                                        <div className="flex items-start gap-2">
+                                          {item.priority && (
+                                            <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                                              item.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                              item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                              'bg-slate-100 text-slate-600'
+                                            }`}>{str(item.priority)}</span>
+                                          )}
+                                          <p className="text-sm text-slate-800 font-medium">{str(item.query)}</p>
+                                        </div>
+                                        {item.reason && (
+                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Reason:</span> {str(item.reason)}</p>
+                                        )}
+                                        {item.impact_on_coding && (
+                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Coding Impact:</span> {str(item.impact_on_coding)}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
