@@ -93,6 +93,78 @@ const ToggleButton = ({ open, onClick, variant = "add" }) => {
   );
 };
 
+const StyledDropdown = ({ value, onChange, options, placeholder }) => {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef(null);
+  const selected = options.find(o => o.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: "100%", padding: "9px 32px 9px 12px", borderRadius: 10,
+          border: open ? "1.5px solid #c084fc" : "1.5px solid #e9d5ff",
+          background: "#fff", textAlign: "left", cursor: "pointer",
+          fontSize: 12, fontWeight: 600, color: selected ? "#1e293b" : "#94a3b8",
+          display: "flex", alignItems: "center", gap: 8,
+          transition: "border-color 0.15s",
+          position: "relative",
+        }}
+      >
+        {selected?.dot && <span style={{ width: 8, height: 8, borderRadius: "50%", background: selected.dot, flexShrink: 0 }} />}
+        {selected?.label || placeholder || "Select..."}
+        <ChevronDown style={{
+          width: 14, height: 14, color: "#a855f7", position: "absolute", right: 10, top: "50%",
+          transform: open ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)",
+          transition: "transform 0.2s",
+        }} />
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+          background: "#fff", borderRadius: 10, border: "1.5px solid #e9d5ff",
+          boxShadow: "0 8px 24px rgba(168, 85, 247, 0.12)", overflow: "hidden",
+          maxHeight: 200, overflowY: "auto",
+        }}>
+          {options.map((opt) => {
+            const isActive = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                style={{
+                  width: "100%", padding: "9px 12px", border: "none", textAlign: "left",
+                  cursor: "pointer", fontSize: 12, fontWeight: isActive ? 700 : 500,
+                  color: isActive ? "#7c3aed" : "#1e293b",
+                  background: isActive ? "#f5f3ff" : "transparent",
+                  display: "flex", alignItems: "center", gap: 8,
+                  transition: "background 0.1s",
+                }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#fdf4ff"; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+              >
+                {opt.dot && <span style={{ width: 8, height: 8, borderRadius: "50%", background: opt.dot, flexShrink: 0 }} />}
+                <span style={{ flex: 1 }}>{opt.label}</span>
+                {isActive && <Check style={{ width: 14, height: 14, color: "#7c3aed" }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CollapsibleSection = ({ title, subtitle, defaultOpen = false, children, headerAction }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -2399,51 +2471,29 @@ export default function ProcessChart() {
                         <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                           <div style={{ flex: 1 }}>
                             <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>Code Type</label>
-                            <div style={{ position: "relative" }}>
-                              <select
-                                value={newCodeForm.type}
-                                onChange={(e) => setNewCodeForm(prev => ({ ...prev, type: e.target.value }))}
-                                style={{
-                                  width: "100%", padding: "9px 32px 9px 12px", borderRadius: 10,
-                                  border: "1.5px solid #e9d5ff", background: "#fff",
-                                  fontSize: 12, fontWeight: 600, color: "#1e293b",
-                                  outline: "none", cursor: "pointer",
-                                  WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
-                                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23a855f7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                                  backgroundRepeat: "no-repeat",
-                                  backgroundPosition: "right 12px center",
-                                }}
-                              >
-                                <option value="icd">ICD-10</option>
-                                <option value="cpt">CPT</option>
-                              </select>
-                            </div>
+                            <StyledDropdown
+                              value={newCodeForm.type}
+                              onChange={(val) => setNewCodeForm(prev => ({ ...prev, type: val }))}
+                              options={[
+                                { value: 'icd', label: 'ICD-10', dot: '#3b82f6' },
+                                { value: 'cpt', label: 'CPT', dot: '#10b981' },
+                              ]}
+                            />
                           </div>
                           <div style={{ flex: 1 }}>
                             <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>Category</label>
-                            <div style={{ position: "relative" }}>
-                              <select
-                                value={newCodeForm.category}
-                                onChange={(e) => setNewCodeForm(prev => ({ ...prev, category: e.target.value }))}
-                                style={{
-                                  width: "100%", padding: "9px 32px 9px 12px", borderRadius: 10,
-                                  border: "1.5px solid #e9d5ff", background: "#fff",
-                                  fontSize: 12, fontWeight: 600, color: "#1e293b",
-                                  outline: "none", cursor: "pointer",
-                                  WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
-                                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23a855f7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-                                  backgroundRepeat: "no-repeat",
-                                  backgroundPosition: "right 12px center",
-                                }}
-                              >
-                                <option value="Principal">Principal</option>
-                                <option value="Primary">Primary</option>
-                                <option value="Secondary">Secondary</option>
-                                <option value="Reason for Admit">Reason for Admit</option>
-                                <option value="E/M Level">E/M Level</option>
-                                <option value="Procedure">Procedure</option>
-                              </select>
-                            </div>
+                            <StyledDropdown
+                              value={newCodeForm.category}
+                              onChange={(val) => setNewCodeForm(prev => ({ ...prev, category: val }))}
+                              options={[
+                                { value: 'Principal', label: 'Principal', dot: '#7c3aed' },
+                                { value: 'Primary', label: 'Primary', dot: '#d97706' },
+                                { value: 'Secondary', label: 'Secondary', dot: '#64748b' },
+                                { value: 'Reason for Admit', label: 'Reason for Admit', dot: '#0891b2' },
+                                { value: 'E/M Level', label: 'E/M Level', dot: '#2563eb' },
+                                { value: 'Procedure', label: 'Procedure', dot: '#059669' },
+                              ]}
+                            />
                           </div>
                         </div>
                         <div style={{ marginBottom: 12 }}>
