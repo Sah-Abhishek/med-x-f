@@ -10,6 +10,7 @@ import {
   FileText, File as FileIcon, FileImage, Layers,
   ClipboardPaste, X, Plus, Trash2, Upload, Loader2, CheckCircle2, AlertCircle,
   Eye, ExternalLink, Wifi, WifiOff, Clock, ChevronLeft, ChevronRight, List,
+  Minimize2, Maximize2, Sparkles, ChevronDown, ChevronUp,
 } from "lucide-react";
 
 /* ── SVG Icon components ── */
@@ -380,7 +381,10 @@ export default function ProcessChart() {
   const [uploadResult, setUploadResult] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [docViewerUrl, setDocViewerUrl] = useState(null); // for document popup
-  const [docSidebarOpen, setDocSidebarOpen] = useState(false); // sidebar in popup
+  const [docSidebarOpen, setDocSidebarOpen] = useState(true); // sidebar in popup
+  const [popupMinimized, setPopupMinimized] = useState(false); // popup collapsed to mini sidebar
+  const [popupSidebarView, setPopupSidebarView] = useState("documents"); // "documents" | "ai-summary"
+  const [uploadSectionOpen, setUploadSectionOpen] = useState(false); // upload section collapsed/expanded
 
   // WebSocket job status tracking
   const jobId = uploadResult?.jobId || null;
@@ -749,26 +753,38 @@ export default function ProcessChart() {
               </div>
             </div>
 
-            {/* Upload Header Text */}
-            <div style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1a1d23", margin: 0 }}>
-                Upload medical documents to generate AI insights
-              </h3>
-            </div>
-
-            {/* Upload Section */}
+            {/* Upload Header — collapsible when documents exist */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden" style={{ marginBottom: 20 }}>
-              <div className={`px-6 py-4 ${getTabColor(activeTab, 'light')} border-b ${getTabColor(activeTab, 'border')}`}>
-                <div className="flex items-center gap-3">
-                  {React.createElement(currentTab.icon, { className: `w-5 h-5 ${getTabColor(activeTab, 'text')}` })}
-                  <div>
-                    <h2 className={`font-semibold ${getTabColor(activeTab, 'text')}`}>{currentTab.label} Upload</h2>
-                    <p className="text-sm text-slate-500">Add documents (PDF, Word), grouped images, or paste clinical text</p>
+              <div
+                className={`px-6 py-4 ${getTabColor(activeTab, 'light')} border-b ${getTabColor(activeTab, 'border')} cursor-pointer select-none`}
+                onClick={() => setUploadSectionOpen(o => !o)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {React.createElement(currentTab.icon, { className: `w-5 h-5 ${getTabColor(activeTab, 'text')}` })}
+                    <div>
+                      <h2 className={`font-semibold ${getTabColor(activeTab, 'text')}`}>
+                        {aiData?.documents?.length > 0 ? 'Upload More Documents' : 'Upload Medical Documents'}
+                      </h2>
+                      <p className="text-sm text-slate-500">
+                        {aiData?.documents?.length > 0
+                          ? `${aiData.documents.length} document${aiData.documents.length !== 1 ? 's' : ''} uploaded — click to add more`
+                          : 'Add documents (PDF, Word), grouped images, or paste clinical text'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {aiData?.documents?.length > 0 && !uploadSectionOpen && (
+                      <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                        {aiData.documents.length} uploaded
+                      </span>
+                    )}
+                    {uploadSectionOpen ? <ChevronUp className="w-5 h-5 text-amber-500" /> : <ChevronDown className="w-5 h-5 text-amber-500" />}
                   </div>
                 </div>
               </div>
 
-              <div className="p-6">
+              {(uploadSectionOpen || (!aiData?.documents?.length)) && <div className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                   {/* Document Upload (PDF + Word) */}
                   <div className="space-y-3">
@@ -1211,7 +1227,7 @@ export default function ProcessChart() {
                     </div>
                   )}
                 </div>
-              </div>
+              </div>}
             </div>
 
             {/* Chart Info Section — Collapsible */}
@@ -1471,11 +1487,56 @@ export default function ProcessChart() {
         </div>
       </div>
 
-      {/* Document Viewer Popup with Sidebar */}
-      {docViewerUrl && (
+      {/* Document Viewer — Minimized sidebar OR Full popup */}
+      {docViewerUrl && popupMinimized && (
+        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white border border-slate-200 rounded-l-xl shadow-lg px-2 py-4">
+          <button
+            onClick={() => setPopupMinimized(false)}
+            className="w-10 h-10 rounded-lg bg-amber-50 hover:bg-amber-100 flex items-center justify-center text-amber-600 transition-colors"
+            title="Expand viewer"
+          >
+            <Maximize2 className="w-5 h-5" />
+          </button>
+          <div className="w-8 border-t border-slate-200" />
+          {aiData?.documents?.map((doc, idx) => {
+            const isActive = doc.s3Url === docViewerUrl;
+            const isPdf = doc.mimeType === 'application/pdf';
+            return (
+              <button
+                key={doc.id}
+                onClick={() => { setDocViewerUrl(doc.s3Url); setPopupMinimized(false); }}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
+                  isActive ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-transparent'
+                }`}
+                title={doc.filename}
+              >
+                {isPdf ? 'P' : 'D'}{idx + 1}
+              </button>
+            );
+          })}
+          <div className="w-8 border-t border-slate-200" />
+          <button
+            onClick={() => { setPopupSidebarView("ai-summary"); setPopupMinimized(false); }}
+            className="w-10 h-10 rounded-lg bg-purple-50 hover:bg-purple-100 flex items-center justify-center text-purple-600 transition-colors"
+            title="AI Summary"
+          >
+            <Sparkles className="w-5 h-5" />
+          </button>
+          <div className="w-8 border-t border-slate-200" />
+          <button
+            onClick={() => { setDocViewerUrl(null); setPopupMinimized(false); setDocSidebarOpen(true); }}
+            className="w-10 h-10 rounded-lg bg-slate-50 hover:bg-red-50 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {docViewerUrl && !popupMinimized && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(false); }}
+          onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(true); setPopupSidebarView("documents"); }}
         >
           <div
             className="bg-white rounded-2xl shadow-2xl w-[94vw] h-[92vh] max-w-7xl flex flex-col overflow-hidden"
@@ -1488,12 +1549,13 @@ export default function ProcessChart() {
                   <FileText className="w-4 h-4 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-800 text-sm">Document Viewer</h3>
+                  <h3 className="font-semibold text-slate-800 text-sm">
+                    {popupSidebarView === "ai-summary" && !docViewerUrl?.startsWith('http') ? 'AI Summary' : 'Document Viewer'}
+                  </h3>
                   <p className="text-xs text-slate-400 truncate max-w-md">{docViewerUrl.split('/').pop()}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* Toggle documents sidebar */}
                 <button
                   onClick={() => setDocSidebarOpen(o => !o)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
@@ -1503,7 +1565,7 @@ export default function ProcessChart() {
                   }`}
                 >
                   <List className="w-3.5 h-3.5" />
-                  Documents{aiData?.documents?.length ? ` (${aiData.documents.length})` : ''}
+                  Panel
                 </button>
                 <a
                   href={docViewerUrl}
@@ -1515,7 +1577,14 @@ export default function ProcessChart() {
                   New Tab
                 </a>
                 <button
-                  onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(false); }}
+                  onClick={() => setPopupMinimized(true)}
+                  className="w-8 h-8 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                  title="Minimize"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(true); setPopupSidebarView("documents"); }}
                   className="w-8 h-8 rounded-lg bg-white hover:bg-red-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
                 >
                   <X className="w-4 h-4" />
@@ -1523,75 +1592,240 @@ export default function ProcessChart() {
               </div>
             </div>
 
-            {/* Popup Body — iframe + sidebar */}
+            {/* Popup Body — sidebar + content */}
             <div className="flex-1 flex overflow-hidden">
-              {/* Document sidebar */}
+              {/* Sidebar */}
               <div
                 className={`bg-white border-r border-slate-200 flex-shrink-0 overflow-y-auto transition-all duration-300 ${
                   docSidebarOpen ? 'w-72' : 'w-0'
                 }`}
                 style={{ minWidth: docSidebarOpen ? 288 : 0 }}
               >
-                {docSidebarOpen && aiData?.documents?.length > 0 && (
-                  <div className="p-3 space-y-1.5">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2 mb-2">
-                      All Documents
-                    </p>
-                    {aiData.documents.map((doc) => {
-                      const isActive = doc.s3Url === docViewerUrl;
-                      const isPdf = doc.mimeType === 'application/pdf';
-                      const isWord = doc.mimeType?.includes('word') || doc.mimeType?.includes('doc');
-                      const isImage = doc.mimeType?.startsWith('image/');
-                      const iconColor = isPdf ? 'text-red-500' : isWord ? 'text-blue-500' : isImage ? 'text-purple-500' : 'text-slate-500';
+                {docSidebarOpen && (
+                  <div className="flex flex-col h-full">
+                    {/* Sidebar tabs */}
+                    <div className="flex border-b border-slate-200 flex-shrink-0">
+                      <button
+                        onClick={() => setPopupSidebarView("documents")}
+                        className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors ${
+                          popupSidebarView === "documents"
+                            ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50/50'
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5" />
+                          Docs {aiData?.documents?.length ? `(${aiData.documents.length})` : ''}
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => setPopupSidebarView("ai-summary")}
+                        className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors ${
+                          popupSidebarView === "ai-summary"
+                            ? 'text-purple-700 border-b-2 border-purple-500 bg-purple-50/50'
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          AI Summary
+                        </div>
+                      </button>
+                    </div>
 
-                      return (
-                        <button
-                          key={doc.id}
-                          onClick={() => doc.s3Url && setDocViewerUrl(doc.s3Url)}
-                          className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                            isActive
-                              ? 'bg-amber-50 border border-amber-200'
-                              : 'hover:bg-slate-50 border border-transparent'
-                          }`}
-                        >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            isActive ? 'bg-amber-100' : 'bg-slate-100'
-                          }`}>
-                            {isImage
-                              ? <FileImage className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />
-                              : <FileText className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-xs font-medium truncate ${isActive ? 'text-amber-800' : 'text-slate-700'}`}>
-                              {doc.filename}
-                            </p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[10px] text-slate-400">
-                                {doc.fileSize < 1024 ? doc.fileSize + ' B' :
-                                 doc.fileSize < 1048576 ? (doc.fileSize / 1024).toFixed(1) + ' KB' :
-                                 (doc.fileSize / 1048576).toFixed(1) + ' MB'}
-                              </span>
-                              {doc.ocrStatus === 'completed' && (
-                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    {/* Documents list */}
+                    {popupSidebarView === "documents" && (
+                      <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+                        {aiData?.documents?.length > 0 ? aiData.documents.map((doc) => {
+                          const isActive = doc.s3Url === docViewerUrl;
+                          const isPdf = doc.mimeType === 'application/pdf';
+                          const isWord = doc.mimeType?.includes('word') || doc.mimeType?.includes('doc');
+                          const isImage = doc.mimeType?.startsWith('image/');
+                          const iconColor = isPdf ? 'text-red-500' : isWord ? 'text-blue-500' : isImage ? 'text-purple-500' : 'text-slate-500';
+
+                          return (
+                            <button
+                              key={doc.id}
+                              onClick={() => doc.s3Url && setDocViewerUrl(doc.s3Url)}
+                              className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                isActive
+                                  ? 'bg-amber-50 border border-amber-200'
+                                  : 'hover:bg-slate-50 border border-transparent'
+                              }`}
+                            >
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                isActive ? 'bg-amber-100' : 'bg-slate-100'
+                              }`}>
+                                {isImage
+                                  ? <FileImage className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />
+                                  : <FileText className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-xs font-medium truncate ${isActive ? 'text-amber-800' : 'text-slate-700'}`}>
+                                  {doc.filename}
+                                </p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="text-[10px] text-slate-400">
+                                    {doc.fileSize < 1024 ? doc.fileSize + ' B' :
+                                     doc.fileSize < 1048576 ? (doc.fileSize / 1024).toFixed(1) + ' KB' :
+                                     (doc.fileSize / 1048576).toFixed(1) + ' MB'}
+                                  </span>
+                                  {doc.ocrStatus === 'completed' && (
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                  )}
+                                </div>
+                              </div>
+                              {isActive && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
                               )}
-                            </div>
+                            </button>
+                          );
+                        }) : (
+                          <div className="p-6 text-center">
+                            <p className="text-xs text-slate-400">No documents uploaded</p>
                           </div>
-                          {isActive && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                {docSidebarOpen && (!aiData?.documents || aiData.documents.length === 0) && (
-                  <div className="p-6 text-center">
-                    <p className="text-xs text-slate-400">No documents</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* AI Summary */}
+                    {popupSidebarView === "ai-summary" && (
+                      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {aiData?.aiStatus === 'ready' && aiData?.aiSummary ? (
+                          <>
+                            {/* Narrative Summary */}
+                            {(aiData.aiSummary.clinical_summary || aiData.aiSummary.narrative) && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Clinical Summary</h4>
+                                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                  {aiData.aiSummary.clinical_summary || aiData.aiSummary.narrative || ''}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Key Findings */}
+                            {aiData.aiSummary.key_findings?.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Key Findings</h4>
+                                <ul className="space-y-1.5">
+                                  {aiData.aiSummary.key_findings.map((finding, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                                      <span className="w-1 h-1 rounded-full bg-purple-400 mt-1.5 flex-shrink-0" />
+                                      {typeof finding === 'string' ? finding : finding.description || finding.finding || JSON.stringify(finding)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Diagnosis Codes */}
+                            {aiData.diagnosisCodes && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Diagnosis Codes</h4>
+                                {aiData.diagnosisCodes.primary_diagnosis?.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="text-[10px] font-semibold text-amber-600 mb-1">Primary</p>
+                                    {aiData.diagnosisCodes.primary_diagnosis.map((dx, i) => (
+                                      <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-amber-50 rounded-lg mb-1">
+                                        <span className="text-xs font-bold text-amber-800">{dx.code || dx}</span>
+                                        {dx.description && <span className="text-[10px] text-amber-700 truncate">{dx.description}</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {aiData.diagnosisCodes.secondary_diagnoses?.length > 0 && (
+                                  <div>
+                                    <p className="text-[10px] font-semibold text-slate-500 mb-1">Secondary</p>
+                                    {aiData.diagnosisCodes.secondary_diagnoses.map((dx, i) => (
+                                      <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded-lg mb-1">
+                                        <span className="text-xs font-semibold text-slate-700">{dx.code || dx}</span>
+                                        {dx.description && <span className="text-[10px] text-slate-500 truncate">{dx.description}</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {aiData.diagnosisCodes.ed_em_level?.length > 0 && (
+                                  <div className="mt-2">
+                                    <p className="text-[10px] font-semibold text-blue-600 mb-1">E/M Level</p>
+                                    {aiData.diagnosisCodes.ed_em_level.map((em, i) => (
+                                      <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-blue-50 rounded-lg mb-1">
+                                        <span className="text-xs font-bold text-blue-800">{em.code || em}</span>
+                                        {em.description && <span className="text-[10px] text-blue-700 truncate">{em.description}</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Procedures */}
+                            {aiData.procedures?.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Procedures</h4>
+                                {aiData.procedures.map((proc, i) => (
+                                  <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-emerald-50 rounded-lg mb-1">
+                                    <span className="text-xs font-bold text-emerald-800">{proc.code || proc}</span>
+                                    {proc.description && <span className="text-[10px] text-emerald-700 truncate">{proc.description}</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Medications */}
+                            {aiData.medications?.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Medications</h4>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {aiData.medications.map((med, i) => (
+                                    <span key={i} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full font-medium">
+                                      {typeof med === 'string' ? med : med.name || med.medication || JSON.stringify(med)}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Coding Notes */}
+                            {aiData.codingNotes && Object.keys(aiData.codingNotes).length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Coding Notes</h4>
+                                {Object.entries(aiData.codingNotes).map(([key, value]) => (
+                                  <div key={key} className="mb-2">
+                                    <p className="text-[10px] font-semibold text-slate-600 capitalize mb-0.5">{key.replace(/_/g, ' ')}</p>
+                                    <p className="text-xs text-slate-700 leading-relaxed">
+                                      {typeof value === 'string' ? value : JSON.stringify(value)}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : aiData?.aiStatus === 'processing' || aiData?.aiStatus === 'queued' ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-3" />
+                            <p className="text-sm font-medium text-slate-700">AI is processing...</p>
+                            <p className="text-xs text-slate-400 mt-1">Summary will appear here when ready</p>
+                          </div>
+                        ) : aiData?.aiStatus === 'failed' ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <AlertCircle className="w-8 h-8 text-red-400 mb-3" />
+                            <p className="text-sm font-medium text-red-700">Processing Failed</p>
+                            <p className="text-xs text-red-500 mt-1">{aiData.lastError || 'An error occurred'}</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <Sparkles className="w-8 h-8 text-slate-300 mb-3" />
+                            <p className="text-sm font-medium text-slate-500">No AI Summary</p>
+                            <p className="text-xs text-slate-400 mt-1">Upload and process documents to generate AI insights</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
 
-              {/* iframe viewer */}
+              {/* Main content area — iframe viewer */}
               <div className="flex-1 bg-slate-100">
                 <iframe
                   src={docViewerUrl}
