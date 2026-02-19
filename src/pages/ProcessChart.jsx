@@ -214,11 +214,20 @@ export default function ProcessChart() {
   const prevId = getPrevId(currentId);
   const nextId = getNextId(currentId);
 
-  // Timer state
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [timerStartTime, setTimerStartTime] = useState(null);
-  const [timerStopTime, setTimerStopTime] = useState(null);
+  // Timer state — persisted to localStorage per chart
+  const timerStorageKey = `timer_${id}`;
+  const [timerSeconds, setTimerSeconds] = useState(() => {
+    try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.seconds || 0; } catch { return 0; }
+  });
+  const [timerRunning, setTimerRunning] = useState(() => {
+    try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.running || false; } catch { return false; }
+  });
+  const [timerStartTime, setTimerStartTime] = useState(() => {
+    try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.startTime || null; } catch { return null; }
+  });
+  const [timerStopTime, setTimerStopTime] = useState(() => {
+    try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.stopTime || null; } catch { return null; }
+  });
 
   // Upload section state
   const [activeTab] = useState("coding"); // default tab context
@@ -528,6 +537,24 @@ export default function ProcessChart() {
     }
     return () => clearInterval(interval);
   }, [timerRunning]);
+
+  // Recover elapsed time if timer was running when page was refreshed
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(timerStorageKey));
+      if (saved?.running && saved?.runStartedAt) {
+        const elapsed = Math.floor((Date.now() - saved.runStartedAt) / 1000);
+        if (elapsed > 0) setTimerSeconds(saved.seconds + elapsed);
+      }
+    } catch { /* ignore */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist timer state to localStorage
+  useEffect(() => {
+    const data = { seconds: timerSeconds, running: timerRunning, startTime: timerStartTime, stopTime: timerStopTime };
+    if (timerRunning) data.runStartedAt = Date.now();
+    localStorage.setItem(timerStorageKey, JSON.stringify(data));
+  }, [timerSeconds, timerRunning, timerStartTime, timerStopTime, timerStorageKey]);
 
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60).toString().padStart(2, "0");
@@ -1481,7 +1508,7 @@ export default function ProcessChart() {
                   <IconBot /> AI ICD Prediction
                 </span>
               }
-              defaultOpen={false}
+              defaultOpen={true}
             >
               {(() => {
                 const str = (val) => { if (val == null) return ''; if (typeof val === 'string') return val; return String(val); };
@@ -1560,7 +1587,7 @@ export default function ProcessChart() {
               <div style={{ padding: "8px 0 4px", borderTop: "1px solid #f1f5f9", marginTop: 8 }}>
                 <button
                   disabled={!timerRunning}
-                  onClick={() => setReviewPopupOpen(true)}
+                  onClick={() => { setReviewPopupOpen(true); setSelectedCode(null); }}
                   style={{
                     width: "100%", padding: "10px 16px", borderRadius: 10,
                     border: "none", fontSize: 13, fontWeight: 600, cursor: timerRunning ? "pointer" : "not-allowed",
@@ -2021,6 +2048,27 @@ export default function ProcessChart() {
         };
 
         const isReviewAiView = reviewTab === "ai-summary";
+
+        // Auto-select first code when popup opens
+        if (!selectedCode && allCodes.length > 0) {
+          // Use setTimeout to avoid setState during render
+          setTimeout(() => setSelectedCode(allCodes[0]), 0);
+        }
+
+        // Navigate to next/previous code
+        const currentIdx = allCodes.findIndex(c => c._key === selectedCode?._key);
+        const goToNext = () => {
+          if (currentIdx < allCodes.length - 1) {
+            setSelectedCode(allCodes[currentIdx + 1]);
+            setEditingCode(null);
+          }
+        };
+        const goToPrev = () => {
+          if (currentIdx > 0) {
+            setSelectedCode(allCodes[currentIdx - 1]);
+            setEditingCode(null);
+          }
+        };
 
         return (
           <div
@@ -2497,6 +2545,42 @@ export default function ProcessChart() {
                                 </div>
                               </div>
                             )}
+
+                            {/* Prev / Next Navigation */}
+                            <div style={{
+                              display: "flex", justifyContent: "space-between", alignItems: "center",
+                              marginTop: 14, paddingTop: 12, borderTop: "1px solid #e2e8f0",
+                            }}>
+                              <button
+                                onClick={goToPrev}
+                                disabled={currentIdx <= 0}
+                                style={{
+                                  padding: "6px 14px", borderRadius: 8, border: "1px solid #e2e8f0",
+                                  background: currentIdx <= 0 ? "#f8fafc" : "#fff",
+                                  color: currentIdx <= 0 ? "#cbd5e1" : "#475569",
+                                  fontSize: 12, fontWeight: 600, cursor: currentIdx <= 0 ? "not-allowed" : "pointer",
+                                  display: "flex", alignItems: "center", gap: 5,
+                                }}
+                              >
+                                <ChevronLeft style={{ width: 14, height: 14 }} /> Previous
+                              </button>
+                              <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                                {currentIdx + 1} / {allCodes.length}
+                              </span>
+                              <button
+                                onClick={goToNext}
+                                disabled={currentIdx >= allCodes.length - 1}
+                                style={{
+                                  padding: "6px 14px", borderRadius: 8, border: "1px solid #e2e8f0",
+                                  background: currentIdx >= allCodes.length - 1 ? "#f8fafc" : "#fff",
+                                  color: currentIdx >= allCodes.length - 1 ? "#cbd5e1" : "#475569",
+                                  fontSize: 12, fontWeight: 600, cursor: currentIdx >= allCodes.length - 1 ? "not-allowed" : "pointer",
+                                  display: "flex", alignItems: "center", gap: 5,
+                                }}
+                              >
+                                Next <ChevronRight style={{ width: 14, height: 14 }} />
+                              </button>
+                            </div>
                           </div>
                         )}
                       </>
