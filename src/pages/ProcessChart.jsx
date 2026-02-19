@@ -278,6 +278,7 @@ export default function ProcessChart() {
   const [chart, setChart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [config, setConfig] = useState(null);
 
   // Chart navigation from Zustand store
   const getPrevId = useChartsStore((s) => s.getPrevId);
@@ -593,10 +594,24 @@ export default function ProcessChart() {
     }
   }, [id]);
 
+  const fetchConfiguration = useCallback(async (clientId = 0, locationId = 1) => {
+    try {
+      const response = await api.get(
+        `https://uat-app.valerionhealth.com/users/getcongfiguration/${clientId}/${locationId}`
+      );
+      if (response.data.success) {
+        setConfig(response.data.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch configuration:", e.message);
+    }
+  }, []);
+
   useEffect(() => {
     fetchChart();
     fetchAiData();
-  }, [fetchChart, fetchAiData]);
+    fetchConfiguration();
+  }, [fetchChart, fetchAiData, fetchConfiguration]);
 
   // Refetch AI data when job completes
   useEffect(() => {
@@ -1356,7 +1371,7 @@ export default function ProcessChart() {
               </div>
               {/* Row 3 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Disposition" value={chart.Disposition} required type="select" />
+                <FormField label="Disposition" value={chart.Disposition} required type="select" options={config?.dispositions?.map(d => d.disposition_name) || []} />
                 <div>
                   <FormField label="Primary diagnosis" value={chart.PrimaryDiagnosis} required />
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
@@ -1371,8 +1386,8 @@ export default function ProcessChart() {
               </div>
               {/* Row 4 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Primary Health Plan" value={chart.PrimaryHealth} type="select" />
-                <FormField label="Facility" value={chart.Facility} type="select" />
+                <FormField label="Primary Health Plan" value={chart.PrimaryHealth} type="select" options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />
+                <FormField label="Facility" value={chart.Facility} type="select" options={config?.facility?.map(f => f.FacilityName) || []} />
               </div>
               {/* Row 5 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -1383,7 +1398,7 @@ export default function ProcessChart() {
               {/* Row 6 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Procedure code" value={chart.procedure_code} required />
-                <FormField label="Sub Specialty" value={chart.SubSpecialty} required />
+                <FormField label="Sub Specialty" value={chart.SubSpecialty} required type="select" options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
               </div>
               {/* Row 7 */}
               <div style={{ marginBottom: 16 }}>
@@ -1396,11 +1411,11 @@ export default function ProcessChart() {
               {/* Row 1 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Chart status" value={chart.Status} required type="select" options={["Open", "Complete", "Incomplete"]} />
-                <FormField label="Responsible party" value="" required type="select" />
+                <FormField label="Responsible party" value="" required type="select" options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
               </div>
               {/* Row 2 */}
               <div style={{ marginBottom: 16 }}>
-                <FormField label="Hold reason" value="" type="select" placeholder="Select..." />
+                <FormField label="Hold reason" value="" type="select" placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
               </div>
               {/* Row 3 */}
               <div style={{ marginBottom: 16 }}>
@@ -1416,7 +1431,7 @@ export default function ProcessChart() {
               {/* Row 4 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Date of completion" value={chart.DateOfCompletion} />
-                <FormField label="Audit options" value="" required type="select" />
+                <FormField label="Audit options" value="" required type="select" options={config?.audit_options?.map(a => a.audit_opt) || []} />
                 <FormField label="Coder QC Status" value={chart.qc_status} required type="select" />
               </div>
               {/* Row 5 */}
