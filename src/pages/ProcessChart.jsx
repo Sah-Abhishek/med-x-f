@@ -370,6 +370,10 @@ export default function ProcessChart() {
     setTextInput("");
   };
 
+  // MedEx AI data for this session
+  const [aiData, setAiData] = useState(null);
+  const [aiDataLoading, setAiDataLoading] = useState(false);
+
   // Document processing API
   const DOCUMENT_PROCESS_URL = `${MEDX_API_URL}/documents/process`;
   const [uploadStatus, setUploadStatus] = useState(null); // null | 'uploading' | 'success' | 'error'
@@ -472,9 +476,36 @@ export default function ProcessChart() {
     }
   }, [id]);
 
+  const fetchAiData = useCallback(async () => {
+    setAiDataLoading(true);
+    try {
+      const response = await axios.get(`${MEDX_API_URL}/charts/session/${id}`, {
+        headers: {
+          ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+        },
+      });
+      if (response.data.success) {
+        setAiData(response.data.chart);
+      }
+    } catch (e) {
+      // No AI data for this session yet — that's fine
+      console.log("No AI data found for session:", id);
+    } finally {
+      setAiDataLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchChart();
-  }, [fetchChart]);
+    fetchAiData();
+  }, [fetchChart, fetchAiData]);
+
+  // Refetch AI data when job completes
+  useEffect(() => {
+    if (jobStatus === "completed") {
+      fetchAiData();
+    }
+  }, [jobStatus, fetchAiData]);
 
   // Timer logic
   useEffect(() => {

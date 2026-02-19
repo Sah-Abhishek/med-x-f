@@ -1,7 +1,7 @@
 // API Configuration
 export const API_URL = import.meta.env.VITE_NEXTCODE_API_URL || 'https://uat-app.valerionhealth.com/integrations/ai';
-export const MEDX_API_URL = import.meta.env.VITE_MEDX_API_URL || 'http://103.142.175.170:4500/api';
-export const MEDX_WS_URL = import.meta.env.VITE_MEDX_WS_URL || 'ws://103.142.175.170:4500/api/ws';
+export const MEDX_API_URL = import.meta.env.VITE_MEDX_API_URL || 'https://ai.safentro.com/api';
+export const MEDX_WS_URL = import.meta.env.VITE_MEDX_WS_URL || 'wss://ai.safentro.com/api/ws';
 
 // User Roles
 export const ROLES = {
