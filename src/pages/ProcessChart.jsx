@@ -1371,7 +1371,7 @@ export default function ProcessChart() {
               </div>
               {/* Row 3 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Disposition" value={chart.Disposition} required type="select" options={config?.dispositions?.map(d => d.disposition_name) || []} />
+                <FormField label="Disposition" value={chart.Disposition} required type="select" readOnly={false} options={config?.dispositions?.map(d => d.disposition_name) || []} />
                 <div>
                   <FormField label="Primary diagnosis" value={chart.PrimaryDiagnosis} required />
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
@@ -1386,8 +1386,8 @@ export default function ProcessChart() {
               </div>
               {/* Row 4 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Primary Health Plan" value={chart.PrimaryHealth} type="select" options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />
-                <FormField label="Facility" value={chart.Facility} type="select" options={config?.facility?.map(f => f.FacilityName) || []} />
+                <FormField label="Primary Health Plan" value={chart.PrimaryHealth} type="select" readOnly={false} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />
+                <FormField label="Facility" value={chart.Facility} type="select" readOnly={false} options={config?.facility?.map(f => f.FacilityName) || []} />
               </div>
               {/* Row 5 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -1398,7 +1398,7 @@ export default function ProcessChart() {
               {/* Row 6 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Procedure code" value={chart.procedure_code} required />
-                <FormField label="Sub Specialty" value={chart.SubSpecialty} required type="select" options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
+                <FormField label="Sub Specialty" value={chart.SubSpecialty} required type="select" readOnly={false} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
               </div>
               {/* Row 7 */}
               <div style={{ marginBottom: 16 }}>
@@ -1410,12 +1410,12 @@ export default function ProcessChart() {
             <CollapsibleCard title="Processing Info" subtitle="All fields related to processing this chart" defaultOpen={true}>
               {/* Row 1 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Chart status" value={chart.Status} required type="select" options={["Open", "Complete", "Incomplete"]} />
-                <FormField label="Responsible party" value="" required type="select" options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
+                <FormField label="Chart status" value={chart.Status} required type="select" readOnly={false} options={["Open", "Complete", "Incomplete"]} />
+                <FormField label="Responsible party" value="" required type="select" readOnly={false} options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
               </div>
               {/* Row 2 */}
               <div style={{ marginBottom: 16 }}>
-                <FormField label="Hold reason" value="" type="select" placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
+                <FormField label="Hold reason" value="" type="select" readOnly={false} placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
               </div>
               {/* Row 3 */}
               <div style={{ marginBottom: 16 }}>
@@ -1431,14 +1431,14 @@ export default function ProcessChart() {
               {/* Row 4 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Date of completion" value={chart.DateOfCompletion} />
-                <FormField label="Audit options" value="" required type="select" options={config?.audit_options?.map(a => a.audit_opt) || []} />
-                <FormField label="Coder QC Status" value={chart.qc_status} required type="select" />
+                <FormField label="Audit options" value="" required type="select" readOnly={false} options={config?.audit_options?.map(a => a.audit_opt) || []} />
+                <FormField label="Coder QC Status" value={chart.qc_status} required type="select" readOnly={false} />
               </div>
               {/* Row 5 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Allocate to auditor" value="" type="select" />
-                <FormField label="Allocate to Coder" value="" type="select" />
-                <FormField label="Priority" value={chart.Priority} type="select" options={["Critical", "High", "Medium", "Low"]} />
+                <FormField label="Allocate to auditor" value="" type="select" readOnly={false} />
+                <FormField label="Allocate to Coder" value="" type="select" readOnly={false} />
+                <FormField label="Priority" value={chart.Priority} type="select" readOnly={false} options={["Critical", "High", "Medium", "Low"]} />
               </div>
               {/* Row 6 */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
