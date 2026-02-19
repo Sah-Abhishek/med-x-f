@@ -10,7 +10,7 @@ import {
   FileText, File as FileIcon, FileImage, Layers,
   ClipboardPaste, X, Plus, Trash2, Upload, Loader2, CheckCircle2, AlertCircle,
   Eye, ExternalLink, Wifi, WifiOff, Clock, ChevronLeft, ChevronRight, List,
-  Minimize2, Maximize2, Sparkles, ChevronDown, ChevronUp,
+  Minimize2, Maximize2, Sparkles, ChevronDown, ChevronUp, Check, XCircle, Pencil, Save,
 } from "lucide-react";
 
 /* ── SVG Icon components ── */
@@ -385,6 +385,13 @@ export default function ProcessChart() {
   const [popupMinimized, setPopupMinimized] = useState(false); // popup collapsed to mini sidebar
   const [popupSidebarView, setPopupSidebarView] = useState("documents"); // "documents" | "ai-summary"
   const [uploadSectionOpen, setUploadSectionOpen] = useState(false); // upload section collapsed/expanded
+
+  // Review & Edit popup state
+  const [reviewPopupOpen, setReviewPopupOpen] = useState(false);
+  const [codeDecisions, setCodeDecisions] = useState({}); // { [code]: { status, editedCode?, editedDesc? } }
+  const [selectedCode, setSelectedCode] = useState(null);
+  const [editingCode, setEditingCode] = useState(null);
+  const [reviewTab, setReviewTab] = useState("document"); // "document" | "ai-summary"
 
   // WebSocket job status tracking
   const jobId = uploadResult?.jobId || null;
@@ -1482,6 +1489,30 @@ export default function ProcessChart() {
                   background: "#fff", color: "#1a1d23", fontSize: 13, fontWeight: 600, cursor: "pointer",
                 }}>Regenerate</button>
               </div>
+              {/* Review and Edit Button */}
+              <div style={{ padding: "8px 0 4px", borderTop: "1px solid #f1f5f9", marginTop: 8 }}>
+                <button
+                  disabled={!timerRunning}
+                  onClick={() => setReviewPopupOpen(true)}
+                  style={{
+                    width: "100%", padding: "10px 16px", borderRadius: 10,
+                    border: "none", fontSize: 13, fontWeight: 600, cursor: timerRunning ? "pointer" : "not-allowed",
+                    background: timerRunning ? "linear-gradient(135deg, #f59e0b, #d97706)" : "#e2e8f0",
+                    color: timerRunning ? "#fff" : "#94a3b8",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    transition: "all 0.2s",
+                    opacity: timerRunning ? 1 : 0.7,
+                  }}
+                >
+                  <Pencil style={{ width: 14, height: 14 }} />
+                  Review and Edit
+                </button>
+                {!timerRunning && (
+                  <p style={{ color: "#94a3b8", fontSize: 11, textAlign: "center", marginTop: 6 }}>
+                    Start the timer to review and edit
+                  </p>
+                )}
+              </div>
             </CollapsibleSection>
           </div>
         </div>
@@ -1890,6 +1921,400 @@ export default function ProcessChart() {
             </div>
           </div>
         </div>
+        );
+      })()}
+
+      {/* ── Review & Edit Popup Modal ── */}
+      {reviewPopupOpen && (() => {
+        const str = (val) => {
+          if (val == null) return '';
+          if (typeof val === 'string') return val;
+          if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+          return JSON.stringify(val);
+        };
+        const getCode = (item) => str(item?.icd_10_code || item?.code || item?.cpt_code || (typeof item === 'string' ? item : ''));
+        const getDesc = (item) => str(item?.description || item?.finding || '');
+
+        // Collect all codes into a flat list with category labels
+        const allCodes = [];
+        if (aiData?.diagnosisCodes?.primary_diagnosis) {
+          aiData.diagnosisCodes.primary_diagnosis.forEach((dx, i) => {
+            allCodes.push({ ...dx, _category: 'Primary', _key: `primary-${i}`, _code: getCode(dx), _desc: getDesc(dx) });
+          });
+        }
+        if (aiData?.diagnosisCodes?.secondary_diagnoses) {
+          aiData.diagnosisCodes.secondary_diagnoses.forEach((dx, i) => {
+            allCodes.push({ ...dx, _category: 'Secondary', _key: `secondary-${i}`, _code: getCode(dx), _desc: getDesc(dx) });
+          });
+        }
+        if (aiData?.diagnosisCodes?.ed_em_level) {
+          aiData.diagnosisCodes.ed_em_level.forEach((em, i) => {
+            allCodes.push({ ...em, _category: 'E/M Level', _key: `em-${i}`, _code: getCode(em), _desc: getDesc(em) });
+          });
+        }
+
+        const getBadgeStyle = (code) => {
+          const decision = codeDecisions[code._key];
+          const isSelected = selectedCode?._key === code._key;
+          if (decision?.status === 'accepted') return { bg: '#dcfce7', border: '#86efac', color: '#166534' };
+          if (decision?.status === 'rejected') return { bg: '#fef2f2', border: '#fca5a5', color: '#991b1b' };
+          if (decision?.status === 'edited') return { bg: '#dbeafe', border: '#93c5fd', color: '#1e40af' };
+          if (isSelected) return { bg: '#fef3c7', border: '#fbbf24', color: '#92400e' };
+          return { bg: '#f8fafc', border: '#e2e8f0', color: '#475569' };
+        };
+
+        const getStatusIcon = (code) => {
+          const decision = codeDecisions[code._key];
+          if (decision?.status === 'accepted') return <Check style={{ width: 10, height: 10 }} />;
+          if (decision?.status === 'rejected') return <X style={{ width: 10, height: 10 }} />;
+          if (decision?.status === 'edited') return <Pencil style={{ width: 10, height: 10 }} />;
+          return null;
+        };
+
+        const handleAccept = (code) => {
+          setCodeDecisions(prev => ({ ...prev, [code._key]: { status: 'accepted' } }));
+          setEditingCode(null);
+        };
+        const handleReject = (code) => {
+          setCodeDecisions(prev => ({ ...prev, [code._key]: { status: 'rejected' } }));
+          setEditingCode(null);
+        };
+        const handleStartEdit = (code) => {
+          const decision = codeDecisions[code._key];
+          setEditingCode({
+            _key: code._key,
+            editedCode: decision?.editedCode || code._code,
+            editedDesc: decision?.editedDesc || code._desc,
+          });
+        };
+        const handleSaveEdit = () => {
+          if (!editingCode) return;
+          setCodeDecisions(prev => ({
+            ...prev,
+            [editingCode._key]: {
+              status: 'edited',
+              editedCode: editingCode.editedCode,
+              editedDesc: editingCode.editedDesc,
+            },
+          }));
+          setEditingCode(null);
+        };
+
+        const isReviewAiView = reviewTab === "ai-summary";
+        const reviewDocUrl = aiData?.documents?.[0]?.s3Url;
+
+        return (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => { setReviewPopupOpen(false); setEditingCode(null); }}
+          >
+            <div
+              className="bg-slate-50 rounded-2xl shadow-2xl w-[96vw] h-[94vh] max-w-[1600px] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* ── Header Bar ── */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "12px 20px", background: "#1a1d23", borderRadius: "16px 16px 0 0",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <span style={{ color: "#94a3b8", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
+                    Review & Edit
+                  </span>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    background: "rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 12px",
+                  }}>
+                    <Clock style={{ width: 14, height: 14, color: "#fbbf24" }} />
+                    <span style={{ color: "#fbbf24", fontSize: 14, fontWeight: 700, fontFamily: "monospace" }}>
+                      {formatTime(timerSeconds)}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setReviewPopupOpen(false); setEditingCode(null); }}
+                  style={{
+                    width: 32, height: 32, borderRadius: 8, border: "none",
+                    background: "rgba(255,255,255,0.1)", color: "#94a3b8", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  <X style={{ width: 16, height: 16 }} />
+                </button>
+              </div>
+
+              {/* ── Body ── */}
+              <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                {/* ── Left Panel (60%) ── */}
+                <div style={{ width: "60%", display: "flex", flexDirection: "column", borderRight: "1px solid #e2e8f0" }}>
+                  {/* Tab Switcher */}
+                  <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #e2e8f0", background: "#fff" }}>
+                    {[
+                      { key: "document", label: "Document", icon: <FileText style={{ width: 14, height: 14 }} /> },
+                      { key: "ai-summary", label: "AI Summary", icon: <Sparkles style={{ width: 14, height: 14 }} /> },
+                    ].map(tab => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setReviewTab(tab.key)}
+                        style={{
+                          flex: 1, padding: "10px 16px", border: "none", cursor: "pointer",
+                          background: reviewTab === tab.key ? "#fff" : "#f8fafc",
+                          borderBottom: reviewTab === tab.key ? "2px solid #f59e0b" : "2px solid transparent",
+                          color: reviewTab === tab.key ? "#1a1d23" : "#94a3b8",
+                          fontSize: 13, fontWeight: 600,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {tab.icon} {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Content Area */}
+                  <div style={{ flex: 1, overflow: "hidden", background: "#f8fafc" }}>
+                    {!isReviewAiView ? (
+                      reviewDocUrl ? (
+                        <iframe src={reviewDocUrl} title="Document Viewer" style={{ width: "100%", height: "100%", border: "none" }} />
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8" }}>
+                          <FileText style={{ width: 40, height: 40, marginBottom: 12, opacity: 0.4 }} />
+                          <p style={{ fontSize: 14, fontWeight: 500 }}>No document available</p>
+                        </div>
+                      )
+                    ) : (
+                      <div style={{ height: "100%", overflowY: "auto", padding: 24 }}>
+                        {aiData?.aiStatus === 'ready' && aiData?.aiSummary ? (
+                          <div style={{ maxWidth: 700, margin: "0 auto" }}>
+                            {(aiData.aiSummary.clinical_summary || aiData.aiSummary.narrative) && (
+                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20, marginBottom: 16 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                                  <Sparkles style={{ width: 14, height: 14, color: "#a855f7" }} /> Clinical Summary
+                                </h4>
+                                <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                                  {str(aiData.aiSummary.clinical_summary || aiData.aiSummary.narrative)}
+                                </p>
+                              </div>
+                            )}
+                            {aiData.aiSummary.key_findings?.length > 0 && (
+                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>Key Findings</h4>
+                                {aiData.aiSummary.key_findings.map((finding, i) => (
+                                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8, fontSize: 13, color: "#475569" }}>
+                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", marginTop: 6, flexShrink: 0 }} />
+                                    {str(typeof finding === 'string' ? finding : finding?.description || finding?.finding) || str(finding)}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8" }}>
+                            <Sparkles style={{ width: 40, height: 40, marginBottom: 12, opacity: 0.4 }} />
+                            <p style={{ fontSize: 14, fontWeight: 500 }}>No AI summary available</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Right Panel (40%) ── */}
+                <div style={{ width: "40%", display: "flex", flexDirection: "column", background: "#fff" }}>
+                  {/* Header */}
+                  <div style={{ padding: "14px 20px", borderBottom: "1px solid #e2e8f0" }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", margin: 0 }}>ICD Codes</h3>
+                    <p style={{ fontSize: 11, color: "#94a3b8", margin: "4px 0 0" }}>
+                      {allCodes.length} codes &middot; {Object.keys(codeDecisions).length} reviewed
+                    </p>
+                  </div>
+
+                  {/* Code Badges Grid */}
+                  <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
+                    {allCodes.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8" }}>
+                        <p style={{ fontSize: 13 }}>No ICD codes available</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+                          {allCodes.map((code) => {
+                            const style = getBadgeStyle(code);
+                            const decision = codeDecisions[code._key];
+                            const displayCode = decision?.editedCode || code._code;
+                            return (
+                              <button
+                                key={code._key}
+                                onClick={() => { setSelectedCode(code); setEditingCode(null); }}
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 5,
+                                  padding: "6px 12px", borderRadius: 8,
+                                  border: `1.5px solid ${style.border}`,
+                                  background: style.bg, color: style.color,
+                                  fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                  transition: "all 0.15s",
+                                  outline: selectedCode?._key === code._key ? `2px solid #f59e0b` : "none",
+                                  outlineOffset: 1,
+                                }}
+                              >
+                                {getStatusIcon(code)}
+                                {displayCode}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Legend */}
+                        <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+                          {[
+                            { label: "Accepted", bg: "#dcfce7", border: "#86efac" },
+                            { label: "Rejected", bg: "#fef2f2", border: "#fca5a5" },
+                            { label: "Edited", bg: "#dbeafe", border: "#93c5fd" },
+                            { label: "Pending", bg: "#f8fafc", border: "#e2e8f0" },
+                          ].map(item => (
+                            <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#94a3b8" }}>
+                              <span style={{ width: 10, height: 10, borderRadius: 3, background: item.bg, border: `1px solid ${item.border}` }} />
+                              {item.label}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Selected Code Detail */}
+                        {selectedCode && (
+                          <div style={{
+                            background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0",
+                            padding: 16, marginTop: 4,
+                          }}>
+                            <div style={{ marginBottom: 12 }}>
+                              <span style={{
+                                display: "inline-block", fontSize: 10, fontWeight: 700, color: "#f59e0b",
+                                textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4,
+                              }}>
+                                {selectedCode._category}
+                              </span>
+                              <div style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
+                                {codeDecisions[selectedCode._key]?.editedCode || selectedCode._code}
+                              </div>
+                              <div style={{ fontSize: 13, color: "#475569", marginTop: 4, lineHeight: 1.5 }}>
+                                {codeDecisions[selectedCode._key]?.editedDesc || selectedCode._desc || 'No description'}
+                              </div>
+                              {(selectedCode.finding || selectedCode.evidence) && (
+                                <div style={{ fontSize: 12, color: "#64748b", marginTop: 8, padding: "8px 10px", background: "#fff", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                                  <span style={{ fontWeight: 600, color: "#94a3b8", fontSize: 10, textTransform: "uppercase" }}>Evidence: </span>
+                                  {str(selectedCode.finding || selectedCode.evidence)}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            {editingCode?._key !== selectedCode._key ? (
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <button
+                                  onClick={() => handleAccept(selectedCode)}
+                                  style={{
+                                    flex: 1, padding: "8px 12px", borderRadius: 8, border: "none",
+                                    background: codeDecisions[selectedCode._key]?.status === 'accepted' ? "#16a34a" : "#dcfce7",
+                                    color: codeDecisions[selectedCode._key]?.status === 'accepted' ? "#fff" : "#166534",
+                                    fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                    display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                                    transition: "all 0.15s",
+                                  }}
+                                >
+                                  <Check style={{ width: 14, height: 14 }} /> Accept
+                                </button>
+                                <button
+                                  onClick={() => handleReject(selectedCode)}
+                                  style={{
+                                    flex: 1, padding: "8px 12px", borderRadius: 8, border: "none",
+                                    background: codeDecisions[selectedCode._key]?.status === 'rejected' ? "#dc2626" : "#fef2f2",
+                                    color: codeDecisions[selectedCode._key]?.status === 'rejected' ? "#fff" : "#991b1b",
+                                    fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                    display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                                    transition: "all 0.15s",
+                                  }}
+                                >
+                                  <X style={{ width: 14, height: 14 }} /> Reject
+                                </button>
+                                <button
+                                  onClick={() => handleStartEdit(selectedCode)}
+                                  style={{
+                                    flex: 1, padding: "8px 12px", borderRadius: 8, border: "none",
+                                    background: codeDecisions[selectedCode._key]?.status === 'edited' ? "#2563eb" : "#dbeafe",
+                                    color: codeDecisions[selectedCode._key]?.status === 'edited' ? "#fff" : "#1e40af",
+                                    fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                    display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                                    transition: "all 0.15s",
+                                  }}
+                                >
+                                  <Pencil style={{ width: 14, height: 14 }} /> Edit
+                                </button>
+                              </div>
+                            ) : (
+                              /* Inline Edit Form */
+                              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                <div>
+                                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>Code</label>
+                                  <input
+                                    type="text"
+                                    value={editingCode.editedCode}
+                                    onChange={(e) => setEditingCode(prev => ({ ...prev, editedCode: e.target.value }))}
+                                    style={{
+                                      width: "100%", padding: "8px 10px", borderRadius: 8,
+                                      border: "1.5px solid #93c5fd", background: "#fff",
+                                      fontSize: 13, fontWeight: 600, color: "#1e293b",
+                                      outline: "none", boxSizing: "border-box",
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>Description</label>
+                                  <textarea
+                                    value={editingCode.editedDesc}
+                                    onChange={(e) => setEditingCode(prev => ({ ...prev, editedDesc: e.target.value }))}
+                                    rows={2}
+                                    style={{
+                                      width: "100%", padding: "8px 10px", borderRadius: 8,
+                                      border: "1.5px solid #93c5fd", background: "#fff",
+                                      fontSize: 13, color: "#475569", resize: "vertical",
+                                      outline: "none", boxSizing: "border-box", fontFamily: "inherit",
+                                    }}
+                                  />
+                                </div>
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <button
+                                    onClick={handleSaveEdit}
+                                    style={{
+                                      flex: 1, padding: "8px 12px", borderRadius: 8, border: "none",
+                                      background: "#2563eb", color: "#fff",
+                                      fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                      display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                                    }}
+                                  >
+                                    <Save style={{ width: 14, height: 14 }} /> Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingCode(null)}
+                                    style={{
+                                      flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0",
+                                      background: "#fff", color: "#64748b",
+                                      fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                      display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         );
       })()}
     </DashboardLayout>
