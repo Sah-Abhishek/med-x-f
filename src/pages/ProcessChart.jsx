@@ -784,8 +784,8 @@ export default function ProcessChart() {
                 </div>
               </div>
 
-              {(uploadSectionOpen || (!aiData?.documents?.length)) && <div className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="p-6">
+                {(uploadSectionOpen || (!aiData?.documents?.length)) && <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
                   {/* Document Upload (PDF + Word) */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -1013,7 +1013,7 @@ export default function ProcessChart() {
                       </div>
                     )}
                   </div>
-                </div>
+                </div>}
 
                 {/* Process Documents Button & Status */}
                 <div className="mt-5 space-y-4">
@@ -1227,7 +1227,7 @@ export default function ProcessChart() {
                     </div>
                   )}
                 </div>
-              </div>}
+              </div>
             </div>
 
             {/* Chart Info Section — Collapsible */}
@@ -1487,53 +1487,8 @@ export default function ProcessChart() {
         </div>
       </div>
 
-      {/* Document Viewer — Minimized sidebar OR Full popup */}
-      {docViewerUrl && popupMinimized && (
-        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white border border-slate-200 rounded-l-xl shadow-lg px-2 py-4">
-          <button
-            onClick={() => setPopupMinimized(false)}
-            className="w-10 h-10 rounded-lg bg-amber-50 hover:bg-amber-100 flex items-center justify-center text-amber-600 transition-colors"
-            title="Expand viewer"
-          >
-            <Maximize2 className="w-5 h-5" />
-          </button>
-          <div className="w-8 border-t border-slate-200" />
-          {aiData?.documents?.map((doc, idx) => {
-            const isActive = doc.s3Url === docViewerUrl;
-            const isPdf = doc.mimeType === 'application/pdf';
-            return (
-              <button
-                key={doc.id}
-                onClick={() => { setDocViewerUrl(doc.s3Url); setPopupMinimized(false); }}
-                className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
-                  isActive ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-transparent'
-                }`}
-                title={doc.filename}
-              >
-                {isPdf ? 'P' : 'D'}{idx + 1}
-              </button>
-            );
-          })}
-          <div className="w-8 border-t border-slate-200" />
-          <button
-            onClick={() => { setPopupSidebarView("ai-summary"); setPopupMinimized(false); }}
-            className="w-10 h-10 rounded-lg bg-purple-50 hover:bg-purple-100 flex items-center justify-center text-purple-600 transition-colors"
-            title="AI Summary"
-          >
-            <Sparkles className="w-5 h-5" />
-          </button>
-          <div className="w-8 border-t border-slate-200" />
-          <button
-            onClick={() => { setDocViewerUrl(null); setPopupMinimized(false); setDocSidebarOpen(true); }}
-            className="w-10 h-10 rounded-lg bg-slate-50 hover:bg-red-50 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
-            title="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      )}
-
-      {docViewerUrl && !popupMinimized && (
+      {/* Document Viewer Popup */}
+      {docViewerUrl && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
           onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(true); setPopupSidebarView("documents"); }}
@@ -1576,13 +1531,6 @@ export default function ProcessChart() {
                   <ExternalLink className="w-3.5 h-3.5" />
                   New Tab
                 </a>
-                <button
-                  onClick={() => setPopupMinimized(true)}
-                  className="w-8 h-8 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
-                  title="Minimize"
-                >
-                  <Minimize2 className="w-4 h-4" />
-                </button>
                 <button
                   onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(true); setPopupSidebarView("documents"); }}
                   className="w-8 h-8 rounded-lg bg-white hover:bg-red-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
@@ -1689,7 +1637,18 @@ export default function ProcessChart() {
                     )}
 
                     {/* AI Summary */}
-                    {popupSidebarView === "ai-summary" && (
+                    {popupSidebarView === "ai-summary" && (() => {
+                      // Safe string renderer — prevents React error #31 from objects
+                      const str = (val) => {
+                        if (val == null) return '';
+                        if (typeof val === 'string') return val;
+                        if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+                        return JSON.stringify(val);
+                      };
+                      const getCode = (item) => str(item?.icd_10_code || item?.code || item?.cpt_code || (typeof item === 'string' ? item : ''));
+                      const getDesc = (item) => str(item?.description || item?.finding || '');
+
+                      return (
                       <div className="flex-1 overflow-y-auto p-4 space-y-4">
                         {aiData?.aiStatus === 'ready' && aiData?.aiSummary ? (
                           <>
@@ -1698,7 +1657,7 @@ export default function ProcessChart() {
                               <div>
                                 <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Clinical Summary</h4>
                                 <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
-                                  {aiData.aiSummary.clinical_summary || aiData.aiSummary.narrative || ''}
+                                  {str(aiData.aiSummary.clinical_summary || aiData.aiSummary.narrative)}
                                 </p>
                               </div>
                             )}
@@ -1711,7 +1670,7 @@ export default function ProcessChart() {
                                   {aiData.aiSummary.key_findings.map((finding, i) => (
                                     <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
                                       <span className="w-1 h-1 rounded-full bg-purple-400 mt-1.5 flex-shrink-0" />
-                                      {typeof finding === 'string' ? finding : finding.description || finding.finding || JSON.stringify(finding)}
+                                      {str(typeof finding === 'string' ? finding : finding?.description || finding?.finding) || str(finding)}
                                     </li>
                                   ))}
                                 </ul>
@@ -1726,9 +1685,9 @@ export default function ProcessChart() {
                                   <div className="mb-2">
                                     <p className="text-[10px] font-semibold text-amber-600 mb-1">Primary</p>
                                     {aiData.diagnosisCodes.primary_diagnosis.map((dx, i) => (
-                                      <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-amber-50 rounded-lg mb-1">
-                                        <span className="text-xs font-bold text-amber-800">{dx.code || dx}</span>
-                                        {dx.description && <span className="text-[10px] text-amber-700 truncate">{dx.description}</span>}
+                                      <div key={i} className="flex items-start gap-2 px-2 py-1.5 bg-amber-50 rounded-lg mb-1">
+                                        <span className="text-xs font-bold text-amber-800 flex-shrink-0">{getCode(dx)}</span>
+                                        {getDesc(dx) && <span className="text-[10px] text-amber-700">{getDesc(dx)}</span>}
                                       </div>
                                     ))}
                                   </div>
@@ -1737,9 +1696,9 @@ export default function ProcessChart() {
                                   <div>
                                     <p className="text-[10px] font-semibold text-slate-500 mb-1">Secondary</p>
                                     {aiData.diagnosisCodes.secondary_diagnoses.map((dx, i) => (
-                                      <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded-lg mb-1">
-                                        <span className="text-xs font-semibold text-slate-700">{dx.code || dx}</span>
-                                        {dx.description && <span className="text-[10px] text-slate-500 truncate">{dx.description}</span>}
+                                      <div key={i} className="flex items-start gap-2 px-2 py-1.5 bg-slate-50 rounded-lg mb-1">
+                                        <span className="text-xs font-semibold text-slate-700 flex-shrink-0">{getCode(dx)}</span>
+                                        {getDesc(dx) && <span className="text-[10px] text-slate-500">{getDesc(dx)}</span>}
                                       </div>
                                     ))}
                                   </div>
@@ -1748,9 +1707,9 @@ export default function ProcessChart() {
                                   <div className="mt-2">
                                     <p className="text-[10px] font-semibold text-blue-600 mb-1">E/M Level</p>
                                     {aiData.diagnosisCodes.ed_em_level.map((em, i) => (
-                                      <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-blue-50 rounded-lg mb-1">
-                                        <span className="text-xs font-bold text-blue-800">{em.code || em}</span>
-                                        {em.description && <span className="text-[10px] text-blue-700 truncate">{em.description}</span>}
+                                      <div key={i} className="flex items-start gap-2 px-2 py-1.5 bg-blue-50 rounded-lg mb-1">
+                                        <span className="text-xs font-bold text-blue-800 flex-shrink-0">{getCode(em)}</span>
+                                        {getDesc(em) && <span className="text-[10px] text-blue-700">{getDesc(em)}</span>}
                                       </div>
                                     ))}
                                   </div>
@@ -1763,9 +1722,9 @@ export default function ProcessChart() {
                               <div>
                                 <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Procedures</h4>
                                 {aiData.procedures.map((proc, i) => (
-                                  <div key={i} className="flex items-center gap-2 px-2 py-1.5 bg-emerald-50 rounded-lg mb-1">
-                                    <span className="text-xs font-bold text-emerald-800">{proc.code || proc}</span>
-                                    {proc.description && <span className="text-[10px] text-emerald-700 truncate">{proc.description}</span>}
+                                  <div key={i} className="flex items-start gap-2 px-2 py-1.5 bg-emerald-50 rounded-lg mb-1">
+                                    <span className="text-xs font-bold text-emerald-800 flex-shrink-0">{getCode(proc)}</span>
+                                    {getDesc(proc) && <span className="text-[10px] text-emerald-700">{getDesc(proc)}</span>}
                                   </div>
                                 ))}
                               </div>
@@ -1778,7 +1737,7 @@ export default function ProcessChart() {
                                 <div className="flex flex-wrap gap-1.5">
                                   {aiData.medications.map((med, i) => (
                                     <span key={i} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full font-medium">
-                                      {typeof med === 'string' ? med : med.name || med.medication || JSON.stringify(med)}
+                                      {str(typeof med === 'string' ? med : med?.name || med?.medication) || str(med)}
                                     </span>
                                   ))}
                                 </div>
@@ -1792,9 +1751,7 @@ export default function ProcessChart() {
                                 {Object.entries(aiData.codingNotes).map(([key, value]) => (
                                   <div key={key} className="mb-2">
                                     <p className="text-[10px] font-semibold text-slate-600 capitalize mb-0.5">{key.replace(/_/g, ' ')}</p>
-                                    <p className="text-xs text-slate-700 leading-relaxed">
-                                      {typeof value === 'string' ? value : JSON.stringify(value)}
-                                    </p>
+                                    <p className="text-xs text-slate-700 leading-relaxed">{str(value)}</p>
                                   </div>
                                 ))}
                               </div>
@@ -1810,7 +1767,7 @@ export default function ProcessChart() {
                           <div className="flex flex-col items-center justify-center py-12 text-center">
                             <AlertCircle className="w-8 h-8 text-red-400 mb-3" />
                             <p className="text-sm font-medium text-red-700">Processing Failed</p>
-                            <p className="text-xs text-red-500 mt-1">{aiData.lastError || 'An error occurred'}</p>
+                            <p className="text-xs text-red-500 mt-1">{aiData?.lastError || 'An error occurred'}</p>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -1820,7 +1777,8 @@ export default function ProcessChart() {
                           </div>
                         )}
                       </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 )}
               </div>
