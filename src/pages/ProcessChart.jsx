@@ -402,6 +402,9 @@ export default function ProcessChart() {
   const [editingCode, setEditingCode] = useState(null);
   const [reviewTab, setReviewTab] = useState("document"); // "document" | "ai-summary"
   const [reviewDocIndex, setReviewDocIndex] = useState(0); // which document to show in review popup
+  const [customCodes, setCustomCodes] = useState([]); // user-added codes
+  const [addingCode, setAddingCode] = useState(false); // whether the add-code form is open
+  const [newCodeForm, setNewCodeForm] = useState({ code: '', description: '', type: 'icd', category: 'Secondary' });
 
   // WebSocket job status tracking
   const jobId = uploadResult?.jobId || null;
@@ -1999,10 +2002,15 @@ export default function ProcessChart() {
             allCodes.push({ ...proc, _category: 'Procedure', _key: `proc-${i}`, _code: getCode(proc), _desc: str(proc.description || proc.procedure_name || ''), _type: 'cpt' });
           });
         }
+        // User-added custom codes
+        customCodes.forEach((cc) => {
+          allCodes.push(cc);
+        });
 
         const getBadgeStyle = (code) => {
           const decision = codeDecisions[code._key];
           const isSelected = selectedCode?._key === code._key;
+          if (code._isCustom) return { bg: '#fdf4ff', border: '#e879f9', color: '#86198f' };
           if (decision?.status === 'accepted') return { bg: '#dcfce7', border: '#86efac', color: '#166534' };
           if (decision?.status === 'rejected') return { bg: '#fef2f2', border: '#fca5a5', color: '#991b1b' };
           if (decision?.status === 'edited') return { bg: '#dbeafe', border: '#93c5fd', color: '#1e40af' };
@@ -2045,6 +2053,31 @@ export default function ProcessChart() {
             },
           }));
           setEditingCode(null);
+        };
+
+        const handleAddCode = () => {
+          if (!newCodeForm.code.trim()) return;
+          const key = `custom-${Date.now()}`;
+          const newCode = {
+            _key: key,
+            _code: newCodeForm.code.trim(),
+            _desc: newCodeForm.description.trim(),
+            _category: newCodeForm.category,
+            _type: newCodeForm.type,
+            _isCustom: true,
+          };
+          setCustomCodes(prev => [...prev, newCode]);
+          setCodeDecisions(prev => ({ ...prev, [key]: { status: 'accepted' } }));
+          setNewCodeForm({ code: '', description: '', type: 'icd', category: 'Secondary' });
+          setAddingCode(false);
+          // Select the newly added code
+          setTimeout(() => setSelectedCode(newCode), 0);
+        };
+
+        const handleDeleteCustomCode = (key) => {
+          setCustomCodes(prev => prev.filter(c => c._key !== key));
+          setCodeDecisions(prev => { const next = { ...prev }; delete next[key]; return next; });
+          if (selectedCode?._key === key) setSelectedCode(null);
         };
 
         const isReviewAiView = reviewTab === "ai-summary";
@@ -2317,20 +2350,133 @@ export default function ProcessChart() {
                 {/* ── Right Panel (40%) ── */}
                 <div style={{ width: "40%", display: "flex", flexDirection: "column", background: "#fff" }}>
                   {/* Header */}
-                  <div style={{ padding: "14px 20px", borderBottom: "1px solid #e2e8f0" }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", margin: 0 }}>ICD & CPT Codes</h3>
-                    <p style={{ fontSize: 11, color: "#94a3b8", margin: "4px 0 0" }}>
-                      {allCodes.length} codes &middot; {Object.keys(codeDecisions).length} reviewed
-                    </p>
+                  <div style={{ padding: "14px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", margin: 0 }}>ICD & CPT Codes</h3>
+                      <p style={{ fontSize: 11, color: "#94a3b8", margin: "4px 0 0" }}>
+                        {allCodes.length} codes &middot; {Object.keys(codeDecisions).length} reviewed
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setAddingCode(true)}
+                      style={{
+                        padding: "6px 12px", borderRadius: 8, border: "none",
+                        background: "#f5f3ff", color: "#7c3aed",
+                        fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 5,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <Plus style={{ width: 14, height: 14 }} /> Add Code
+                    </button>
                   </div>
 
                   {/* Code Badges Grid */}
                   <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
-                    {allCodes.length === 0 ? (
+                    {/* Add Code Form */}
+                    {addingCode && (
+                      <div style={{ background: "#fdf4ff", borderRadius: 12, border: "1.5px solid #e879f9", padding: 16, marginBottom: 16 }}>
+                        <h4 style={{ fontSize: 12, fontWeight: 700, color: "#86198f", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+                          <Plus style={{ width: 14, height: 14 }} /> Add New Code
+                        </h4>
+                        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: 10, fontWeight: 600, color: "#86198f", display: "block", marginBottom: 3 }}>Type</label>
+                            <select
+                              value={newCodeForm.type}
+                              onChange={(e) => setNewCodeForm(prev => ({ ...prev, type: e.target.value }))}
+                              style={{
+                                width: "100%", padding: "6px 8px", borderRadius: 6,
+                                border: "1px solid #e9d5ff", background: "#fff",
+                                fontSize: 12, color: "#1e293b", outline: "none",
+                              }}
+                            >
+                              <option value="icd">ICD-10</option>
+                              <option value="cpt">CPT</option>
+                            </select>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: 10, fontWeight: 600, color: "#86198f", display: "block", marginBottom: 3 }}>Category</label>
+                            <select
+                              value={newCodeForm.category}
+                              onChange={(e) => setNewCodeForm(prev => ({ ...prev, category: e.target.value }))}
+                              style={{
+                                width: "100%", padding: "6px 8px", borderRadius: 6,
+                                border: "1px solid #e9d5ff", background: "#fff",
+                                fontSize: 12, color: "#1e293b", outline: "none",
+                              }}
+                            >
+                              <option value="Principal">Principal</option>
+                              <option value="Primary">Primary</option>
+                              <option value="Secondary">Secondary</option>
+                              <option value="Reason for Admit">Reason for Admit</option>
+                              <option value="E/M Level">E/M Level</option>
+                              <option value="Procedure">Procedure</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: 10 }}>
+                          <label style={{ fontSize: 10, fontWeight: 600, color: "#86198f", display: "block", marginBottom: 3 }}>Code *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. K63.5 or 45385"
+                            value={newCodeForm.code}
+                            onChange={(e) => setNewCodeForm(prev => ({ ...prev, code: e.target.value }))}
+                            style={{
+                              width: "100%", padding: "7px 10px", borderRadius: 6,
+                              border: "1px solid #e9d5ff", background: "#fff",
+                              fontSize: 12, color: "#1e293b", outline: "none", boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                        <div style={{ marginBottom: 12 }}>
+                          <label style={{ fontSize: 10, fontWeight: 600, color: "#86198f", display: "block", marginBottom: 3 }}>Description</label>
+                          <input
+                            type="text"
+                            placeholder="Code description"
+                            value={newCodeForm.description}
+                            onChange={(e) => setNewCodeForm(prev => ({ ...prev, description: e.target.value }))}
+                            style={{
+                              width: "100%", padding: "7px 10px", borderRadius: 6,
+                              border: "1px solid #e9d5ff", background: "#fff",
+                              fontSize: 12, color: "#1e293b", outline: "none", boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            onClick={handleAddCode}
+                            disabled={!newCodeForm.code.trim()}
+                            style={{
+                              flex: 1, padding: "7px 12px", borderRadius: 8, border: "none",
+                              background: newCodeForm.code.trim() ? "#7c3aed" : "#d8b4fe",
+                              color: "#fff", fontSize: 12, fontWeight: 600,
+                              cursor: newCodeForm.code.trim() ? "pointer" : "not-allowed",
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                            }}
+                          >
+                            <Plus style={{ width: 14, height: 14 }} /> Add
+                          </button>
+                          <button
+                            onClick={() => { setAddingCode(false); setNewCodeForm({ code: '', description: '', type: 'icd', category: 'Secondary' }); }}
+                            style={{
+                              flex: 1, padding: "7px 12px", borderRadius: 8,
+                              border: "1px solid #e9d5ff", background: "#fff", color: "#86198f",
+                              fontSize: 12, fontWeight: 600, cursor: "pointer",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {allCodes.length === 0 && !addingCode ? (
                       <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8" }}>
                         <p style={{ fontSize: 13 }}>No ICD codes available</p>
                       </div>
-                    ) : (
+                    ) : allCodes.length > 0 ? (
                       <>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
                           {allCodes.map((code) => {
@@ -2365,6 +2511,7 @@ export default function ProcessChart() {
                             { label: "Accepted", bg: "#dcfce7", border: "#86efac" },
                             { label: "Rejected", bg: "#fef2f2", border: "#fca5a5" },
                             { label: "Edited", bg: "#dbeafe", border: "#93c5fd" },
+                            { label: "Added", bg: "#fdf4ff", border: "#e879f9" },
                             { label: "Pending", bg: "#f8fafc", border: "#e2e8f0" },
                           ].map(item => (
                             <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#94a3b8" }}>
@@ -2381,12 +2528,29 @@ export default function ProcessChart() {
                             padding: 16, marginTop: 4,
                           }}>
                             <div style={{ marginBottom: 12 }}>
-                              <span style={{
-                                display: "inline-block", fontSize: 10, fontWeight: 700, color: "#f59e0b",
-                                textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4,
-                              }}>
-                                {selectedCode._category}
-                              </span>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                <span style={{
+                                  display: "inline-flex", alignItems: "center", gap: 6,
+                                  fontSize: 10, fontWeight: 700, color: selectedCode._isCustom ? "#86198f" : "#f59e0b",
+                                  textTransform: "uppercase", letterSpacing: 0.5,
+                                }}>
+                                  {selectedCode._category}
+                                  {selectedCode._isCustom && <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: "#fdf4ff", border: "1px solid #e879f9" }}>Added</span>}
+                                </span>
+                                {selectedCode._isCustom && (
+                                  <button
+                                    onClick={() => handleDeleteCustomCode(selectedCode._key)}
+                                    style={{
+                                      padding: "3px 8px", borderRadius: 6, border: "none",
+                                      background: "#fef2f2", color: "#dc2626",
+                                      fontSize: 10, fontWeight: 600, cursor: "pointer",
+                                      display: "flex", alignItems: "center", gap: 4,
+                                    }}
+                                  >
+                                    <Trash2 style={{ width: 10, height: 10 }} /> Remove
+                                  </button>
+                                )}
+                              </div>
                               <div style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
                                 {codeDecisions[selectedCode._key]?.editedCode || selectedCode._code}
                               </div>
@@ -2584,7 +2748,7 @@ export default function ProcessChart() {
                           </div>
                         )}
                       </>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
