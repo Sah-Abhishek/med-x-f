@@ -2388,185 +2388,128 @@ export default function ProcessChart() {
                   {/* Code Badges Grid */}
                   <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
                     {/* Add Code Form */}
-                    {addingCode && (() => {
-                      const typeOptions = [
-                        { value: 'icd', label: 'ICD-10', icon: '🏥', color: '#1d4ed8', bg: '#eff6ff' },
-                        { value: 'cpt', label: 'CPT', icon: '⚕️', color: '#047857', bg: '#ecfdf5' },
-                      ];
-                      const categoryOptions = [
-                        { value: 'Principal', color: '#7c3aed', bg: '#f5f3ff' },
-                        { value: 'Primary', color: '#b45309', bg: '#fffbeb' },
-                        { value: 'Secondary', color: '#475569', bg: '#f8fafc' },
-                        { value: 'Reason for Admit', color: '#0e7490', bg: '#ecfeff' },
-                        { value: 'E/M Level', color: '#1d4ed8', bg: '#eff6ff' },
-                        { value: 'Procedure', color: '#047857', bg: '#ecfdf5' },
-                      ];
-                      const selectedType = typeOptions.find(t => t.value === newCodeForm.type);
-                      const selectedCat = categoryOptions.find(c => c.value === newCodeForm.category);
-
-                      return (
-                        <div style={{ background: "#fdf4ff", borderRadius: 14, border: "1.5px solid #e879f9", padding: 18, marginBottom: 16, boxShadow: "0 4px 20px rgba(168, 85, 247, 0.08)" }}>
-                          <h4 style={{ fontSize: 13, fontWeight: 700, color: "#86198f", margin: "0 0 16px", display: "flex", alignItems: "center", gap: 8 }}>
-                            <div style={{ width: 24, height: 24, borderRadius: 7, background: "#f0abfc", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <Plus style={{ width: 13, height: 13, color: "#fff" }} />
-                            </div>
-                            Add New Code
-                          </h4>
-
-                          {/* Type Selector — pill toggle */}
-                          <div style={{ marginBottom: 14 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Code Type</label>
-                            <div style={{ display: "flex", gap: 6, background: "#f3e8ff", borderRadius: 10, padding: 3 }}>
-                              {typeOptions.map(opt => (
-                                <button
-                                  key={opt.value}
-                                  onClick={() => setNewCodeForm(prev => ({ ...prev, type: opt.value }))}
-                                  style={{
-                                    flex: 1, padding: "8px 12px", borderRadius: 8, border: "none",
-                                    background: newCodeForm.type === opt.value ? "#fff" : "transparent",
-                                    color: newCodeForm.type === opt.value ? opt.color : "#a78bfa",
-                                    fontSize: 12, fontWeight: 700, cursor: "pointer",
-                                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                                    transition: "all 0.15s",
-                                    boxShadow: newCodeForm.type === opt.value ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-                                  }}
-                                >
-                                  <span style={{ fontSize: 13 }}>{opt.icon}</span> {opt.label}
-                                </button>
-                              ))}
-                            </div>
+                    {addingCode && (
+                      <div style={{ background: "#fdf4ff", borderRadius: 14, border: "1.5px solid #e879f9", padding: 18, marginBottom: 16, boxShadow: "0 4px 20px rgba(168, 85, 247, 0.08)" }}>
+                        <h4 style={{ fontSize: 13, fontWeight: 700, color: "#86198f", margin: "0 0 16px", display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ width: 24, height: 24, borderRadius: 7, background: "#f0abfc", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Plus style={{ width: 13, height: 13, color: "#fff" }} />
                           </div>
-
-                          {/* Category Selector — tag chips */}
-                          <div style={{ marginBottom: 14 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Category</label>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                              {categoryOptions.map(opt => (
-                                <button
-                                  key={opt.value}
-                                  onClick={() => setNewCodeForm(prev => ({ ...prev, category: opt.value }))}
-                                  style={{
-                                    padding: "6px 12px", borderRadius: 20, cursor: "pointer",
-                                    border: newCodeForm.category === opt.value ? `2px solid ${opt.color}` : "1.5px solid #e9d5ff",
-                                    background: newCodeForm.category === opt.value ? opt.bg : "#fff",
-                                    color: newCodeForm.category === opt.value ? opt.color : "#a78bfa",
-                                    fontSize: 11, fontWeight: 600,
-                                    transition: "all 0.15s",
-                                    boxShadow: newCodeForm.category === opt.value ? `0 0 0 2px ${opt.bg}` : "none",
-                                  }}
-                                >
-                                  {opt.value}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Code Input */}
-                          <div style={{ marginBottom: 10 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                              Code <span style={{ color: "#e879f9" }}>*</span>
-                            </label>
+                          Add New Code
+                        </h4>
+                        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>Code Type</label>
                             <div style={{ position: "relative" }}>
-                              <input
-                                type="text"
-                                placeholder={newCodeForm.type === 'icd' ? "e.g. K63.5, Z12.11" : "e.g. 45385, 99213"}
-                                value={newCodeForm.code}
-                                onChange={(e) => setNewCodeForm(prev => ({ ...prev, code: e.target.value }))}
+                              <select
+                                value={newCodeForm.type}
+                                onChange={(e) => setNewCodeForm(prev => ({ ...prev, type: e.target.value }))}
                                 style={{
-                                  width: "100%", padding: "9px 12px 9px 36px", borderRadius: 10,
+                                  width: "100%", padding: "9px 32px 9px 12px", borderRadius: 10,
                                   border: "1.5px solid #e9d5ff", background: "#fff",
-                                  fontSize: 13, fontWeight: 600, color: "#1e293b",
-                                  outline: "none", boxSizing: "border-box",
-                                  transition: "border-color 0.15s",
+                                  fontSize: 12, fontWeight: 600, color: "#1e293b",
+                                  outline: "none", cursor: "pointer",
+                                  WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
+                                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23a855f7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                                  backgroundRepeat: "no-repeat",
+                                  backgroundPosition: "right 12px center",
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#c084fc'}
-                                onBlur={(e) => e.target.style.borderColor = '#e9d5ff'}
-                              />
-                              <div style={{
-                                position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
-                                width: 20, height: 20, borderRadius: 5,
-                                background: selectedType?.bg || '#eff6ff',
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 10,
-                              }}>
-                                {selectedType?.icon}
-                              </div>
+                              >
+                                <option value="icd">ICD-10</option>
+                                <option value="cpt">CPT</option>
+                              </select>
                             </div>
                           </div>
-
-                          {/* Description Input */}
-                          <div style={{ marginBottom: 16 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>Description</label>
-                            <input
-                              type="text"
-                              placeholder="Enter code description..."
-                              value={newCodeForm.description}
-                              onChange={(e) => setNewCodeForm(prev => ({ ...prev, description: e.target.value }))}
-                              style={{
-                                width: "100%", padding: "9px 12px", borderRadius: 10,
-                                border: "1.5px solid #e9d5ff", background: "#fff",
-                                fontSize: 13, color: "#475569",
-                                outline: "none", boxSizing: "border-box",
-                                transition: "border-color 0.15s",
-                              }}
-                              onFocus={(e) => e.target.style.borderColor = '#c084fc'}
-                              onBlur={(e) => e.target.style.borderColor = '#e9d5ff'}
-                            />
-                          </div>
-
-                          {/* Preview chip */}
-                          {newCodeForm.code.trim() && (
-                            <div style={{ marginBottom: 14, padding: "10px 12px", background: "#fff", borderRadius: 10, border: "1px dashed #d8b4fe", display: "flex", alignItems: "center", gap: 10 }}>
-                              <span style={{ fontSize: 10, color: "#a78bfa", fontWeight: 600 }}>Preview:</span>
-                              <span style={{
-                                padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700,
-                                background: selectedCat?.bg || '#f8fafc',
-                                color: selectedCat?.color || '#475569',
-                                border: `1.5px dashed ${selectedCat?.color || '#cbd5e1'}`,
-                              }}>
-                                <span style={{ marginRight: 4, fontSize: 10 }}>{selectedType?.icon}</span>
-                                {newCodeForm.code.trim()}
-                              </span>
-                              {newCodeForm.description.trim() && (
-                                <span style={{ fontSize: 11, color: "#64748b", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  {newCodeForm.description.trim()}
-                                </span>
-                              )}
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>Category</label>
+                            <div style={{ position: "relative" }}>
+                              <select
+                                value={newCodeForm.category}
+                                onChange={(e) => setNewCodeForm(prev => ({ ...prev, category: e.target.value }))}
+                                style={{
+                                  width: "100%", padding: "9px 32px 9px 12px", borderRadius: 10,
+                                  border: "1.5px solid #e9d5ff", background: "#fff",
+                                  fontSize: 12, fontWeight: 600, color: "#1e293b",
+                                  outline: "none", cursor: "pointer",
+                                  WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
+                                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23a855f7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                                  backgroundRepeat: "no-repeat",
+                                  backgroundPosition: "right 12px center",
+                                }}
+                              >
+                                <option value="Principal">Principal</option>
+                                <option value="Primary">Primary</option>
+                                <option value="Secondary">Secondary</option>
+                                <option value="Reason for Admit">Reason for Admit</option>
+                                <option value="E/M Level">E/M Level</option>
+                                <option value="Procedure">Procedure</option>
+                              </select>
                             </div>
-                          )}
-
-                          {/* Action Buttons */}
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <button
-                              onClick={handleAddCode}
-                              disabled={!newCodeForm.code.trim()}
-                              style={{
-                                flex: 1, padding: "9px 14px", borderRadius: 10, border: "none",
-                                background: newCodeForm.code.trim() ? "linear-gradient(135deg, #a855f7, #7c3aed)" : "#e9d5ff",
-                                color: "#fff", fontSize: 12, fontWeight: 700,
-                                cursor: newCodeForm.code.trim() ? "pointer" : "not-allowed",
-                                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                                boxShadow: newCodeForm.code.trim() ? "0 2px 8px rgba(168, 85, 247, 0.3)" : "none",
-                                transition: "all 0.15s",
-                              }}
-                            >
-                              <Plus style={{ width: 14, height: 14 }} /> Add Code
-                            </button>
-                            <button
-                              onClick={() => { setAddingCode(false); setNewCodeForm({ code: '', description: '', type: 'icd', category: 'Secondary' }); }}
-                              style={{
-                                padding: "9px 16px", borderRadius: 10,
-                                border: "1.5px solid #e9d5ff", background: "#fff", color: "#86198f",
-                                fontSize: 12, fontWeight: 600, cursor: "pointer",
-                                transition: "all 0.15s",
-                              }}
-                            >
-                              Cancel
-                            </button>
                           </div>
                         </div>
-                      );
-                    })()}
+                        <div style={{ marginBottom: 12 }}>
+                          <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                            Code <span style={{ color: "#e879f9" }}>*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder={newCodeForm.type === 'icd' ? "e.g. K63.5, Z12.11" : "e.g. 45385, 99213"}
+                            value={newCodeForm.code}
+                            onChange={(e) => setNewCodeForm(prev => ({ ...prev, code: e.target.value }))}
+                            style={{
+                              width: "100%", padding: "9px 12px", borderRadius: 10,
+                              border: "1.5px solid #e9d5ff", background: "#fff",
+                              fontSize: 13, fontWeight: 600, color: "#1e293b",
+                              outline: "none", boxSizing: "border-box",
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#c084fc'}
+                            onBlur={(e) => e.target.style.borderColor = '#e9d5ff'}
+                          />
+                        </div>
+                        <div style={{ marginBottom: 14 }}>
+                          <label style={{ fontSize: 10, fontWeight: 700, color: "#a855f7", display: "block", marginBottom: 5, textTransform: "uppercase", letterSpacing: 0.5 }}>Description</label>
+                          <input
+                            type="text"
+                            placeholder="Enter code description..."
+                            value={newCodeForm.description}
+                            onChange={(e) => setNewCodeForm(prev => ({ ...prev, description: e.target.value }))}
+                            style={{
+                              width: "100%", padding: "9px 12px", borderRadius: 10,
+                              border: "1.5px solid #e9d5ff", background: "#fff",
+                              fontSize: 13, color: "#475569",
+                              outline: "none", boxSizing: "border-box",
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#c084fc'}
+                            onBlur={(e) => e.target.style.borderColor = '#e9d5ff'}
+                          />
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            onClick={handleAddCode}
+                            disabled={!newCodeForm.code.trim()}
+                            style={{
+                              flex: 1, padding: "9px 14px", borderRadius: 10, border: "none",
+                              background: newCodeForm.code.trim() ? "linear-gradient(135deg, #a855f7, #7c3aed)" : "#e9d5ff",
+                              color: "#fff", fontSize: 12, fontWeight: 700,
+                              cursor: newCodeForm.code.trim() ? "pointer" : "not-allowed",
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                              boxShadow: newCodeForm.code.trim() ? "0 2px 8px rgba(168, 85, 247, 0.3)" : "none",
+                            }}
+                          >
+                            <Plus style={{ width: 14, height: 14 }} /> Add Code
+                          </button>
+                          <button
+                            onClick={() => { setAddingCode(false); setNewCodeForm({ code: '', description: '', type: 'icd', category: 'Secondary' }); }}
+                            style={{
+                              padding: "9px 16px", borderRadius: 10,
+                              border: "1.5px solid #e9d5ff", background: "#fff", color: "#86198f",
+                              fontSize: 12, fontWeight: 600, cursor: "pointer",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {allCodes.length === 0 && !addingCode ? (
                       <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8" }}>
