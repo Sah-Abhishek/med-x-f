@@ -221,20 +221,144 @@ const CollapsibleCard = ({ title, subtitle, defaultOpen = true, children }) => {
   );
 };
 
-const FormField = ({ label, value, required, type = "text", options, placeholder, readOnly = true }) => (
+const FormFieldDropdown = ({ value, onChange, options = [], placeholder, readOnly }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = React.useRef(null);
+  const searchRef = React.useRef(null);
+
+  const normalizedOpts = options.map(opt =>
+    typeof opt === "string" ? { value: opt, label: opt } : opt
+  );
+  const selected = normalizedOpts.find(o => o.value === value);
+  const filtered = search
+    ? normalizedOpts.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
+    : normalizedOpts;
+  const showSearch = normalizedOpts.length > 6;
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setSearch(""); } };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  useEffect(() => {
+    if (open && showSearch && searchRef.current) searchRef.current.focus();
+  }, [open, showSearch]);
+
+  if (readOnly) {
+    return (
+      <div style={{
+        width: "100%", padding: "10px 12px", borderRadius: 8,
+        border: "1px solid #e2e8f0", background: "#f8fafc",
+        fontSize: 13, color: value ? "#1a1d23" : "#94a3b8",
+        boxSizing: "border-box", minHeight: 40,
+      }}>
+        {selected?.label || value || placeholder || "Select..."}
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: "100%", padding: "10px 32px 10px 12px", borderRadius: 8,
+          border: open ? "1.5px solid #a78bfa" : "1px solid #e2e8f0",
+          background: "#fff", textAlign: "left", cursor: "pointer",
+          fontSize: 13, fontWeight: 500, color: selected ? "#1a1d23" : "#94a3b8",
+          display: "flex", alignItems: "center", gap: 8,
+          transition: "border-color 0.15s, box-shadow 0.15s",
+          boxShadow: open ? "0 0 0 3px rgba(167, 139, 250, 0.1)" : "none",
+          position: "relative", boxSizing: "border-box",
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+          {selected?.label || placeholder || "Select..."}
+        </span>
+        <ChevronDown style={{
+          width: 14, height: 14, color: "#94a3b8", position: "absolute", right: 10, top: "50%",
+          transform: open ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)",
+          transition: "transform 0.2s",
+        }} />
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+          background: "#fff", borderRadius: 10, border: "1px solid #e2e8f0",
+          boxShadow: "0 10px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)",
+          overflow: "hidden",
+        }}>
+          {showSearch && (
+            <div style={{ padding: "8px 8px 4px" }}>
+              <input
+                ref={searchRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                style={{
+                  width: "100%", padding: "7px 10px", borderRadius: 6,
+                  border: "1px solid #e2e8f0", fontSize: 12, color: "#1a1d23",
+                  outline: "none", boxSizing: "border-box", background: "#f8fafc",
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "#a78bfa"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "#e2e8f0"}
+              />
+            </div>
+          )}
+          <div style={{ maxHeight: 200, overflowY: "auto", padding: "4px 0" }}>
+            {filtered.length === 0 && (
+              <div style={{ padding: "12px 16px", fontSize: 12, color: "#94a3b8", textAlign: "center" }}>
+                No options found
+              </div>
+            )}
+            {filtered.map((opt) => {
+              const isActive = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { onChange?.(opt.value); setOpen(false); setSearch(""); }}
+                  style={{
+                    width: "100%", padding: "8px 12px", border: "none", textAlign: "left",
+                    cursor: "pointer", fontSize: 13, fontWeight: isActive ? 600 : 400,
+                    color: isActive ? "#7c3aed" : "#1e293b",
+                    background: isActive ? "#f5f3ff" : "transparent",
+                    display: "flex", alignItems: "center", gap: 8,
+                    transition: "background 0.1s",
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#f8fafc"; }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = isActive ? "#f5f3ff" : "transparent"; }}
+                >
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{opt.label}</span>
+                  {isActive && <Check style={{ width: 14, height: 14, color: "#7c3aed", flexShrink: 0 }} />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FormField = ({ label, value, required, type = "text", options, placeholder, readOnly = true, onChange }) => (
   <div style={{ flex: 1, minWidth: 0 }}>
     <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
       {label}{required && <span style={{ color: "#ef4444" }}> *</span>}
     </label>
     {type === "select" ? (
-      <select disabled={readOnly} style={{
-        width: "100%", padding: "10px 12px", borderRadius: 8,
-        border: "1px solid #e2e8f0", background: readOnly ? "#f8fafc" : "#fff",
-        fontSize: 13, color: value ? "#1a1d23" : "#94a3b8", cursor: readOnly ? "default" : "pointer",
-      }}>
-        <option value="">{placeholder || "Select..."}</option>
-        {options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
+      <FormFieldDropdown
+        value={value}
+        onChange={onChange}
+        options={options}
+        placeholder={placeholder}
+        readOnly={readOnly}
+      />
     ) : (
       <input type={type} value={value || ""} readOnly={readOnly} placeholder={placeholder || ""}
         style={{
