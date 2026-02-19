@@ -392,6 +392,7 @@ export default function ProcessChart() {
   const [selectedCode, setSelectedCode] = useState(null);
   const [editingCode, setEditingCode] = useState(null);
   const [reviewTab, setReviewTab] = useState("document"); // "document" | "ai-summary"
+  const [reviewDocIndex, setReviewDocIndex] = useState(0); // which document to show in review popup
 
   // WebSocket job status tracking
   const jobId = uploadResult?.jobId || null;
@@ -1482,13 +1483,79 @@ export default function ProcessChart() {
               }
               defaultOpen={false}
             >
-              <div style={{ textAlign: "center", padding: "12px 0" }}>
-                <p style={{ color: "#94a3b8", fontSize: 12, marginBottom: 12 }}>No predictions available</p>
-                <button style={{
-                  padding: "10px 24px", borderRadius: 10, border: "2px solid #1a1d23",
-                  background: "#fff", color: "#1a1d23", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                }}>Regenerate</button>
-              </div>
+              {(() => {
+                const str = (val) => { if (val == null) return ''; if (typeof val === 'string') return val; return String(val); };
+                const getCode = (item) => str(item?.icd_10_code || item?.code || item?.cpt_code || '');
+                const getDesc = (item) => str(item?.description || item?.finding || '');
+                const dc = aiData?.diagnosisCodes;
+                const procs = aiData?.procedures;
+                const hasCodes = dc && (
+                  dc.principal_diagnosis || dc.primary_diagnosis?.length > 0 ||
+                  dc.secondary_diagnoses?.length > 0 || dc.reason_for_admit?.length > 0 ||
+                  dc.ed_em_level?.length > 0
+                );
+                const hasProcs = procs?.length > 0;
+
+                if (!hasCodes && !hasProcs) {
+                  return (
+                    <div style={{ textAlign: "center", padding: "12px 0" }}>
+                      <p style={{ color: "#94a3b8", fontSize: 12, marginBottom: 12 }}>No predictions available</p>
+                      <button style={{
+                        padding: "10px 24px", borderRadius: 10, border: "2px solid #1a1d23",
+                        background: "#fff", color: "#1a1d23", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      }}>Regenerate</button>
+                    </div>
+                  );
+                }
+
+                const CodeRow = ({ code, desc, bg, textColor }) => (
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 8px", background: bg, borderRadius: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: textColor, flexShrink: 0 }}>{code}</span>
+                    {desc && <span style={{ fontSize: 11, color: textColor, opacity: 0.85 }}>{desc}</span>}
+                  </div>
+                );
+
+                return (
+                  <div style={{ padding: "4px 0" }}>
+                    {dc?.principal_diagnosis && (
+                      <div style={{ marginBottom: 8 }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#7c3aed", marginBottom: 4, textTransform: "uppercase" }}>Principal</p>
+                        <CodeRow code={getCode(dc.principal_diagnosis)} desc={getDesc(dc.principal_diagnosis)} bg="#f5f3ff" textColor="#6d28d9" />
+                      </div>
+                    )}
+                    {dc?.primary_diagnosis?.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#d97706", marginBottom: 4, textTransform: "uppercase" }}>Primary</p>
+                        {dc.primary_diagnosis.map((dx, i) => <CodeRow key={i} code={getCode(dx)} desc={getDesc(dx)} bg="#fffbeb" textColor="#b45309" />)}
+                      </div>
+                    )}
+                    {dc?.secondary_diagnoses?.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginBottom: 4, textTransform: "uppercase" }}>Secondary</p>
+                        {dc.secondary_diagnoses.map((dx, i) => <CodeRow key={i} code={getCode(dx)} desc={getDesc(dx)} bg="#f8fafc" textColor="#475569" />)}
+                      </div>
+                    )}
+                    {dc?.reason_for_admit?.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#0891b2", marginBottom: 4, textTransform: "uppercase" }}>Reason for Admit</p>
+                        {dc.reason_for_admit.map((dx, i) => <CodeRow key={i} code={getCode(dx)} desc={getDesc(dx)} bg="#ecfeff" textColor="#0e7490" />)}
+                      </div>
+                    )}
+                    {dc?.ed_em_level?.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#2563eb", marginBottom: 4, textTransform: "uppercase" }}>E/M Level</p>
+                        {dc.ed_em_level.map((em, i) => <CodeRow key={i} code={getCode(em)} desc={getDesc(em)} bg="#eff6ff" textColor="#1d4ed8" />)}
+                      </div>
+                    )}
+                    {hasProcs && (
+                      <div style={{ marginBottom: 4 }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#059669", marginBottom: 4, textTransform: "uppercase" }}>Procedures</p>
+                        {procs.map((proc, i) => <CodeRow key={i} code={getCode(proc)} desc={getDesc(proc)} bg="#ecfdf5" textColor="#047857" />)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               {/* Review and Edit Button */}
               <div style={{ padding: "8px 0 4px", borderTop: "1px solid #f1f5f9", marginTop: 8 }}>
                 <button
@@ -1703,69 +1770,6 @@ export default function ProcessChart() {
                                 </li>
                               ))}
                             </ul>
-                          </div>
-                        )}
-
-                        {/* Diagnosis Codes */}
-                        {aiData.diagnosisCodes && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Diagnosis Codes</h4>
-                            <div className="space-y-3">
-                              {aiData.diagnosisCodes.primary_diagnosis?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-amber-600 mb-1.5">Primary Diagnosis</p>
-                                  <div className="space-y-1.5">
-                                    {aiData.diagnosisCodes.primary_diagnosis.map((dx, i) => (
-                                      <div key={i} className="flex items-start gap-3 px-3 py-2 bg-amber-50 rounded-lg">
-                                        <span className="text-sm font-bold text-amber-800 flex-shrink-0">{getCode(dx)}</span>
-                                        {getDesc(dx) && <span className="text-sm text-amber-700">{getDesc(dx)}</span>}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {aiData.diagnosisCodes.secondary_diagnoses?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-slate-500 mb-1.5">Secondary Diagnoses</p>
-                                  <div className="space-y-1.5">
-                                    {aiData.diagnosisCodes.secondary_diagnoses.map((dx, i) => (
-                                      <div key={i} className="flex items-start gap-3 px-3 py-2 bg-slate-50 rounded-lg">
-                                        <span className="text-sm font-semibold text-slate-700 flex-shrink-0">{getCode(dx)}</span>
-                                        {getDesc(dx) && <span className="text-sm text-slate-600">{getDesc(dx)}</span>}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {aiData.diagnosisCodes.ed_em_level?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-blue-600 mb-1.5">E/M Level</p>
-                                  <div className="space-y-1.5">
-                                    {aiData.diagnosisCodes.ed_em_level.map((em, i) => (
-                                      <div key={i} className="flex items-start gap-3 px-3 py-2 bg-blue-50 rounded-lg">
-                                        <span className="text-sm font-bold text-blue-800 flex-shrink-0">{getCode(em)}</span>
-                                        {getDesc(em) && <span className="text-sm text-blue-700">{getDesc(em)}</span>}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Procedures */}
-                        {aiData.procedures?.length > 0 && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Procedures</h4>
-                            <div className="space-y-1.5">
-                              {aiData.procedures.map((proc, i) => (
-                                <div key={i} className="flex items-start gap-3 px-3 py-2 bg-emerald-50 rounded-lg">
-                                  <span className="text-sm font-bold text-emerald-800 flex-shrink-0">{getCode(proc)}</span>
-                                  {getDesc(proc) && <span className="text-sm text-emerald-700">{getDesc(proc)}</span>}
-                                </div>
-                              ))}
-                            </div>
                           </div>
                         )}
 
@@ -2017,7 +2021,6 @@ export default function ProcessChart() {
         };
 
         const isReviewAiView = reviewTab === "ai-summary";
-        const reviewDocUrl = aiData?.documents?.[0]?.s3Url;
 
         return (
           <div
@@ -2087,40 +2090,168 @@ export default function ProcessChart() {
                     ))}
                   </div>
 
+                  {/* Document Switcher (only in document tab when multiple docs) */}
+                  {!isReviewAiView && aiData?.documents?.length > 1 && (
+                    <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #e2e8f0", background: "#fff", overflowX: "auto" }}>
+                      {aiData.documents.map((doc, idx) => (
+                        <button
+                          key={doc.id}
+                          onClick={() => setReviewDocIndex(idx)}
+                          style={{
+                            padding: "8px 14px", border: "none", cursor: "pointer",
+                            background: reviewDocIndex === idx ? "#fffbeb" : "#fff",
+                            borderBottom: reviewDocIndex === idx ? "2px solid #d97706" : "2px solid transparent",
+                            color: reviewDocIndex === idx ? "#92400e" : "#94a3b8",
+                            fontSize: 11, fontWeight: 600, whiteSpace: "nowrap",
+                            display: "flex", alignItems: "center", gap: 5,
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          {doc.mimeType === 'application/pdf'
+                            ? <FileText style={{ width: 12, height: 12 }} />
+                            : doc.mimeType?.startsWith('image/')
+                            ? <FileImage style={{ width: 12, height: 12 }} />
+                            : <FileIcon style={{ width: 12, height: 12 }} />
+                          }
+                          {doc.filename || `Document ${idx + 1}`}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Content Area */}
                   <div style={{ flex: 1, overflow: "hidden", background: "#f8fafc" }}>
                     {!isReviewAiView ? (
-                      reviewDocUrl ? (
-                        <iframe src={reviewDocUrl} title="Document Viewer" style={{ width: "100%", height: "100%", border: "none" }} />
-                      ) : (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8" }}>
-                          <FileText style={{ width: 40, height: 40, marginBottom: 12, opacity: 0.4 }} />
-                          <p style={{ fontSize: 14, fontWeight: 500 }}>No document available</p>
-                        </div>
-                      )
+                      (() => {
+                        const currentDoc = aiData?.documents?.[reviewDocIndex];
+                        const docUrl = currentDoc?.s3Url;
+                        return docUrl ? (
+                          <iframe src={docUrl} title="Document Viewer" style={{ width: "100%", height: "100%", border: "none" }} />
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8" }}>
+                            <FileText style={{ width: 40, height: 40, marginBottom: 12, opacity: 0.4 }} />
+                            <p style={{ fontSize: 14, fontWeight: 500 }}>No document available</p>
+                          </div>
+                        );
+                      })()
                     ) : (
                       <div style={{ height: "100%", overflowY: "auto", padding: 24 }}>
                         {aiData?.aiStatus === 'ready' && aiData?.aiSummary ? (
                           <div style={{ maxWidth: 700, margin: "0 auto" }}>
-                            {(aiData.aiSummary.clinical_summary || aiData.aiSummary.narrative) && (
+                            {/* Chief Complaint */}
+                            {aiData.aiSummary.chief_complaint?.text && (
                               <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20, marginBottom: 16 }}>
                                 <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                                  <Sparkles style={{ width: 14, height: 14, color: "#a855f7" }} /> Clinical Summary
+                                  <Sparkles style={{ width: 14, height: 14, color: "#a855f7" }} /> Chief Complaint
                                 </h4>
-                                <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
-                                  {str(aiData.aiSummary.clinical_summary || aiData.aiSummary.narrative)}
+                                <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7 }}>
+                                  {str(aiData.aiSummary.chief_complaint.text)}
                                 </p>
                               </div>
                             )}
-                            {aiData.aiSummary.key_findings?.length > 0 && (
-                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20 }}>
-                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>Key Findings</h4>
-                                {aiData.aiSummary.key_findings.map((finding, i) => (
-                                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8, fontSize: 13, color: "#475569" }}>
-                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#a855f7", marginTop: 6, flexShrink: 0 }} />
-                                    {str(typeof finding === 'string' ? finding : finding?.description || finding?.finding) || str(finding)}
+
+                            {/* History of Present Illness */}
+                            {aiData.aiSummary.history_of_present_illness?.text && (
+                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20, marginBottom: 16 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>History of Present Illness</h4>
+                                <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                                  {str(aiData.aiSummary.history_of_present_illness.text)}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Assessment & Plan */}
+                            {aiData.aiSummary.assessment_and_plan && (
+                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20, marginBottom: 16 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>Assessment & Plan</h4>
+                                {aiData.aiSummary.assessment_and_plan.assessment && (
+                                  <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, marginBottom: 8 }}>
+                                    {str(aiData.aiSummary.assessment_and_plan.assessment)}
+                                  </p>
+                                )}
+                                {aiData.aiSummary.assessment_and_plan.plan && (
+                                  <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, marginBottom: 8 }}>
+                                    <span style={{ fontWeight: 600 }}>Plan: </span>{str(aiData.aiSummary.assessment_and_plan.plan)}
+                                  </p>
+                                )}
+                                {aiData.aiSummary.assessment_and_plan.diagnoses?.length > 0 && (
+                                  <div style={{ marginTop: 8 }}>
+                                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Diagnoses: </span>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                                      {aiData.aiSummary.assessment_and_plan.diagnoses.map((d, i) => (
+                                        <span key={i} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6, background: "#f5f3ff", border: "1px solid #e9d5ff", color: "#6d28d9" }}>
+                                          {str(d)}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {aiData.aiSummary.assessment_and_plan.follow_up && (
+                                  <p style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}>
+                                    <span style={{ fontWeight: 600 }}>Follow-up: </span>{str(aiData.aiSummary.assessment_and_plan.follow_up)}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Past Medical History */}
+                            {aiData.aiSummary.past_medical_history && (
+                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20, marginBottom: 16 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>Past Medical History</h4>
+                                {aiData.aiSummary.past_medical_history.conditions?.length > 0 && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Conditions: </span>
+                                    <span style={{ fontSize: 13, color: "#475569" }}>{aiData.aiSummary.past_medical_history.conditions.map(str).join(', ')}</span>
+                                  </div>
+                                )}
+                                {aiData.aiSummary.past_medical_history.surgeries?.length > 0 && (
+                                  <div>
+                                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Surgeries: </span>
+                                    <span style={{ fontSize: 13, color: "#475569" }}>{aiData.aiSummary.past_medical_history.surgeries.map(str).join(', ')}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Clinical Alerts */}
+                            {aiData.aiSummary.clinical_alerts?.length > 0 && (
+                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #fef3c7", padding: 20, marginBottom: 16 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#92400e", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                                  <AlertCircle style={{ width: 14, height: 14, color: "#d97706" }} /> Clinical Alerts
+                                </h4>
+                                {aiData.aiSummary.clinical_alerts.map((alert, i) => (
+                                  <div key={i} style={{ padding: "8px 10px", background: "#fffbeb", borderRadius: 8, marginBottom: 6, border: "1px solid #fef3c7" }}>
+                                    <p style={{ fontSize: 13, color: "#92400e", fontWeight: 600 }}>{str(alert.alert)}</p>
+                                    {alert.action_required && (
+                                      <p style={{ fontSize: 11, color: "#b45309", marginTop: 4 }}>Action: {str(alert.action_required)}</p>
+                                    )}
                                   </div>
                                 ))}
+                              </div>
+                            )}
+
+                            {/* Medications */}
+                            {aiData.aiSummary.medications?.current?.length > 0 && (
+                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20, marginBottom: 16 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>Medications</h4>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                  {aiData.aiSummary.medications.current.map((med, i) => (
+                                    <span key={i} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 6, background: "#eef2ff", border: "1px solid #c7d2fe", color: "#4338ca" }}>
+                                      {str(med)}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Patient Demographics */}
+                            {aiData.aiSummary.patient_demographics && (
+                              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20, marginBottom: 16 }}>
+                                <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>Patient Demographics</h4>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 13, color: "#475569" }}>
+                                  {aiData.aiSummary.patient_demographics.age && <span><span style={{ fontWeight: 600, color: "#64748b" }}>Age:</span> {str(aiData.aiSummary.patient_demographics.age)}</span>}
+                                  {aiData.aiSummary.patient_demographics.sex && <span><span style={{ fontWeight: 600, color: "#64748b" }}>Sex:</span> {str(aiData.aiSummary.patient_demographics.sex)}</span>}
+                                </div>
                               </div>
                             )}
                           </div>
