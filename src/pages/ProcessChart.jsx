@@ -9,7 +9,7 @@ import axios from "axios";
 import {
   FileText, File as FileIcon, FileImage, Layers,
   ClipboardPaste, X, Plus, Trash2, Upload, Loader2, CheckCircle2, AlertCircle,
-  Eye, ExternalLink, Wifi, WifiOff, Clock,
+  Eye, ExternalLink, Wifi, WifiOff, Clock, ChevronLeft, ChevronRight, List,
 } from "lucide-react";
 
 /* ── SVG Icon components ── */
@@ -380,6 +380,7 @@ export default function ProcessChart() {
   const [uploadResult, setUploadResult] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [docViewerUrl, setDocViewerUrl] = useState(null); // for document popup
+  const [docSidebarOpen, setDocSidebarOpen] = useState(false); // sidebar in popup
 
   // WebSocket job status tracking
   const jobId = uploadResult?.jobId || null;
@@ -1027,70 +1028,50 @@ export default function ProcessChart() {
                     )}
                   </div>
 
-                  {/* Live Job Status Tracker (during active upload) */}
-                  {uploadResult && jobId && (
-                    <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-800">AI Processing Status</span>
-                          <span className="text-xs font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                            {jobId.slice(0, 8)}...
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {wsConnected ? (
-                            <Wifi className="w-3.5 h-3.5 text-emerald-500" />
-                          ) : (
-                            <WifiOff className="w-3.5 h-3.5 text-slate-400" />
-                          )}
-                          <span className={`text-xs ${wsConnected ? 'text-emerald-600' : 'text-slate-400'}`}>
-                            {wsConnected ? 'Live' : 'Connecting...'}
-                          </span>
-                        </div>
-                      </div>
+                  {/* Live Job Progress Bar (during active upload) */}
+                  {uploadResult && jobId && (() => {
+                    const progressPercent = jobStatus === 'failed' ? Math.round(((currentPhaseIndex >= 0 ? currentPhaseIndex : 0) / (PHASES.length - 1)) * 100)
+                      : jobStatus === 'completed' ? 100
+                      : currentPhaseIndex >= 0 ? Math.round(((currentPhaseIndex + 0.5) / (PHASES.length - 1)) * 100)
+                      : 0;
+                    const isFailed = jobStatus === 'failed';
+                    const isComplete = jobStatus === 'completed';
+                    const barColor = isFailed ? 'bg-red-500' : isComplete ? 'bg-emerald-500' : 'bg-amber-500';
+                    const textColor = isFailed ? 'text-red-700' : isComplete ? 'text-emerald-700' : 'text-amber-700';
 
-                      <div className="flex items-center gap-1">
-                        {PHASES.map((ph, idx) => {
-                          const isActive = idx === currentPhaseIndex;
-                          const isDone = idx < currentPhaseIndex;
-                          const isFailed = jobStatus === 'failed';
-                          return (
-                            <div key={ph.key} className="flex-1 flex flex-col items-center gap-1.5">
-                              <div
-                                className={`h-2 w-full rounded-full transition-all duration-500 ${
-                                  isFailed && isActive ? 'bg-red-400' :
-                                  isDone ? 'bg-emerald-400' :
-                                  isActive ? 'bg-amber-400 animate-pulse' :
-                                  'bg-slate-200'
-                                }`}
-                              />
-                              <span className={`text-[10px] font-medium leading-none ${
-                                isFailed && isActive ? 'text-red-600' :
-                                isDone ? 'text-emerald-600' :
-                                isActive ? 'text-amber-700' :
-                                'text-slate-400'
-                              }`}>
-                                {ph.label}
-                              </span>
+                    return (
+                      <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {isComplete ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> :
+                             isFailed ? <AlertCircle className="w-4 h-4 text-red-500" /> :
+                             <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />}
+                            <span className={`text-sm font-semibold ${textColor}`}>
+                              {isComplete ? 'Processing Complete' : isFailed ? 'Processing Failed' : 'Processing...'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-lg font-bold ${textColor}`}>{progressPercent}%</span>
+                            <div className="flex items-center gap-1">
+                              {wsConnected ? <Wifi className="w-3 h-3 text-emerald-500" /> : <WifiOff className="w-3 h-3 text-slate-400" />}
                             </div>
-                          );
-                        })}
-                      </div>
-
-                      {jobMessage && (
-                        <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg ${
-                          jobStatus === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                          jobStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
-                          'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}>
-                          {jobStatus === 'completed' ? <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> :
-                           jobStatus === 'failed' ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> :
-                           <Clock className="w-4 h-4 flex-shrink-0 animate-pulse" />}
-                          <span>{jobMessage}</span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
+
+                        {/* Single progress bar */}
+                        <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ease-out ${barColor} ${!isComplete && !isFailed ? 'animate-pulse' : ''}`}
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+
+                        {jobMessage && (
+                          <p className={`text-xs ${isFailed ? 'text-red-600' : 'text-slate-500'}`}>{jobMessage}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* AI Status & Uploaded Documents (from saved session data) */}
                   {aiData && (
@@ -1490,21 +1471,21 @@ export default function ProcessChart() {
         </div>
       </div>
 
-      {/* Document Viewer Popup */}
+      {/* Document Viewer Popup with Sidebar */}
       {docViewerUrl && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setDocViewerUrl(null)}
+          onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(false); }}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl w-[90vw] h-[90vh] max-w-6xl flex flex-col overflow-hidden"
+            className="bg-white rounded-2xl shadow-2xl w-[94vw] h-[92vh] max-w-7xl flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Popup Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-red-500" />
+                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-red-500" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-800 text-sm">Document Viewer</h3>
@@ -1512,6 +1493,18 @@ export default function ProcessChart() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* Toggle documents sidebar */}
+                <button
+                  onClick={() => setDocSidebarOpen(o => !o)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                    docSidebarOpen
+                      ? 'text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100'
+                      : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  Documents{aiData?.documents?.length ? ` (${aiData.documents.length})` : ''}
+                </button>
                 <a
                   href={docViewerUrl}
                   target="_blank"
@@ -1519,23 +1512,93 @@ export default function ProcessChart() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white rounded-lg hover:bg-slate-100 border border-slate-200 transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  Open in New Tab
+                  New Tab
                 </a>
                 <button
-                  onClick={() => setDocViewerUrl(null)}
+                  onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(false); }}
                   className="w-8 h-8 rounded-lg bg-white hover:bg-red-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            {/* Popup Body */}
-            <div className="flex-1 bg-slate-100">
-              <iframe
-                src={docViewerUrl}
-                title="Document Viewer"
-                className="w-full h-full border-0"
-              />
+
+            {/* Popup Body — iframe + sidebar */}
+            <div className="flex-1 flex overflow-hidden">
+              {/* Document sidebar */}
+              <div
+                className={`bg-white border-r border-slate-200 flex-shrink-0 overflow-y-auto transition-all duration-300 ${
+                  docSidebarOpen ? 'w-72' : 'w-0'
+                }`}
+                style={{ minWidth: docSidebarOpen ? 288 : 0 }}
+              >
+                {docSidebarOpen && aiData?.documents?.length > 0 && (
+                  <div className="p-3 space-y-1.5">
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2 mb-2">
+                      All Documents
+                    </p>
+                    {aiData.documents.map((doc) => {
+                      const isActive = doc.s3Url === docViewerUrl;
+                      const isPdf = doc.mimeType === 'application/pdf';
+                      const isWord = doc.mimeType?.includes('word') || doc.mimeType?.includes('doc');
+                      const isImage = doc.mimeType?.startsWith('image/');
+                      const iconColor = isPdf ? 'text-red-500' : isWord ? 'text-blue-500' : isImage ? 'text-purple-500' : 'text-slate-500';
+
+                      return (
+                        <button
+                          key={doc.id}
+                          onClick={() => doc.s3Url && setDocViewerUrl(doc.s3Url)}
+                          className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                            isActive
+                              ? 'bg-amber-50 border border-amber-200'
+                              : 'hover:bg-slate-50 border border-transparent'
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            isActive ? 'bg-amber-100' : 'bg-slate-100'
+                          }`}>
+                            {isImage
+                              ? <FileImage className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />
+                              : <FileText className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-medium truncate ${isActive ? 'text-amber-800' : 'text-slate-700'}`}>
+                              {doc.filename}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] text-slate-400">
+                                {doc.fileSize < 1024 ? doc.fileSize + ' B' :
+                                 doc.fileSize < 1048576 ? (doc.fileSize / 1024).toFixed(1) + ' KB' :
+                                 (doc.fileSize / 1048576).toFixed(1) + ' MB'}
+                              </span>
+                              {doc.ocrStatus === 'completed' && (
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                              )}
+                            </div>
+                          </div>
+                          {isActive && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {docSidebarOpen && (!aiData?.documents || aiData.documents.length === 0) && (
+                  <div className="p-6 text-center">
+                    <p className="text-xs text-slate-400">No documents</p>
+                  </div>
+                )}
+              </div>
+
+              {/* iframe viewer */}
+              <div className="flex-1 bg-slate-100">
+                <iframe
+                  src={docViewerUrl}
+                  title="Document Viewer"
+                  className="w-full h-full border-0"
+                />
+              </div>
             </div>
           </div>
         </div>
