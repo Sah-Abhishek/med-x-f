@@ -422,7 +422,7 @@ export default function ProcessChart() {
         label: doc.name,
       }));
 
-      formData.append("sessionId", chart?.id?.toString() || "");
+      formData.append("sessionId", id);
       formData.append("documentType", "ed-notes");
       formData.append("mrn", chart?.MR_No || "");
       formData.append("chartNumber", chart?.ChartNo || "");
