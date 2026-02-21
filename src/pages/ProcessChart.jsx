@@ -700,6 +700,7 @@ export default function ProcessChart() {
           admitDate: c.AdmitDate || "",
           dischargeDate: c.DischargeDate || "",
           disposition: c.Disposition || "",
+          em: c.EM || "",
           primaryDiagnosis: c.PrimaryDiagnosis || "",
           primaryHealth: c.PrimaryHealth || "",
           facility: c.Facility || "",
@@ -708,16 +709,15 @@ export default function ProcessChart() {
           drgValue: c.drg_value || "",
           procedureCode: c.procedure_code || "",
           subSpecialty: c.SubSpecialty || "",
-          secondaryDiagnosis: c.SecondaryDiagnosis || "",
           chartStatus: c.Status || "",
           responsibleParty: c.ResponsibleParty || "",
           holdReason: c.HoldReason || "",
           coderComments: c.CoderComments || "",
+          rejectionComments: c.RejectionComments || "",
+          deficiencyComments: c.DeficiencyComments || "",
           auditOption: c.AuditOption || "",
           qcStatus: c.qc_status || "",
           priority: c.Priority || "",
-          therapySessions: c.TherapySessions || "",
-          latestAppointment: c.LatestAppointment || "",
         });
       } else {
         setError("Failed to load chart data");
@@ -1513,108 +1513,98 @@ export default function ProcessChart() {
 
             {/* Chart Info Section — Collapsible */}
             <CollapsibleCard title="Chart Info" subtitle="All relevant chart fields" defaultOpen={true}>
-              {/* Row 1 */}
+              {/* Row 1: Chart #, MR#, Date of Service */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Chart #" value={formData.chartNo} required readOnly={false} onChange={(v) => updateForm("chartNo", v)} />
-                <FormField label="MR#" value={formData.mrNo} required readOnly={false} onChange={(v) => updateForm("mrNo", v)} />
-                <FormField label="Date of Service" value={formData.dateOfService} required readOnly={false} onChange={(v) => updateForm("dateOfService", v)} />
+                <FormField label="MR#" value={formData.mrNo} readOnly={false} onChange={(v) => updateForm("mrNo", v)} />
+                <FormField label="Date of Service" value={formData.dateOfService} readOnly={false} onChange={(v) => updateForm("dateOfService", v)} />
               </div>
-              {/* Row 2 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Admit date" value={formData.admitDate} required readOnly={false} onChange={(v) => updateForm("admitDate", v)} />
-                <FormField label="Discharge date" value={formData.dischargeDate} required readOnly={false} onChange={(v) => updateForm("dischargeDate", v)} />
+              {/* Row 2: Admit date, Discharge date */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+                <FormField label="Admit date" value={formData.admitDate} readOnly={false} onChange={(v) => updateForm("admitDate", v)} />
+                <FormField label="Discharge date" value={formData.dischargeDate} readOnly={false} onChange={(v) => updateForm("dischargeDate", v)} />
+                <div />
               </div>
-              {/* Row 3 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Disposition" value={formData.disposition} required type="select" readOnly={false} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />
-                <div>
-                  <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} required readOnly={false} onChange={(v) => updateForm("primaryDiagnosis", v)} />
-                  <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                    <span style={{ fontSize: 11, color: "#0ea5e9", fontWeight: 600, cursor: "pointer" }}>AI Suggest</span>
-                    <span style={{
-                      padding: "2px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600,
-                      background: "#f0f1f3", color: "#64748b", cursor: "pointer",
-                    }}>Procedure codes</span>
-                    <span style={{ fontSize: 11, color: "#0ea5e9", fontWeight: 600, cursor: "pointer" }}>View Evidence</span>
-                  </div>
-                </div>
+              {/* Row 3: Disposition, EM, Primary diagnosis */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+                <FormField label="Disposition" value={formData.disposition} type="select" readOnly={false} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />
+                <FormField label="EM" value={formData.em} readOnly={false} onChange={(v) => updateForm("em", v)} />
+                <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} readOnly={false} onChange={(v) => updateForm("primaryDiagnosis", v)} />
               </div>
-              {/* Row 4 */}
+              {/* Row 4: Primary Health Plan, Facility */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Primary Health Plan" value={formData.primaryHealth} type="select" readOnly={false} onChange={(v) => updateForm("primaryHealth", v)} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />
                 <FormField label="Facility" value={formData.facility} type="select" readOnly={false} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />
               </div>
-              {/* Row 5 */}
+              {/* Row 5: POA, LOS, DRG Value */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="POA" value={formData.poa} required readOnly={false} onChange={(v) => updateForm("poa", v)} />
-                <FormField label="LOS" value={formData.los} required readOnly={false} onChange={(v) => updateForm("los", v)} />
-                <FormField label="DRG Value" value={formData.drgValue} required readOnly={false} onChange={(v) => updateForm("drgValue", v)} />
+                <FormField label="POA" value={formData.poa} readOnly={false} onChange={(v) => updateForm("poa", v)} />
+                <FormField label="LOS" value={formData.los} readOnly={false} onChange={(v) => updateForm("los", v)} />
+                <FormField label="DRG Value" value={formData.drgValue} readOnly={false} onChange={(v) => updateForm("drgValue", v)} />
               </div>
-              {/* Row 6 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Procedure code" value={formData.procedureCode} required readOnly={false} onChange={(v) => updateForm("procedureCode", v)} />
-                <FormField label="Sub Specialty" value={formData.subSpecialty} required type="select" readOnly={false} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
-              </div>
-              {/* Row 7 */}
-              <div style={{ marginBottom: 16 }}>
-                <FormField label="Secondary Diagnosis" value={formData.secondaryDiagnosis} required readOnly={false} onChange={(v) => updateForm("secondaryDiagnosis", v)} />
+              {/* Row 6: Procedure code, Sub Specialty */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                <FormField label="Procedure code" value={formData.procedureCode} readOnly={false} onChange={(v) => updateForm("procedureCode", v)} />
+                <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" readOnly={false} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
+                <div />
               </div>
             </CollapsibleCard>
 
             {/* Processing Info Section — Collapsible */}
             <CollapsibleCard title="Processing Info" subtitle="All fields related to processing this chart" defaultOpen={true}>
-              {/* Row 1 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Chart status" value={formData.chartStatus} required type="select" readOnly={false} onChange={(v) => updateForm("chartStatus", v)} options={["Open", "Complete", "Incomplete"]} />
-                <FormField label="Responsible party" value={formData.responsibleParty} required type="select" readOnly={false} onChange={(v) => updateForm("responsibleParty", v)} options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
+              {/* Row 1: Chart status, Responsible party */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 16, marginBottom: 16 }}>
+                <FormField label="Chart status" value={formData.chartStatus} type="select" readOnly={false} onChange={(v) => updateForm("chartStatus", v)} options={["Open", "Complete", "Incomplete"]} />
+                <FormField label="Responsible party" value={formData.responsibleParty} type="select" readOnly={false} onChange={(v) => updateForm("responsibleParty", v)} placeholder="Select..." options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
               </div>
-              {/* Row 2 */}
+              {/* Row 2: Hold reason */}
               <div style={{ marginBottom: 16 }}>
                 <FormField label="Hold reason" value={formData.holdReason} type="select" readOnly={false} onChange={(v) => updateForm("holdReason", v)} placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
               </div>
-              {/* Row 3 */}
+              {/* Row 3: Coder comments to client */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                  Coder comments to client <span style={{ color: "#ef4444" }}>*</span>
+                  Coder comments to client
                 </label>
-                <textarea rows={3} value={formData.coderComments} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
+                <textarea rows={3} value={formData.coderComments || ""} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
                   border: "1px solid #e2e8f0", background: "#fff",
                   fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
                 }} />
               </div>
-              {/* Row 4 */}
+              {/* Row 4: Rejection / Denial Comments */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
+                  Rejection / Denial Comments
+                </label>
+                <textarea rows={3} value={formData.rejectionComments || ""} onChange={(e) => updateForm("rejectionComments", e.target.value)} style={{
+                  width: "100%", padding: "10px 12px", borderRadius: 8,
+                  border: "1px solid #e2e8f0", background: "#fff",
+                  fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                }} />
+              </div>
+              {/* Row 5: Deficiency Comments */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
+                  Deficiency Comments
+                </label>
+                <textarea rows={3} value={formData.deficiencyComments || ""} onChange={(e) => updateForm("deficiencyComments", e.target.value)} style={{
+                  width: "100%", padding: "10px 12px", borderRadius: 8,
+                  border: "1px solid #e2e8f0", background: "#fff",
+                  fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                }} />
+              </div>
+              {/* Row 6: Date of completion, Audit options, Coder QC Status */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Date of completion" value={chart.DateOfCompletion} />
-                <FormField label="Audit options" value={formData.auditOption} required type="select" readOnly={false} onChange={(v) => updateForm("auditOption", v)} options={config?.audit_options?.map(a => a.audit_opt) || []} />
-                <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={false} onChange={(v) => updateForm("qcStatus", v)} />
+                <FormField label="Audit options" value={formData.auditOption} required type="select" readOnly={false} onChange={(v) => updateForm("auditOption", v)} placeholder="Select..." options={config?.audit_options?.map(a => a.audit_opt) || []} />
+                <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={false} onChange={(v) => updateForm("qcStatus", v)} placeholder="Select..." />
               </div>
-              {/* Row 5 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Allocate to auditor" value="" type="select" readOnly={false} />
-                <FormField label="Allocate to Coder" value="" type="select" readOnly={false} />
-                <FormField label="Priority" value={formData.priority} type="select" readOnly={false} onChange={(v) => updateForm("priority", v)} options={["Critical", "High", "Medium", "Low"]} />
-              </div>
-              {/* Row 6 */}
+              {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                <FormField label="Therapy sessions taken" value={formData.therapySessions} required readOnly={false} onChange={(v) => updateForm("therapySessions", v)} />
-                <FormField label="Date of latest appointment" value={formData.latestAppointment} required readOnly={false} type="text" onChange={(v) => updateForm("latestAppointment", v)} placeholder="Select a Date" />
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                    AI Confidence Score
-                  </label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input readOnly value="" style={{
-                      width: "100%", padding: "10px 12px", borderRadius: 8,
-                      border: "1px solid #e2e8f0", background: "#f8fafc",
-                      fontSize: 13, color: "#1a1d23", boxSizing: "border-box",
-                    }} />
-                    <span style={{
-                      padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                      background: "#f0f1f3", color: "#64748b", whiteSpace: "nowrap",
-                    }}>NO</span>
-                  </div>
-                </div>
+                <FormField label="Allocate to auditor" value="" type="select" readOnly={false} />
+                <FormField label="Allocate to Coder" value="" type="select" readOnly={false} placeholder="Select..." />
+                <FormField label="Priority" value={formData.priority} type="select" readOnly={false} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
               </div>
             </CollapsibleCard>
 
