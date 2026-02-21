@@ -583,6 +583,7 @@ export default function ProcessChart() {
   // MedEx AI data for this session
   const [aiData, setAiData] = useState(null);
   const [aiDataLoading, setAiDataLoading] = useState(false);
+  const [aiNoSession, setAiNoSession] = useState(false);
 
   // Document processing API
   const DOCUMENT_PROCESS_URL = `${MEDX_API_URL}/documents/process`;
@@ -731,6 +732,7 @@ export default function ProcessChart() {
 
   const fetchAiData = useCallback(async () => {
     setAiDataLoading(true);
+    setAiNoSession(false);
     try {
       const response = await axios.get(`${MEDX_API_URL}/charts/session/${id}`, {
         headers: {
@@ -739,9 +741,13 @@ export default function ProcessChart() {
       });
       if (response.data.success) {
         setAiData(response.data.chart);
+        setAiNoSession(false);
+      } else {
+        setAiNoSession(true);
       }
     } catch (e) {
-      // No AI data for this session yet — that's fine
+      // No AI data for this session yet
+      setAiNoSession(true);
       console.log("No AI data found for session:", id);
     } finally {
       setAiDataLoading(false);
@@ -1758,6 +1764,15 @@ export default function ProcessChart() {
                   dc.ed_em_level?.length > 0
                 );
                 const hasProcs = procs?.length > 0;
+
+                if (aiNoSession) {
+                  return (
+                    <div style={{ textAlign: "center", padding: "12px 0" }}>
+                      <Upload style={{ width: 24, height: 24, color: "#94a3b8", margin: "0 auto 8px" }} />
+                      <p style={{ color: "#94a3b8", fontSize: 12 }}>Upload document to get ICD prediction</p>
+                    </div>
+                  );
+                }
 
                 if (!hasCodes && !hasProcs) {
                   return (
