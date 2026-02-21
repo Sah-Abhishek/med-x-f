@@ -171,7 +171,6 @@ const CollapsibleSection = ({ title, subtitle, defaultOpen = false, children, he
     <div style={{
       background: "#fff", borderRadius: 14, border: "1px solid #e8eaed",
       boxShadow: "0 1px 3px rgba(0,0,0,0.04)", marginBottom: 16,
-      overflow: "hidden",
     }}>
       <div
         onClick={() => setOpen(o => !o)}
@@ -203,12 +202,12 @@ const CollapsibleCard = ({ title, subtitle, defaultOpen = true, children }) => {
     <div style={{
       background: "#fff", borderRadius: 14, border: "1px solid #e8eaed",
       boxShadow: "0 1px 3px rgba(0,0,0,0.04)", marginBottom: 20,
-      overflow: "hidden",
     }}>
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "18px 24px", borderBottom: open ? "1px solid #f0f1f3" : "none",
         cursor: "pointer", userSelect: "none",
+        borderRadius: open ? "14px 14px 0 0" : 14,
       }} onClick={() => setOpen(o => !o)}>
         <div>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1a1d23", margin: 0 }}>{title}</h3>
