@@ -1554,22 +1554,23 @@ export default function ProcessChart() {
             <CollapsibleCard title="Processing Info" subtitle="All fields related to processing this chart" defaultOpen={true}>
               {/* Row 1: Chart status, Responsible party */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Chart status" value={formData.chartStatus} type="select" readOnly={false} onChange={(v) => updateForm("chartStatus", v)} options={["Open", "Complete", "Incomplete"]} />
+                <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" readOnly={false} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />
                 <FormField label="Responsible party" value={formData.responsibleParty} type="select" readOnly={false} onChange={(v) => updateForm("responsibleParty", v)} placeholder="Select..." options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
               </div>
-              {/* Row 2: Hold reason */}
-              <div style={{ marginBottom: 16 }}>
-                <FormField label="Hold reason" value={formData.holdReason} type="select" readOnly={false} onChange={(v) => updateForm("holdReason", v)} placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
+              {/* Row 2: Hold reason — disabled when Open or Complete */}
+              <div style={{ marginBottom: 16, opacity: (formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5, pointerEvents: (formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none" }}>
+                <FormField label="Hold reason" value={formData.holdReason} type="select" readOnly={(formData.chartStatus || "Open") !== "Incomplete"} onChange={(v) => updateForm("holdReason", v)} placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
               </div>
-              {/* Row 3: Coder comments to client */}
-              <div style={{ marginBottom: 16 }}>
+              {/* Row 3: Coder comments to client — disabled when Complete */}
+              <div style={{ marginBottom: 16, opacity: (formData.chartStatus || "Open") === "Complete" ? 0.5 : 1, pointerEvents: (formData.chartStatus || "Open") === "Complete" ? "none" : "auto" }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
                   Coder comments to client
                 </label>
-                <textarea rows={3} value={formData.coderComments || ""} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
+                <textarea rows={3} value={formData.coderComments || ""} readOnly={(formData.chartStatus || "Open") === "Complete"} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: "1px solid #e2e8f0", background: "#fff",
+                  border: "1px solid #e2e8f0", background: (formData.chartStatus || "Open") === "Complete" ? "#f8fafc" : "#fff",
                   fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                  cursor: (formData.chartStatus || "Open") === "Complete" ? "not-allowed" : "text",
                 }} />
               </div>
               {/* Row 4: Rejection / Denial Comments */}
