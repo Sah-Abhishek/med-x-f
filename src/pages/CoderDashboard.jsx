@@ -4,6 +4,13 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
 import { useChartsStore } from "../store/chartsStore";
 
+const fmtElapsed = (s) => {
+  if (s == null) return "--:--";
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return h > 0 ? `${pad(h)} : ${pad(m)} : ${pad(sec)}` : `${pad(m)} : ${pad(sec)}`;
+};
+
 const CHARTS_BASE_URL = "/charts/";
 
 // Map table column keys to API sort column names
@@ -189,6 +196,17 @@ export default function MyToDoList() {
     fetchUserStats();
   }, [fetchUserStats]);
 
+  const [elapsed, setElapsed] = useState(null);
+  useEffect(() => {
+    const timer = userStats?.current_chart_stats?.timer;
+    if (!timer) { setElapsed(null); return; }
+    const startTime = new Date(timer).getTime();
+    const tick = () => setElapsed(Math.floor((Date.now() - startTime) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [userStats]);
+
   // Reset to page 1 when tab or pageSize changes
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -334,7 +352,7 @@ export default function MyToDoList() {
         {userStats && (
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 20,
             marginBottom: 24,
           }}>
@@ -459,6 +477,69 @@ export default function MyToDoList() {
               }}>
                 Today's Count
               </div>
+            </div>
+
+            {/* Current Chart Card */}
+            <div
+              onClick={() => userStats.current_chart_stats?.chartId && navigate(`/process-chart/${userStats.current_chart_stats.chartId}`)}
+              style={{
+                background: "#fff",
+                borderRadius: 14,
+                border: "1px solid #e8eaed",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 140,
+                cursor: userStats.current_chart_stats?.chartId ? "pointer" : "default",
+                overflow: "hidden",
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "12px 16px",
+                borderBottom: "1px dashed #e8eaed",
+              }}>
+                <span style={{ color: "#10b981", fontSize: 10, lineHeight: 1 }}>●</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>Current Chart</span>
+              </div>
+
+              {/* Body */}
+              {userStats.current_chart_stats ? (
+                <div style={{ padding: "10px 16px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
+                  <div style={{
+                    background: "linear-gradient(135deg, #38bdf8, #06b6d4)",
+                    borderRadius: 12,
+                    padding: "16px 18px",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 4,
+                  }}>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>
+                      {userStats.current_chart_stats.chart_no || "—"}
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.7)" }}>
+                      {userStats.current_chart_stats.milestone || "—"}
+                    </div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", letterSpacing: 2, marginTop: 4 }}>
+                      {fmtElapsed(elapsed)}
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
+                      Tap to view
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#94a3b8", fontSize: 13, fontWeight: 500,
+                }}>
+                  No active chart
+                </div>
+              )}
             </div>
           </div>
         )}
