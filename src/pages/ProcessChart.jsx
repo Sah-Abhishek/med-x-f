@@ -2009,13 +2009,13 @@ export default function ProcessChart() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Date of completion" value={new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} readOnly />
                 <FormField label="Audit options" value={formData.auditOption} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("auditOption", v)} placeholder="Select..." options={config?.audit_options?.map(a => a.audit_opt) || []} />
-                <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("qcStatus", v)} placeholder="Select..." />
+                <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={timerStopped || chart?.MilestoneId !== 4} onChange={(v) => updateForm("qcStatus", v)} placeholder="Select..." />
               </div>
               {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
                 <FormField label="Allocate to auditor" value={formData.allocateAuditor} type="select" readOnly={timerStopped || !!formData.allocateCoder} onChange={(v) => updateForm("allocateAuditor", v)} placeholder="Select..." options={masterData?.auditors_active?.map(a => ({ value: a.name, label: a.name || "None" })) || []} />
                 <FormField label="Allocate to Coder" value={formData.allocateCoder} type="select" readOnly={timerStopped} onChange={(v) => updateForm("allocateCoder", v)} placeholder="Select..." options={masterData?.coders_active?.map(c => ({ value: c.name, label: c.name || "None" })) || []} />
-                <FormField label="Priority" value={formData.priority} type="select" readOnly={timerStopped} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
+                <FormField label="Priority" value={formData.priority} type="select" readOnly={timerStopped || chart?.MilestoneId !== 4} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
               </div>
               {renderCustomFields("Processing Info")}
               </div>
