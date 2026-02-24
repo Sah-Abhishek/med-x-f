@@ -878,7 +878,7 @@ export default function ProcessChart() {
           subSpecialty: c.SubSpecialty || "",
           chartStatus: c.Status || "",
           responsibleParty: c.ResponsibleParty || "",
-          holdReason: c.HoldReason || "",
+          holdReason: c.HoldReason ? (Array.isArray(c.HoldReason) ? c.HoldReason : c.HoldReason.split(",").map(s => s.trim()).filter(Boolean)) : [],
           coderComments: c.CoderComments || "",
           rejectionComments: c.RejectionComments || "",
           deficiencyComments: c.DeficiencyComments || "",
@@ -1928,7 +1928,16 @@ export default function ProcessChart() {
               </div>
               {/* Row 2: Hold reason — disabled when Open or Complete */}
               <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none") }}>
-                <FormField label="Hold reason" value={formData.holdReason} type="select" readOnly={timerStopped || (formData.chartStatus || "Open") !== "Incomplete"} onChange={(v) => updateForm("holdReason", v)} placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Hold reason</label>
+                  <FormFieldMultiSelect
+                    value={formData.holdReason || []}
+                    onChange={(v) => updateForm("holdReason", v)}
+                    options={config?.hold_reasons?.map(h => h.hold_reason) || []}
+                    placeholder="Select..."
+                    readOnly={timerStopped || (formData.chartStatus || "Open") !== "Incomplete"}
+                  />
+                </div>
               </div>
               {/* Row 3: Coder comments to client — disabled when Complete */}
               <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Complete" ? 0.5 : 1), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Complete" ? "none" : "auto") }}>
