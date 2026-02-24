@@ -532,13 +532,13 @@ const PriorityBadge = ({ priority }) => {
 
 /* ── Audit rows configuration ── */
 const AUDIT_ROWS = [
-  { key: "primaryDiagnosis", label: "Primary Diagnosis" },
-  { key: "secondaryDiagnosis", label: "Secondary Diagnosis" },
-  { key: "procedures", label: "Procedures" },
-  { key: "edEmLevel", label: "ED/EM Level", isDropdown: true },
-  { key: "modifier", label: "Modifier" },
-  { key: "poaIndicator", label: "POA Indicator" },
-  { key: "drgValue", label: "DRG Value" },
+  { key: "primaryDiagnosis", label: "Primary Diagnosis", feedKey: "prim_diag_feed" },
+  { key: "secondaryDiagnosis", label: "Secondary Diagnosis", feedKey: "sec_diag_feed" },
+  { key: "procedures", label: "Procedures", feedKey: "procedure_feed" },
+  { key: "edEmLevel", label: "ED/EM Level", isDropdown: true, feedKey: "ed_em_feed" },
+  { key: "modifier", label: "Modifier", feedKey: "modifier_feed" },
+  { key: "poaIndicator", label: "POA Indicator", feedKey: "poa_feed" },
+  { key: "drgValue", label: "DRG Value", feedKey: "drug_feed" },
   { key: "total", label: "Total", noFeedback: true },
 ];
 
@@ -2019,7 +2019,7 @@ export default function ProcessChart() {
                           <FormFieldDropdown
                             value={auditData[row.key]?.totalCodes || ""}
                             onChange={(v) => updateAuditField(row.key, "totalCodes", v)}
-                            options={[]}
+                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
                             placeholder="Select..."
                             readOnly={timerStopped}
                           />
@@ -2044,7 +2044,7 @@ export default function ProcessChart() {
                           <FormFieldDropdown
                             value={auditData[row.key]?.correctCodes || ""}
                             onChange={(v) => updateAuditField(row.key, "correctCodes", v)}
-                            options={[]}
+                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
                             placeholder="Select..."
                             readOnly={timerStopped}
                           />
@@ -2069,7 +2069,7 @@ export default function ProcessChart() {
                           <FormFieldDropdown
                             value={auditData[row.key]?.feedbackCategory || ""}
                             onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
-                            options={[]}
+                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
                             placeholder="Select..."
                             readOnly={timerStopped}
                           />
@@ -2088,7 +2088,7 @@ export default function ProcessChart() {
                     <FormFieldDropdown
                       value={formData.feedbackType}
                       onChange={(v) => updateForm("feedbackType", v)}
-                      options={[]}
+                      options={config?.feedback_types?.map(f => f.feed_type_name) || []}
                       placeholder="Select..."
                       readOnly={timerStopped}
                     />
