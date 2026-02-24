@@ -2007,7 +2007,7 @@ export default function ProcessChart() {
               </div>
               {/* Row 6: Date of completion, Audit options, Coder QC Status */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Date of completion" value={chart.DateOfCompletion} />
+                <FormField label="Date of completion" value={new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} readOnly />
                 <FormField label="Audit options" value={formData.auditOption} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("auditOption", v)} placeholder="Select..." options={config?.audit_options?.map(a => a.audit_opt) || []} />
                 <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("qcStatus", v)} placeholder="Select..." />
               </div>
