@@ -428,6 +428,12 @@ export default function ProcessChart() {
   const [timerStopTime, setTimerStopTime] = useState(() => {
     try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.stopTime || null; } catch { return null; }
   });
+  const [timerStopped, setTimerStopped] = useState(() => {
+    try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.stopped || false; } catch { return false; }
+  });
+
+  // Toast state
+  const [toast, setToast] = useState(null); // { message, type: 'error' | 'warning' | 'info' }
 
   // Upload section state
   const [activeTab] = useState("coding"); // default tab context
@@ -802,10 +808,10 @@ export default function ProcessChart() {
 
   // Persist timer state to localStorage
   useEffect(() => {
-    const data = { seconds: timerSeconds, running: timerRunning, startTime: timerStartTime, stopTime: timerStopTime };
+    const data = { seconds: timerSeconds, running: timerRunning, startTime: timerStartTime, stopTime: timerStopTime, stopped: timerStopped };
     if (timerRunning) data.runStartedAt = Date.now();
     localStorage.setItem(timerStorageKey, JSON.stringify(data));
-  }, [timerSeconds, timerRunning, timerStartTime, timerStopTime, timerStorageKey]);
+  }, [timerSeconds, timerRunning, timerStartTime, timerStopTime, timerStopped, timerStorageKey]);
 
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60).toString().padStart(2, "0");
@@ -824,18 +830,44 @@ export default function ProcessChart() {
     return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
   };
 
-  const handleTimerStart = () => {
-    if (!timerRunning) {
-      setTimerRunning(true);
-      setTimerStartTime(now());
-      setTimerStopTime(null);
+  const showToast = (message, type = "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 5000);
+  };
+
+  const handleTimerStart = async () => {
+    if (timerRunning) return;
+
+    // Step 1: Check if documents are uploaded
+    if (aiNoSession || !aiData?.documents || aiData.documents.length === 0) {
+      showToast("Please upload documents before starting the timer.", "warning");
+      return;
     }
+
+    // Step 2: Check if another chart is already being processed
+    try {
+      const res = await api.get("/users/processing-chart");
+      if (res.data?.success && res.data?.isChartUnderProcess) {
+        showToast("You already have a chart under process. Please complete or release it before starting a new one.", "warning");
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to check processing-chart status:", e.message);
+      showToast("Unable to verify processing status. Please try again.", "error");
+      return;
+    }
+
+    // All checks passed — start the timer
+    setTimerRunning(true);
+    setTimerStartTime(now());
+    setTimerStopTime(null);
   };
 
   const handleTimerStop = () => {
     if (timerRunning) {
       setTimerRunning(false);
       setTimerStopTime(now());
+      setTimerStopped(true);
     }
   };
 
@@ -874,6 +906,29 @@ export default function ProcessChart() {
 
   return (
     <DashboardLayout>
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: 24, right: 24, zIndex: 9999,
+          padding: "14px 20px", borderRadius: 12, maxWidth: 400,
+          background: toast.type === "warning" ? "#fef3c7" : toast.type === "error" ? "#fef2f2" : "#eff6ff",
+          border: `1px solid ${toast.type === "warning" ? "#f59e0b" : toast.type === "error" ? "#ef4444" : "#3b82f6"}`,
+          color: toast.type === "warning" ? "#92400e" : toast.type === "error" ? "#991b1b" : "#1e40af",
+          fontSize: 13, fontWeight: 500, boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+          display: "flex", alignItems: "flex-start", gap: 10,
+          animation: "slideInRight 0.3s ease-out",
+        }}>
+          <span style={{ fontSize: 16, lineHeight: 1 }}>
+            {toast.type === "warning" ? "\u26A0\uFE0F" : toast.type === "error" ? "\u274C" : "\u2139\uFE0F"}
+          </span>
+          <span style={{ flex: 1 }}>{toast.message}</span>
+          <button onClick={() => setToast(null)} style={{
+            background: "none", border: "none", cursor: "pointer", fontSize: 16,
+            color: "inherit", padding: 0, lineHeight: 1, opacity: 0.6,
+          }}>&times;</button>
+        </div>
+      )}
+      <style>{`@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
       <div style={{ fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif" }}>
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
@@ -1518,64 +1573,67 @@ export default function ProcessChart() {
 
             {/* Chart Info Section — Collapsible */}
             <CollapsibleCard title="Chart Info" subtitle="All relevant chart fields" defaultOpen={true}>
+              <div style={timerStopped ? { opacity: 0.6, pointerEvents: "none" } : {}}>
               {/* Row 1: Chart #, MR#, Date of Service */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Chart #" value={formData.chartNo} required readOnly={false} onChange={(v) => updateForm("chartNo", v)} />
-                <FormField label="MR#" value={formData.mrNo} readOnly={false} onChange={(v) => updateForm("mrNo", v)} />
-                <FormField label="Date of Service" value={formData.dateOfService} readOnly={false} onChange={(v) => updateForm("dateOfService", v)} />
+                <FormField label="Chart #" value={formData.chartNo} required readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />
+                <FormField label="MR#" value={formData.mrNo} readOnly={timerStopped} onChange={(v) => updateForm("mrNo", v)} />
+                <FormField label="Date of Service" value={formData.dateOfService} readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />
               </div>
               {/* Row 2: Admit date, Discharge date */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Admit date" value={formData.admitDate} readOnly={false} onChange={(v) => updateForm("admitDate", v)} />
-                <FormField label="Discharge date" value={formData.dischargeDate} readOnly={false} onChange={(v) => updateForm("dischargeDate", v)} />
+                <FormField label="Admit date" value={formData.admitDate} readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />
+                <FormField label="Discharge date" value={formData.dischargeDate} readOnly={timerStopped} onChange={(v) => updateForm("dischargeDate", v)} />
                 <div />
               </div>
               {/* Row 3: Disposition, EM, Primary diagnosis */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Disposition" value={formData.disposition} type="select" readOnly={false} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />
-                <FormField label="EM" value={formData.em} readOnly={false} onChange={(v) => updateForm("em", v)} />
-                <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} readOnly={false} onChange={(v) => updateForm("primaryDiagnosis", v)} />
+                <FormField label="Disposition" value={formData.disposition} type="select" readOnly={timerStopped} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />
+                <FormField label="EM" value={formData.em} readOnly={timerStopped} onChange={(v) => updateForm("em", v)} />
+                <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} />
               </div>
               {/* Row 4: Primary Health Plan, Facility */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Primary Health Plan" value={formData.primaryHealth} type="select" readOnly={false} onChange={(v) => updateForm("primaryHealth", v)} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />
-                <FormField label="Facility" value={formData.facility} type="select" readOnly={false} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />
+                <FormField label="Primary Health Plan" value={formData.primaryHealth} type="select" readOnly={timerStopped} onChange={(v) => updateForm("primaryHealth", v)} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />
+                <FormField label="Facility" value={formData.facility} type="select" readOnly={timerStopped} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />
               </div>
               {/* Row 5: POA, LOS, DRG Value */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="POA" value={formData.poa} readOnly={false} onChange={(v) => updateForm("poa", v)} />
-                <FormField label="LOS" value={formData.los} readOnly={false} onChange={(v) => updateForm("los", v)} />
-                <FormField label="DRG Value" value={formData.drgValue} readOnly={false} onChange={(v) => updateForm("drgValue", v)} />
+                <FormField label="POA" value={formData.poa} readOnly={timerStopped} onChange={(v) => updateForm("poa", v)} />
+                <FormField label="LOS" value={formData.los} readOnly={timerStopped} onChange={(v) => updateForm("los", v)} />
+                <FormField label="DRG Value" value={formData.drgValue} readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v)} />
               </div>
               {/* Row 6: Procedure code, Sub Specialty */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                <FormField label="Procedure code" value={formData.procedureCode} readOnly={false} onChange={(v) => updateForm("procedureCode", v)} />
-                <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" readOnly={false} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
+                <FormField label="Procedure code" value={formData.procedureCode} readOnly={timerStopped} onChange={(v) => updateForm("procedureCode", v)} />
+                <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
                 <div />
+              </div>
               </div>
             </CollapsibleCard>
 
             {/* Processing Info Section — Collapsible */}
             <CollapsibleCard title="Processing Info" subtitle="All fields related to processing this chart" defaultOpen={true}>
+              <div style={timerStopped ? { opacity: 0.6, pointerEvents: "none" } : {}}>
               {/* Row 1: Chart status, Responsible party */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" readOnly={false} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />
-                <FormField label="Responsible party" value={formData.responsibleParty} type="select" readOnly={false} onChange={(v) => updateForm("responsibleParty", v)} placeholder="Select..." options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
+                <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />
+                <FormField label="Responsible party" value={formData.responsibleParty} type="select" readOnly={timerStopped} onChange={(v) => updateForm("responsibleParty", v)} placeholder="Select..." options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
               </div>
               {/* Row 2: Hold reason — disabled when Open or Complete */}
-              <div style={{ marginBottom: 16, opacity: (formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5, pointerEvents: (formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none" }}>
-                <FormField label="Hold reason" value={formData.holdReason} type="select" readOnly={(formData.chartStatus || "Open") !== "Incomplete"} onChange={(v) => updateForm("holdReason", v)} placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
+              <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none") }}>
+                <FormField label="Hold reason" value={formData.holdReason} type="select" readOnly={timerStopped || (formData.chartStatus || "Open") !== "Incomplete"} onChange={(v) => updateForm("holdReason", v)} placeholder="Select..." options={config?.hold_reasons?.map(h => h.hold_reason) || []} />
               </div>
               {/* Row 3: Coder comments to client — disabled when Complete */}
-              <div style={{ marginBottom: 16, opacity: (formData.chartStatus || "Open") === "Complete" ? 0.5 : 1, pointerEvents: (formData.chartStatus || "Open") === "Complete" ? "none" : "auto" }}>
+              <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Complete" ? 0.5 : 1), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Complete" ? "none" : "auto") }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
                   Coder comments to client
                 </label>
-                <textarea rows={3} value={formData.coderComments || ""} readOnly={(formData.chartStatus || "Open") === "Complete"} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
+                <textarea rows={3} value={formData.coderComments || ""} readOnly={timerStopped || (formData.chartStatus || "Open") === "Complete"} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: "1px solid #e2e8f0", background: (formData.chartStatus || "Open") === "Complete" ? "#f8fafc" : "#fff",
+                  border: "1px solid #e2e8f0", background: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#f8fafc" : "#fff",
                   fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
-                  cursor: (formData.chartStatus || "Open") === "Complete" ? "not-allowed" : "text",
+                  cursor: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "not-allowed" : "text",
                 }} />
               </div>
               {/* Row 4: Rejection / Denial Comments */}
@@ -1583,10 +1641,11 @@ export default function ProcessChart() {
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
                   Rejection / Denial Comments
                 </label>
-                <textarea rows={3} value={formData.rejectionComments || ""} onChange={(e) => updateForm("rejectionComments", e.target.value)} style={{
+                <textarea rows={3} value={formData.rejectionComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("rejectionComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: "1px solid #e2e8f0", background: "#fff",
+                  border: "1px solid #e2e8f0", background: timerStopped ? "#f8fafc" : "#fff",
                   fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                  cursor: timerStopped ? "not-allowed" : "text",
                 }} />
               </div>
               {/* Row 5: Deficiency Comments */}
@@ -1594,31 +1653,35 @@ export default function ProcessChart() {
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
                   Deficiency Comments
                 </label>
-                <textarea rows={3} value={formData.deficiencyComments || ""} onChange={(e) => updateForm("deficiencyComments", e.target.value)} style={{
+                <textarea rows={3} value={formData.deficiencyComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("deficiencyComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: "1px solid #e2e8f0", background: "#fff",
+                  border: "1px solid #e2e8f0", background: timerStopped ? "#f8fafc" : "#fff",
                   fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                  cursor: timerStopped ? "not-allowed" : "text",
                 }} />
               </div>
               {/* Row 6: Date of completion, Audit options, Coder QC Status */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Date of completion" value={chart.DateOfCompletion} />
-                <FormField label="Audit options" value={formData.auditOption} required type="select" readOnly={false} onChange={(v) => updateForm("auditOption", v)} placeholder="Select..." options={config?.audit_options?.map(a => a.audit_opt) || []} />
-                <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={false} onChange={(v) => updateForm("qcStatus", v)} placeholder="Select..." />
+                <FormField label="Audit options" value={formData.auditOption} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("auditOption", v)} placeholder="Select..." options={config?.audit_options?.map(a => a.audit_opt) || []} />
+                <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("qcStatus", v)} placeholder="Select..." />
               </div>
               {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                <FormField label="Allocate to auditor" value="" type="select" readOnly={false} />
-                <FormField label="Allocate to Coder" value="" type="select" readOnly={false} placeholder="Select..." />
-                <FormField label="Priority" value={formData.priority} type="select" readOnly={false} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
+                <FormField label="Allocate to auditor" value="" type="select" readOnly={timerStopped} />
+                <FormField label="Allocate to Coder" value="" type="select" readOnly={timerStopped} placeholder="Select..." />
+                <FormField label="Priority" value={formData.priority} type="select" readOnly={timerStopped} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
+              </div>
               </div>
             </CollapsibleCard>
 
             {/* Audit Information Section — Collapsible */}
             <CollapsibleCard title="Audit Information" defaultOpen={false}>
+              <div style={timerStopped ? { opacity: 0.6, pointerEvents: "none" } : {}}>
               <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
                 No audit information available
               </p>
+              </div>
             </CollapsibleCard>
 
             {/* Save button */}
