@@ -372,6 +372,148 @@ const FormField = ({ label, value, required, type = "text", options, placeholder
   </div>
 );
 
+const FormFieldMultiSelect = ({ value = [], onChange, options = [], placeholder, readOnly }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = React.useRef(null);
+  const searchRef = React.useRef(null);
+
+  const normalizedOpts = options.map(opt =>
+    typeof opt === "string" ? { value: opt, label: opt } : opt
+  );
+  const filtered = search
+    ? normalizedOpts.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
+    : normalizedOpts;
+  const showSearch = normalizedOpts.length > 6;
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setSearch(""); } };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  useEffect(() => {
+    if (open && showSearch && searchRef.current) searchRef.current.focus();
+  }, [open, showSearch]);
+
+  const toggleOption = (optValue) => {
+    const arr = Array.isArray(value) ? value : [];
+    if (arr.includes(optValue)) {
+      onChange(arr.filter(v => v !== optValue));
+    } else {
+      onChange([...arr, optValue]);
+    }
+  };
+
+  if (readOnly) {
+    const display = Array.isArray(value) && value.length > 0 ? value.join(", ") : (placeholder || "Select...");
+    return (
+      <div style={{
+        width: "100%", padding: "10px 12px", borderRadius: 8,
+        border: "1px solid #d1d5db", background: "#e5e7eb",
+        fontSize: 13, color: value?.length ? "#6b7280" : "#9ca3af",
+        boxSizing: "border-box", minHeight: 40, cursor: "not-allowed",
+      }}>
+        {display}
+      </div>
+    );
+  }
+
+  const selectedLabels = normalizedOpts.filter(o => (value || []).includes(o.value)).map(o => o.label);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: "100%", padding: "10px 32px 10px 12px", borderRadius: 8,
+          border: open ? "1.5px solid #a78bfa" : "1px solid #e2e8f0",
+          background: "#fff", textAlign: "left", cursor: "pointer",
+          fontSize: 13, fontWeight: 500, color: selectedLabels.length > 0 ? "#1a1d23" : "#94a3b8",
+          display: "flex", alignItems: "center", gap: 8,
+          transition: "border-color 0.15s, box-shadow 0.15s",
+          boxShadow: open ? "0 0 0 3px rgba(167, 139, 250, 0.1)" : "none",
+          position: "relative", boxSizing: "border-box", minHeight: 40,
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+          {selectedLabels.length > 0 ? selectedLabels.join(", ") : (placeholder || "Select...")}
+        </span>
+        <ChevronDown style={{
+          width: 14, height: 14, color: "#94a3b8", position: "absolute", right: 10, top: "50%",
+          transform: open ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)",
+          transition: "transform 0.2s",
+        }} />
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+          background: "#fff", borderRadius: 10, border: "1px solid #e2e8f0",
+          boxShadow: "0 10px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)",
+          overflow: "hidden",
+        }}>
+          {showSearch && (
+            <div style={{ padding: "8px 8px 4px" }}>
+              <input
+                ref={searchRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                style={{
+                  width: "100%", padding: "7px 10px", borderRadius: 6,
+                  border: "1px solid #e2e8f0", fontSize: 12, color: "#1a1d23",
+                  outline: "none", boxSizing: "border-box", background: "#f8fafc",
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "#a78bfa"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "#e2e8f0"}
+              />
+            </div>
+          )}
+          <div style={{ maxHeight: 200, overflowY: "auto", padding: "4px 0" }}>
+            {filtered.length === 0 && (
+              <div style={{ padding: "12px 16px", fontSize: 12, color: "#94a3b8", textAlign: "center" }}>
+                No options found
+              </div>
+            )}
+            {filtered.map((opt) => {
+              const isChecked = (value || []).includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleOption(opt.value)}
+                  style={{
+                    width: "100%", padding: "8px 12px", border: "none", textAlign: "left",
+                    cursor: "pointer", fontSize: 13, fontWeight: isChecked ? 600 : 400,
+                    color: isChecked ? "#7c3aed" : "#1e293b",
+                    background: isChecked ? "#f5f3ff" : "transparent",
+                    display: "flex", alignItems: "center", gap: 8,
+                    transition: "background 0.1s",
+                  }}
+                  onMouseEnter={(e) => { if (!isChecked) e.currentTarget.style.background = "#f8fafc"; }}
+                  onMouseLeave={(e) => { if (!isChecked) e.currentTarget.style.background = isChecked ? "#f5f3ff" : "transparent"; }}
+                >
+                  <span style={{
+                    width: 16, height: 16, borderRadius: 3, border: isChecked ? "none" : "1.5px solid #cbd5e1",
+                    background: isChecked ? "#7c3aed" : "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                  }}>
+                    {isChecked && <Check style={{ width: 11, height: 11, color: "#fff" }} />}
+                  </span>
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const PriorityBadge = ({ priority }) => {
   const colors = {
     Critical: { bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
@@ -407,6 +549,9 @@ export default function ProcessChart() {
   const [config, setConfig] = useState(null);
   const [formData, setFormData] = useState({});
   const updateForm = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+  const [customFields, setCustomFields] = useState([]);
+  const [customFieldValues, setCustomFieldValues] = useState({});
+  const updateCustomField = (fieldId, value) => setCustomFieldValues(prev => ({ ...prev, [fieldId]: value }));
 
   // Chart navigation from Zustand store
   const getPrevId = useChartsStore((s) => s.getPrevId);
@@ -726,6 +871,8 @@ export default function ProcessChart() {
           qcStatus: c.qc_status || "",
           priority: c.Priority || "",
         });
+        fetchCustomFields(c.ClientId, c.LocationId);
+        fetchConfiguration(c.ClientId, c.LocationId);
       } else {
         setError("Failed to load chart data");
       }
@@ -774,6 +921,17 @@ export default function ProcessChart() {
     }
   }, []);
 
+  const fetchCustomFields = useCallback(async (clientId, locationId) => {
+    try {
+      const response = await api.get(`/users/configurations/chart-custom-fields/${clientId}/${locationId}`);
+      if (response.data?.data) {
+        setCustomFields(response.data.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch custom fields:", e.message);
+    }
+  }, []);
+
   // Check if a chart is under process on page load — API is source of truth for timer state
   const checkTimerStatus = useCallback(async () => {
     try {
@@ -802,9 +960,8 @@ export default function ProcessChart() {
   useEffect(() => {
     fetchChart();
     fetchAiData();
-    fetchConfiguration();
     checkTimerStatus();
-  }, [fetchChart, fetchAiData, fetchConfiguration, checkTimerStatus]);
+  }, [fetchChart, fetchAiData, checkTimerStatus]);
 
   // Refetch AI data when job completes
   useEffect(() => {
@@ -968,6 +1125,66 @@ export default function ProcessChart() {
   }
 
   const userName = [chart.UserFirstName, chart.UserLastName].filter(Boolean).join(" ");
+
+  const renderCustomFields = (placement) => {
+    const fields = customFields.filter(f => f.placement === placement);
+    if (fields.length === 0) return null;
+    const rows = [];
+    for (let i = 0; i < fields.length; i += 3) {
+      rows.push(fields.slice(i, i + 3));
+    }
+    return rows.map((row, rowIdx) => (
+      <div key={`cf-${placement}-${rowIdx}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginTop: 16 }}>
+        {row.map(field => {
+          const isRequired = field.validation === "Mandatory";
+          const options = field.ChartInfoDropdowns?.map(item => ({ value: item.name, label: item.name })) || [];
+          if (field.type === "dropdown" && field.isMultiSelect) {
+            return (
+              <div key={field.id} style={{ flex: 1, minWidth: 0 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
+                  {field.name}{isRequired && <span style={{ color: "#ef4444" }}> *</span>}
+                </label>
+                <FormFieldMultiSelect
+                  value={customFieldValues[field.id] || []}
+                  onChange={(v) => updateCustomField(field.id, v)}
+                  options={options}
+                  placeholder="Select..."
+                  readOnly={timerStopped}
+                />
+              </div>
+            );
+          }
+          if (field.type === "dropdown") {
+            return (
+              <FormField
+                key={field.id}
+                label={field.name}
+                value={customFieldValues[field.id] || ""}
+                required={isRequired}
+                type="select"
+                options={options}
+                placeholder="Select..."
+                readOnly={timerStopped}
+                onChange={(v) => updateCustomField(field.id, v)}
+              />
+            );
+          }
+          return (
+            <FormField
+              key={field.id}
+              label={field.name}
+              value={customFieldValues[field.id] || ""}
+              required={isRequired}
+              type={field.type === "number" ? "number" : "text"}
+              readOnly={timerStopped}
+              onChange={(v) => updateCustomField(field.id, v)}
+            />
+          );
+        })}
+        {row.length < 3 && Array.from({ length: 3 - row.length }).map((_, i) => <div key={`empty-${i}`} />)}
+      </div>
+    ));
+  };
 
   return (
     <DashboardLayout>
@@ -1680,6 +1897,7 @@ export default function ProcessChart() {
                 <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
                 <div />
               </div>
+              {renderCustomFields("Chart Info")}
               </div>
             </CollapsibleCard>
 
@@ -1747,15 +1965,20 @@ export default function ProcessChart() {
                 <FormField label="Allocate to Coder" value="" type="select" readOnly={timerStopped} placeholder="Select..." />
                 <FormField label="Priority" value={formData.priority} type="select" readOnly={timerStopped} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
               </div>
+              {renderCustomFields("Processing Info")}
               </div>
             </CollapsibleCard>
 
             {/* Audit Information Section — Collapsible */}
             <CollapsibleCard title="Audit Information" defaultOpen={false}>
               <div style={timerStopped ? { pointerEvents: "none" } : {}}>
-              <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
-                No audit information available
-              </p>
+              {customFields.some(f => f.placement === "Audit Info") ? (
+                renderCustomFields("Audit Info")
+              ) : (
+                <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
+                  No audit information available
+                </p>
+              )}
               </div>
             </CollapsibleCard>
 
