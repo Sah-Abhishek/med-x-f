@@ -857,18 +857,46 @@ export default function ProcessChart() {
       return;
     }
 
-    // All checks passed — start the timer
+    // Step 3: Call timer API to register start on backend
+    try {
+      const timerRes = await api.post(`/charts/${id}/timer`);
+      if (!timerRes.data?.success) {
+        showToast("Failed to start timer. Please try again.", "error");
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to start timer:", e.message);
+      showToast("Failed to start timer. Please try again.", "error");
+      return;
+    }
+
+    // All checks passed and backend confirmed — start the local timer
     setTimerRunning(true);
     setTimerStartTime(now());
     setTimerStopTime(null);
   };
 
-  const handleTimerStop = () => {
-    if (timerRunning) {
-      setTimerRunning(false);
-      setTimerStopTime(now());
-      setTimerStopped(true);
+  const handleTimerStop = async () => {
+    if (!timerRunning) return;
+
+    // Call timer API to register stop on backend
+    try {
+      const timerRes = await api.post(`/charts/${id}/timer`);
+      if (!timerRes.data?.success) {
+        showToast("Failed to stop timer. Please try again.", "error");
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to stop timer:", e.message);
+      showToast("Failed to stop timer. Please try again.", "error");
+      return;
     }
+
+    // Backend confirmed — stop local timer and reset
+    setTimerRunning(false);
+    setTimerStopTime(now());
+    setTimerSeconds(0);
+    setTimerStopped(true);
   };
 
   if (loading) {
