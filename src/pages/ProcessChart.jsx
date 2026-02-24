@@ -777,7 +777,7 @@ export default function ProcessChart() {
   // Check if a chart is under process on page load — API is source of truth for timer state
   const checkTimerStatus = useCallback(async () => {
     try {
-      const res = await api.get("https://uat-app.valerionhealth.com/users/processing-chart");
+      const res = await api.get("/users/processing-chart");
       if (res.data?.success) {
         if (res.data.isChartUnderProcess) {
           // Chart is under process — timer should be running, fields editable
