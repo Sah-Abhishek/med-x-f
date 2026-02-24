@@ -1990,11 +1990,12 @@ export default function ProcessChart() {
             <CollapsibleCard title="Audit Information" defaultOpen={false}>
               <div style={timerStopped ? { pointerEvents: "none" } : {}}>
                 {/* Audit table */}
-                <div style={{ border: "1px solid #e8eaed", borderRadius: 10, overflow: "hidden" }}>
+                <div style={{ border: "1px solid #e8eaed", borderRadius: 10, overflow: "visible" }}>
                   {/* Header row */}
                   <div style={{
                     display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
                     background: "#fafafa", borderBottom: "1px solid #e8eaed",
+                    borderRadius: "10px 10px 0 0",
                   }}>
                     <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: 0.5, textTransform: "uppercase", borderRight: "1px dashed #e8eaed" }}>Area</div>
                     <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: 0.5, textTransform: "uppercase" }}>Total Codes</div>
