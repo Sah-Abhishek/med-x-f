@@ -888,12 +888,12 @@ export default function ProcessChart() {
     try {
       const timerRes = await api.post(`/charts/${id}/timer`);
       if (!timerRes.data?.success) {
-        showToast("Failed to start timer. Please try again.", "error");
+        showToast(timerRes.data?.message || "Failed to start timer. Please try again.", "warning");
         return;
       }
     } catch (e) {
       console.error("Failed to start timer:", e.message);
-      showToast("Failed to start timer. Please try again.", "error");
+      showToast(e.response?.data?.message || "Failed to start timer. Please try again.", "error");
       return;
     }
 
