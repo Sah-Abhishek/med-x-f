@@ -883,7 +883,7 @@ export default function ProcessChart() {
           coderComments: c.CoderComments || "",
           rejectionComments: c.RejectionComments || "",
           deficiencyComments: c.DeficiencyComments || "",
-          auditOption: c.AuditOption || "",
+          auditOption: c.AuditOption ? (Array.isArray(c.AuditOption) ? c.AuditOption : c.AuditOption.split(",").map(s => s.trim()).filter(Boolean)) : [],
           qcStatus: c.qc_status || "",
           priority: c.Priority || null,
           feedbackType: c.FeedbackType || "",
@@ -1051,6 +1051,73 @@ export default function ProcessChart() {
   const showToast = (message, type = "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 5000);
+  };
+
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      // Resolve next_user_id from allocateCoder or allocateAuditor
+      let nextUserId = null;
+      if (formData.allocateCoder) {
+        const coder = masterData?.coders_active?.find(c => c.name === formData.allocateCoder);
+        nextUserId = coder?.id || null;
+      } else if (formData.allocateAuditor) {
+        const auditor = masterData?.auditors_active?.find(a => a.name === formData.allocateAuditor);
+        nextUserId = auditor?.id || null;
+      }
+
+      // Resolve IDs from config
+      const dispositionId = config?.dispositions?.find(d => d.disposition_name === formData.disposition)?.id || null;
+      const facilityId = config?.facility?.find(f => f.FacilityName === formData.facility)?.id || null;
+      const primaryHealthId = config?.primary_health?.find(p => p.PrimaryHealthName === formData.primaryHealth)?.id || null;
+      const subSpecialtyId = config?.subspecialties?.find(s => s.SubSpecialtyName === formData.subSpecialty)?.id || null;
+      const statusId = formData.chartStatus === "Complete" ? 2 : formData.chartStatus === "Incomplete" ? 3 : null;
+      const qcStatusId = masterData?.qc_status?.find(q => q.name === formData.qcStatus)?.id || null;
+      const responsiblePartyIds = (formData.responsibleParty || []).map(name => config?.responsible_parties?.find(r => r.resp_party_name === name)?.id).filter(Boolean);
+      const holdReasonIds = (formData.holdReason || []).map(name => config?.hold_reasons?.find(h => h.hold_reason === name)?.id).filter(Boolean);
+      const auditOptionIds = (formData.auditOption || []).map(name => config?.audit_options?.find(a => a.audit_opt === name)?.id).filter(Boolean);
+
+      const payload = {
+        admit_date: formData.admitDate || null,
+        chart_no: formData.chartNo || null,
+        coder_comments: null,
+        date_of_completion: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
+        date_of_service: formData.dateOfService || null,
+        discharge_date: formData.dischargeDate || null,
+        em: formData.em || null,
+        mr_no: formData.mrNo || null,
+        primary_diagnosis: formData.primaryDiagnosis || null,
+        next_user_id: nextUserId,
+        poa: formData.poa || null,
+        los: formData.los ? Number(formData.los) : null,
+        drg_value: formData.drgValue ? Number(formData.drgValue) : null,
+        procedure_code: formData.procedureCode || null,
+        denial_comments: formData.rejectionComments || null,
+        ResponsibleParties: responsiblePartyIds,
+        deficiency_comments: formData.deficiencyComments || null,
+        HoldReasons: holdReasonIds,
+        DispositionId: dispositionId,
+        FacilityId: facilityId,
+        PrimaryHealthId: primaryHealthId,
+        SubSpecialtyId: subSpecialtyId,
+        StatusId: statusId,
+        QCStatusId: qcStatusId,
+        AuditOptions: auditOptionIds,
+        comment_msg: formData.coderComments || null,
+        chartInfoCustomFields: customFieldValues,
+      };
+
+      await api.post(`/charts/${id}`, payload);
+      showToast("Chart saved successfully!", "success");
+    } catch (e) {
+      console.error("Failed to save chart:", e.message);
+      showToast("Failed to save chart. Please try again.", "error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleTimerStart = async () => {
@@ -2008,7 +2075,16 @@ export default function ProcessChart() {
               {/* Row 6: Date of completion, Audit options, Coder QC Status */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Date of completion" value={new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} readOnly />
-                <FormField label="Audit options" value={formData.auditOption} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("auditOption", v)} placeholder="Select..." options={config?.audit_options?.map(a => a.audit_opt) || []} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Audit options<span style={{ color: "#ef4444" }}> *</span></label>
+                  <FormFieldMultiSelect
+                    value={formData.auditOption || []}
+                    onChange={(v) => updateForm("auditOption", v)}
+                    options={config?.audit_options?.map(a => a.audit_opt) || []}
+                    placeholder="Select..."
+                    readOnly={timerStopped}
+                  />
+                </div>
                 <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={timerStopped || chart?.MilestoneId !== 4} onChange={(v) => updateForm("qcStatus", v)} placeholder="Select..." />
               </div>
               {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
@@ -2137,12 +2213,16 @@ export default function ProcessChart() {
             </CollapsibleCard>
 
             {/* Save button */}
-            <button style={{
-              padding: "12px 32px", borderRadius: 10, border: "none",
-              background: "#ef4444", color: "#fff", fontSize: 14, fontWeight: 600,
-              cursor: "pointer", marginBottom: 20,
-            }}>
-              Save
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                padding: "12px 32px", borderRadius: 10, border: "none",
+                background: saving ? "#fca5a5" : "#ef4444", color: "#fff", fontSize: 14, fontWeight: 600,
+                cursor: saving ? "not-allowed" : "pointer", marginBottom: 20,
+                opacity: saving ? 0.7 : 1,
+              }}>
+              {saving ? "Saving..." : "Save"}
             </button>
           </div>
 
