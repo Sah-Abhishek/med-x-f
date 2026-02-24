@@ -877,7 +877,7 @@ export default function ProcessChart() {
           procedureCode: c.procedure_code || "",
           subSpecialty: c.SubSpecialty || "",
           chartStatus: c.Status || "",
-          responsibleParty: c.ResponsibleParty || "",
+          responsibleParty: c.ResponsibleParty ? (Array.isArray(c.ResponsibleParty) ? c.ResponsibleParty : c.ResponsibleParty.split(",").map(s => s.trim()).filter(Boolean)) : [],
           holdReason: c.HoldReason ? (Array.isArray(c.HoldReason) ? c.HoldReason : c.HoldReason.split(",").map(s => s.trim()).filter(Boolean)) : [],
           coderComments: c.CoderComments || "",
           rejectionComments: c.RejectionComments || "",
@@ -1924,7 +1924,16 @@ export default function ProcessChart() {
               {/* Row 1: Chart status, Responsible party */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />
-                <FormField label="Responsible party" value={formData.responsibleParty} type="select" readOnly={timerStopped} onChange={(v) => updateForm("responsibleParty", v)} placeholder="Select..." options={config?.responsible_parties?.map(r => r.resp_party_name) || []} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Responsible party</label>
+                  <FormFieldMultiSelect
+                    value={formData.responsibleParty || []}
+                    onChange={(v) => updateForm("responsibleParty", v)}
+                    options={config?.responsible_parties?.map(r => r.resp_party_name) || []}
+                    placeholder="Select..."
+                    readOnly={timerStopped}
+                  />
+                </div>
               </div>
               {/* Row 2: Hold reason — disabled when Open or Complete */}
               <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none") }}>
