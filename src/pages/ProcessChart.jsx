@@ -883,12 +883,20 @@ export default function ProcessChart() {
     try {
       const timerRes = await api.post(`/charts/${id}/timer`);
       if (!timerRes.data?.success) {
-        showToast("Failed to stop timer. Please try again.", "error");
+        if (timerRes.data?.message === "Chart status has to be updated") {
+          showToast("Please save the chart before stopping the timer.", "warning");
+        } else {
+          showToast("Failed to stop timer. Please try again.", "error");
+        }
         return;
       }
     } catch (e) {
       console.error("Failed to stop timer:", e.message);
-      showToast("Failed to stop timer. Please try again.", "error");
+      if (e.response?.data?.message === "Chart status has to be updated") {
+        showToast("Please save the chart before stopping the timer.", "warning");
+      } else {
+        showToast("Failed to stop timer. Please try again.", "error");
+      }
       return;
     }
 
@@ -946,8 +954,14 @@ export default function ProcessChart() {
           display: "flex", alignItems: "flex-start", gap: 10,
           animation: "slideInRight 0.3s ease-out",
         }}>
-          <span style={{ fontSize: 16, lineHeight: 1 }}>
-            {toast.type === "warning" ? "\u26A0\uFE0F" : toast.type === "error" ? "\u274C" : "\u2139\uFE0F"}
+          <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+            {toast.type === "warning" ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            ) : toast.type === "error" ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            )}
           </span>
           <span style={{ flex: 1 }}>{toast.message}</span>
           <button onClick={() => setToast(null)} style={{
