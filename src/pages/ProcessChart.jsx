@@ -945,7 +945,7 @@ export default function ProcessChart() {
   const fetchMasterData = useCallback(async (clientId = 0, locationId = 0) => {
     try {
       const response = await api.get("/hn-master-data", {
-        params: { client: clientId, location: locationId, role: "coder" },
+        params: { client: clientId, location: locationId },
       });
       if (response.data.success) {
         setMasterData(response.data.data);
