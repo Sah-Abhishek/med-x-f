@@ -885,7 +885,7 @@ export default function ProcessChart() {
           deficiencyComments: c.DeficiencyComments || "",
           auditOption: c.AuditOption || "",
           qcStatus: c.qc_status || "",
-          priority: c.Priority || "",
+          priority: c.Priority || null,
           feedbackType: c.FeedbackType || "",
           auditorQcStatus: c.AuditorQcStatus || "",
           allocateAuditor: c.AllocateAuditor || "",
