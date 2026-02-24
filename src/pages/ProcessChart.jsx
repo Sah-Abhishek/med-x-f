@@ -250,9 +250,9 @@ const FormFieldDropdown = ({ value, onChange, options = [], placeholder, readOnl
     return (
       <div style={{
         width: "100%", padding: "10px 12px", borderRadius: 8,
-        border: "1px solid #e2e8f0", background: "#f8fafc",
-        fontSize: 13, color: value ? "#1a1d23" : "#94a3b8",
-        boxSizing: "border-box", minHeight: 40,
+        border: "1px solid #d1d5db", background: "#e5e7eb",
+        fontSize: 13, color: value ? "#6b7280" : "#9ca3af",
+        boxSizing: "border-box", minHeight: 40, cursor: "not-allowed",
       }}>
         {selected?.label || value || placeholder || "Select..."}
       </div>
@@ -363,9 +363,10 @@ const FormField = ({ label, value, required, type = "text", options, placeholder
         onChange={readOnly ? undefined : (e) => onChange?.(e.target.value)}
         style={{
           width: "100%", padding: "10px 12px", borderRadius: 8,
-          border: "1px solid #e2e8f0", background: readOnly ? "#f8fafc" : "#fff",
-          fontSize: 13, color: "#1a1d23", boxSizing: "border-box",
-          cursor: readOnly ? "default" : "text",
+          border: `1px solid ${readOnly ? "#d1d5db" : "#e2e8f0"}`,
+          background: readOnly ? "#e5e7eb" : "#fff",
+          fontSize: 13, color: readOnly ? "#6b7280" : "#1a1d23", boxSizing: "border-box",
+          cursor: readOnly ? "not-allowed" : "text",
         }} />
     )}
   </div>
@@ -1615,7 +1616,7 @@ export default function ProcessChart() {
 
             {/* Chart Info Section — Collapsible */}
             <CollapsibleCard title="Chart Info" subtitle="All relevant chart fields" defaultOpen={true}>
-              <div style={timerStopped ? { opacity: 0.6, pointerEvents: "none" } : {}}>
+              <div style={timerStopped ? { pointerEvents: "none" } : {}}>
               {/* Row 1: Chart #, MR#, Date of Service */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Chart #" value={formData.chartNo} required readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />
@@ -1656,7 +1657,7 @@ export default function ProcessChart() {
 
             {/* Processing Info Section — Collapsible */}
             <CollapsibleCard title="Processing Info" subtitle="All fields related to processing this chart" defaultOpen={true}>
-              <div style={timerStopped ? { opacity: 0.6, pointerEvents: "none" } : {}}>
+              <div style={timerStopped ? { pointerEvents: "none" } : {}}>
               {/* Row 1: Chart status, Responsible party */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />
@@ -1673,8 +1674,10 @@ export default function ProcessChart() {
                 </label>
                 <textarea rows={3} value={formData.coderComments || ""} readOnly={timerStopped || (formData.chartStatus || "Open") === "Complete"} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: "1px solid #e2e8f0", background: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#f8fafc" : "#fff",
-                  fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                  border: `1px solid ${timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#d1d5db" : "#e2e8f0"}`,
+                  background: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#e5e7eb" : "#fff",
+                  fontSize: 13, color: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#6b7280" : "#1a1d23",
+                  resize: "vertical", boxSizing: "border-box",
                   cursor: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "not-allowed" : "text",
                 }} />
               </div>
@@ -1685,8 +1688,9 @@ export default function ProcessChart() {
                 </label>
                 <textarea rows={3} value={formData.rejectionComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("rejectionComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: "1px solid #e2e8f0", background: timerStopped ? "#f8fafc" : "#fff",
-                  fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                  border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
+                  background: timerStopped ? "#e5e7eb" : "#fff",
+                  fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23", resize: "vertical", boxSizing: "border-box",
                   cursor: timerStopped ? "not-allowed" : "text",
                 }} />
               </div>
@@ -1697,8 +1701,9 @@ export default function ProcessChart() {
                 </label>
                 <textarea rows={3} value={formData.deficiencyComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("deficiencyComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: "1px solid #e2e8f0", background: timerStopped ? "#f8fafc" : "#fff",
-                  fontSize: 13, color: "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                  border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
+                  background: timerStopped ? "#e5e7eb" : "#fff",
+                  fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23", resize: "vertical", boxSizing: "border-box",
                   cursor: timerStopped ? "not-allowed" : "text",
                 }} />
               </div>
@@ -1719,7 +1724,7 @@ export default function ProcessChart() {
 
             {/* Audit Information Section — Collapsible */}
             <CollapsibleCard title="Audit Information" defaultOpen={false}>
-              <div style={timerStopped ? { opacity: 0.6, pointerEvents: "none" } : {}}>
+              <div style={timerStopped ? { pointerEvents: "none" } : {}}>
               <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
                 No audit information available
               </p>
