@@ -774,11 +774,37 @@ export default function ProcessChart() {
     }
   }, []);
 
+  // Check if a chart is under process on page load — API is source of truth for timer state
+  const checkTimerStatus = useCallback(async () => {
+    try {
+      const res = await api.get("https://uat-app.valerionhealth.com/users/processing-chart");
+      if (res.data?.success) {
+        if (res.data.isChartUnderProcess) {
+          // Chart is under process — timer should be running, fields editable
+          if (!timerRunning) {
+            setTimerRunning(true);
+            if (!timerStartTime) setTimerStartTime(now());
+          }
+          setTimerStopped(false);
+        } else {
+          // No chart under process — timer should not be running, fields disabled
+          if (timerRunning) {
+            setTimerRunning(false);
+          }
+          setTimerStopped(true);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to check timer status on load:", e.message);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     fetchChart();
     fetchAiData();
     fetchConfiguration();
-  }, [fetchChart, fetchAiData, fetchConfiguration]);
+    checkTimerStatus();
+  }, [fetchChart, fetchAiData, fetchConfiguration, checkTimerStatus]);
 
   // Refetch AI data when job completes
   useEffect(() => {
