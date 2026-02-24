@@ -2023,7 +2023,7 @@ export default function ProcessChart() {
 
             {/* Audit Information Section — Collapsible */}
             <CollapsibleCard title="Audit Information" defaultOpen={false}>
-              <div style={timerStopped || chart?.MilestoneId === 3 ? { pointerEvents: "none", opacity: 0.5 } : {}}>
+              <div style={timerStopped || chart?.MilestoneId === 3 ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 } : {}}>
                 {/* Audit table */}
                 <div style={{ border: "1px solid #e8eaed", borderRadius: 10, overflow: "visible" }}>
                   {/* Header row */}
