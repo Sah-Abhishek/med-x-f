@@ -530,6 +530,18 @@ const PriorityBadge = ({ priority }) => {
   );
 };
 
+/* ── Audit rows configuration ── */
+const AUDIT_ROWS = [
+  { key: "primaryDiagnosis", label: "Primary Diagnosis" },
+  { key: "secondaryDiagnosis", label: "Secondary Diagnosis" },
+  { key: "procedures", label: "Procedures" },
+  { key: "edEmLevel", label: "ED/EM Level", isDropdown: true },
+  { key: "modifier", label: "Modifier" },
+  { key: "poaIndicator", label: "POA Indicator" },
+  { key: "drgValue", label: "DRG Value" },
+  { key: "total", label: "Total", noFeedback: true },
+];
+
 /* ── Metadata item with icon ── */
 const MetaItem = ({ icon, children }) => (
   <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "#64748b" }}>
@@ -552,6 +564,9 @@ export default function ProcessChart() {
   const [customFields, setCustomFields] = useState([]);
   const [customFieldValues, setCustomFieldValues] = useState({});
   const updateCustomField = (fieldId, value) => setCustomFieldValues(prev => ({ ...prev, [fieldId]: value }));
+  const [auditData, setAuditData] = useState({});
+  const updateAuditField = (rowKey, field, value) =>
+    setAuditData(prev => ({ ...prev, [rowKey]: { ...prev[rowKey], [field]: value } }));
 
   // Chart navigation from Zustand store
   const getPrevId = useChartsStore((s) => s.getPrevId);
@@ -870,6 +885,8 @@ export default function ProcessChart() {
           auditOption: c.AuditOption || "",
           qcStatus: c.qc_status || "",
           priority: c.Priority || "",
+          feedbackType: c.FeedbackType || "",
+          auditorQcStatus: c.AuditorQcStatus || "",
         });
         fetchCustomFields(c.ClientId, c.LocationId);
         fetchConfiguration(c.ClientId, c.LocationId);
@@ -1972,13 +1989,114 @@ export default function ProcessChart() {
             {/* Audit Information Section — Collapsible */}
             <CollapsibleCard title="Audit Information" defaultOpen={false}>
               <div style={timerStopped ? { pointerEvents: "none" } : {}}>
-              {customFields.some(f => f.placement === "Audit Info") ? (
-                renderCustomFields("Audit Info")
-              ) : (
-                <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
-                  No audit information available
-                </p>
-              )}
+                {/* Audit table */}
+                <div style={{ border: "1px solid #e8eaed", borderRadius: 10, overflow: "hidden" }}>
+                  {/* Header row */}
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
+                    background: "#fafafa", borderBottom: "1px solid #e8eaed",
+                  }}>
+                    <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: 0.5, textTransform: "uppercase", borderRight: "1px dashed #e8eaed" }}>Area</div>
+                    <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: 0.5, textTransform: "uppercase" }}>Total Codes</div>
+                    <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: 0.5, textTransform: "uppercase" }}>Correct Codes</div>
+                    <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 600, color: "#94a3b8", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                      <span style={{ background: "#fef3c7", borderRadius: 3, padding: "1px 4px" }}>Feedback</span> Category
+                    </div>
+                  </div>
+                  {/* Data rows */}
+                  {AUDIT_ROWS.map((row, idx) => (
+                    <div key={row.key} style={{
+                      display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
+                      borderBottom: idx < AUDIT_ROWS.length - 1 ? "1px solid #f0f1f3" : "none",
+                      alignItems: "center",
+                    }}>
+                      <div style={{
+                        padding: "8px 14px", fontSize: 13, fontWeight: 500, color: "#334155",
+                        borderRight: "1px dashed #e8eaed",
+                      }}>{row.label}</div>
+                      <div style={{ padding: "8px 12px" }}>
+                        {row.isDropdown ? (
+                          <FormFieldDropdown
+                            value={auditData[row.key]?.totalCodes || ""}
+                            onChange={(v) => updateAuditField(row.key, "totalCodes", v)}
+                            options={[]}
+                            placeholder="Select..."
+                            readOnly={timerStopped}
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={auditData[row.key]?.totalCodes || ""}
+                            readOnly={timerStopped}
+                            onChange={timerStopped ? undefined : (e) => updateAuditField(row.key, "totalCodes", e.target.value)}
+                            style={{
+                              width: "100%", padding: "8px 10px", borderRadius: 6,
+                              border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
+                              background: timerStopped ? "#e5e7eb" : "#fff",
+                              fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23",
+                              boxSizing: "border-box", cursor: timerStopped ? "not-allowed" : "text",
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div style={{ padding: "8px 12px" }}>
+                        {row.isDropdown ? (
+                          <FormFieldDropdown
+                            value={auditData[row.key]?.correctCodes || ""}
+                            onChange={(v) => updateAuditField(row.key, "correctCodes", v)}
+                            options={[]}
+                            placeholder="Select..."
+                            readOnly={timerStopped}
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={auditData[row.key]?.correctCodes || ""}
+                            readOnly={timerStopped}
+                            onChange={timerStopped ? undefined : (e) => updateAuditField(row.key, "correctCodes", e.target.value)}
+                            style={{
+                              width: "100%", padding: "8px 10px", borderRadius: 6,
+                              border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
+                              background: timerStopped ? "#e5e7eb" : "#fff",
+                              fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23",
+                              boxSizing: "border-box", cursor: timerStopped ? "not-allowed" : "text",
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div style={{ padding: "8px 12px" }}>
+                        {!row.noFeedback && (
+                          <FormFieldDropdown
+                            value={auditData[row.key]?.feedbackCategory || ""}
+                            onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
+                            options={[]}
+                            placeholder="Select..."
+                            readOnly={timerStopped}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Feedback Type & Auditor QC Status below table */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 20 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
+                      <span style={{ background: "#fef3c7", borderRadius: 3, padding: "1px 4px" }}>Feedback</span> Type<span style={{ color: "#ef4444" }}> *</span>
+                    </label>
+                    <FormFieldDropdown
+                      value={formData.feedbackType}
+                      onChange={(v) => updateForm("feedbackType", v)}
+                      options={[]}
+                      placeholder="Select..."
+                      readOnly={timerStopped}
+                    />
+                  </div>
+                  <FormField label="Auditor QC Status" value={formData.auditorQcStatus} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("auditorQcStatus", v)} placeholder="Select..." />
+                </div>
+
+                {renderCustomFields("Audit Info")}
               </div>
             </CollapsibleCard>
 
