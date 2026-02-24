@@ -910,19 +910,21 @@ export default function ProcessChart() {
     try {
       const timerRes = await api.post(`/charts/${id}/timer`);
       if (!timerRes.data?.success) {
-        if (timerRes.data?.message === "Chart status has to be updated") {
+        const msg = timerRes.data?.message;
+        if (msg === "Chart status has to be updated") {
           showToast("Please save the chart before stopping the timer.", "warning");
         } else {
-          showToast("Failed to stop timer. Please try again.", "error");
+          showToast(msg || "Failed to stop timer. Please try again.", "warning");
         }
         return;
       }
     } catch (e) {
       console.error("Failed to stop timer:", e.message);
-      if (e.response?.data?.message === "Chart status has to be updated") {
+      const msg = e.response?.data?.message;
+      if (msg === "Chart status has to be updated") {
         showToast("Please save the chart before stopping the timer.", "warning");
       } else {
-        showToast("Failed to stop timer. Please try again.", "error");
+        showToast(msg || "Failed to stop timer. Please try again.", "error");
       }
       return;
     }
