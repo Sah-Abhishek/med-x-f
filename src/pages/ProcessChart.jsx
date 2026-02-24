@@ -559,6 +559,7 @@ export default function ProcessChart() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [config, setConfig] = useState(null);
+  const [masterData, setMasterData] = useState(null);
   const [formData, setFormData] = useState({});
   const updateForm = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
   const [customFields, setCustomFields] = useState([]);
@@ -887,9 +888,12 @@ export default function ProcessChart() {
           priority: c.Priority || "",
           feedbackType: c.FeedbackType || "",
           auditorQcStatus: c.AuditorQcStatus || "",
+          allocateAuditor: c.AllocateAuditor || "",
+          allocateCoder: c.AllocateCoder || "",
         });
         fetchCustomFields(c.ClientId, c.LocationId);
         fetchConfiguration(c.ClientId, c.LocationId);
+        fetchMasterData(c.ClientId, c.LocationId);
       } else {
         setError("Failed to load chart data");
       }
@@ -935,6 +939,19 @@ export default function ProcessChart() {
       }
     } catch (e) {
       console.error("Failed to fetch configuration:", e.message);
+    }
+  }, []);
+
+  const fetchMasterData = useCallback(async (clientId = 0, locationId = 0) => {
+    try {
+      const response = await api.get("/hn-master-data", {
+        params: { client: clientId, location: locationId, role: "coder" },
+      });
+      if (response.data.success) {
+        setMasterData(response.data.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch master data:", e.message);
     }
   }, []);
 
@@ -1996,8 +2013,8 @@ export default function ProcessChart() {
               </div>
               {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                <FormField label="Allocate to auditor" value="" type="select" readOnly={timerStopped} />
-                <FormField label="Allocate to Coder" value="" type="select" readOnly={timerStopped} placeholder="Select..." />
+                <FormField label="Allocate to auditor" value={formData.allocateAuditor} type="select" readOnly={timerStopped} onChange={(v) => updateForm("allocateAuditor", v)} placeholder="Select..." options={masterData?.auditors_active?.filter(a => a.id && a.name).map(a => a.name) || []} />
+                <FormField label="Allocate to Coder" value={formData.allocateCoder} type="select" readOnly={timerStopped} onChange={(v) => updateForm("allocateCoder", v)} placeholder="Select..." options={masterData?.coders_active?.filter(c => c.id && c.name).map(c => c.name) || []} />
                 <FormField label="Priority" value={formData.priority} type="select" readOnly={timerStopped} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
               </div>
               {renderCustomFields("Processing Info")}
