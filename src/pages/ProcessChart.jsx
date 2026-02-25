@@ -1160,6 +1160,7 @@ export default function ProcessChart() {
 
     // All checks passed and backend confirmed — start the local timer
     setTimerRunning(true);
+    setTimerStopped(false);
     setTimerStartTime(now());
     setTimerStopTime(null);
     setTimerMessage("");
