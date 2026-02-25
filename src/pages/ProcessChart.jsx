@@ -1060,6 +1060,42 @@ export default function ProcessChart() {
 
   const handleSave = async () => {
     if (saving) return;
+
+    // --- Required field validation ---
+    const missing = [];
+    if (!formData.chartNo) missing.push("Chart #");
+    if (!formData.mrNo) missing.push("MR#");
+    if (!formData.dateOfService) missing.push("Date of Service");
+    if (!formData.admitDate) missing.push("Admit Date");
+    if (!formData.dischargeDate) missing.push("Discharge Date");
+    if (!formData.disposition) missing.push("Disposition");
+    if (!formData.primaryDiagnosis) missing.push("Primary Diagnosis");
+    if (!formData.facility) missing.push("Facility");
+    if (!formData.poa) missing.push("POA");
+    if (!formData.los) missing.push("LOS");
+    if (!formData.drgValue) missing.push("DRG Value");
+    if (!formData.subSpecialty) missing.push("Sub Specialty");
+    if (!formData.chartStatus || formData.chartStatus === "Open") missing.push("Chart Status");
+    if (formData.chartStatus === "Incomplete" && (!formData.holdReason || formData.holdReason.length === 0)) missing.push("Hold Reason");
+    if (!formData.coderComments || !formData.coderComments.trim()) missing.push("Coder Comments");
+
+    // Custom mandatory fields
+    for (const field of customFields) {
+      if (field.validation === "Mandatory") {
+        const val = customFieldValues[field.id];
+        if (field.type === "dropdown" && field.isMultiSelect) {
+          if (!val || !Array.isArray(val) || val.length === 0) missing.push(field.name);
+        } else {
+          if (!val) missing.push(field.name);
+        }
+      }
+    }
+
+    if (missing.length > 0) {
+      showToast("Required fields missing: " + missing.join(", "));
+      return;
+    }
+
     setSaving(true);
     try {
       // Resolve next_user_id from allocateCoder or allocateAuditor
@@ -1982,36 +2018,36 @@ export default function ProcessChart() {
               {/* Row 1: Chart #, MR#, Date of Service */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Chart #" value={formData.chartNo} required readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />
-                <FormField label="MR#" value={formData.mrNo} readOnly={timerStopped} onChange={(v) => updateForm("mrNo", v)} />
-                <FormField label="Date of Service" value={formData.dateOfService} readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />
+                <FormField label="MR#" value={formData.mrNo} required readOnly={timerStopped} onChange={(v) => updateForm("mrNo", v)} />
+                <FormField label="Date of Service" value={formData.dateOfService} required readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />
               </div>
               {/* Row 2: Admit date, Discharge date */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Admit date" value={formData.admitDate} readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />
-                <FormField label="Discharge date" value={formData.dischargeDate} readOnly={timerStopped} onChange={(v) => updateForm("dischargeDate", v)} />
+                <FormField label="Admit date" value={formData.admitDate} required readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />
+                <FormField label="Discharge date" value={formData.dischargeDate} required readOnly={timerStopped} onChange={(v) => updateForm("dischargeDate", v)} />
                 <div />
               </div>
               {/* Row 3: Disposition, EM, Primary diagnosis */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Disposition" value={formData.disposition} type="select" readOnly={timerStopped} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />
+                <FormField label="Disposition" value={formData.disposition} type="select" required readOnly={timerStopped} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />
                 <FormField label="EM" value={formData.em} readOnly={timerStopped} onChange={(v) => updateForm("em", v)} />
-                <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} />
+                <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} required readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} />
               </div>
               {/* Row 4: Primary Health Plan, Facility */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Primary Health Plan" value={formData.primaryHealth} type="select" readOnly={timerStopped} onChange={(v) => updateForm("primaryHealth", v)} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />
-                <FormField label="Facility" value={formData.facility} type="select" readOnly={timerStopped} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />
+                <FormField label="Facility" value={formData.facility} type="select" required readOnly={timerStopped} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />
               </div>
               {/* Row 5: POA, LOS, DRG Value */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="POA" value={formData.poa} readOnly={timerStopped} onChange={(v) => updateForm("poa", v.slice(0, 1))} />
-                <FormField label="LOS" value={formData.los} readOnly={timerStopped} onChange={(v) => updateForm("los", v.slice(0, 3))} />
-                <FormField label="DRG Value" value={formData.drgValue} readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v.slice(0, 3))} />
+                <FormField label="POA" value={formData.poa} required readOnly={timerStopped} onChange={(v) => updateForm("poa", v.slice(0, 1))} />
+                <FormField label="LOS" value={formData.los} required readOnly={timerStopped} onChange={(v) => updateForm("los", v.slice(0, 3))} />
+                <FormField label="DRG Value" value={formData.drgValue} required readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v.slice(0, 3))} />
               </div>
               {/* Row 6: Procedure code, Sub Specialty */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
                 <FormField label="Procedure code" value={formData.procedureCode} readOnly={timerStopped} onChange={(v) => updateForm("procedureCode", v)} />
-                <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
+                <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" required readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
                 <div />
               </div>
               {renderCustomFields("Chart Info")}
@@ -2023,7 +2059,7 @@ export default function ProcessChart() {
               <div style={timerStopped ? { pointerEvents: "none" } : {}}>
               {/* Row 1: Chart status, Responsible party */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />
+                <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" required readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Responsible party</label>
                   <FormFieldMultiSelect
@@ -2038,7 +2074,7 @@ export default function ProcessChart() {
               {/* Row 2: Hold reason — disabled when Open or Complete */}
               <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none") }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Hold reason</label>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Hold reason{(formData.chartStatus === "Incomplete") && <span style={{ color: "#ef4444" }}> *</span>}</label>
                   <FormFieldMultiSelect
                     value={formData.holdReason || []}
                     onChange={(v) => updateForm("holdReason", v)}
@@ -2051,7 +2087,7 @@ export default function ProcessChart() {
               {/* Row 3: Coder comments to client — disabled when Complete */}
               <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Complete" ? 0.5 : 1), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Complete" ? "none" : "auto") }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                  Coder comments to client
+                  Coder comments to client<span style={{ color: "#ef4444" }}> *</span>
                 </label>
                 <textarea rows={3} value={formData.coderComments || ""} readOnly={timerStopped || (formData.chartStatus || "Open") === "Complete"} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
