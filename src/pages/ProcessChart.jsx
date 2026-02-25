@@ -576,23 +576,17 @@ export default function ProcessChart() {
   const prevId = getPrevId(currentId);
   const nextId = getNextId(currentId);
 
-  // Timer state — persisted to localStorage per chart
+  // Timer state — server is source of truth; localStorage only persists start/stop display times
   const timerStorageKey = `timer_${id}`;
-  const [timerSeconds, setTimerSeconds] = useState(() => {
-    try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.seconds || 0; } catch { return 0; }
-  });
-  const [timerRunning, setTimerRunning] = useState(() => {
-    try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.running || false; } catch { return false; }
-  });
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
   const [timerStartTime, setTimerStartTime] = useState(() => {
     try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.startTime || null; } catch { return null; }
   });
   const [timerStopTime, setTimerStopTime] = useState(() => {
     try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.stopTime || null; } catch { return null; }
   });
-  const [timerStopped, setTimerStopped] = useState(() => {
-    try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.stopped || false; } catch { return false; }
-  });
+  const [timerStopped, setTimerStopped] = useState(true);
   const [isAnotherChartProcessing, setIsAnotherChartProcessing] = useState(null);
   const [timerMessage, setTimerMessage] = useState("");
 
