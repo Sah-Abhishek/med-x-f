@@ -772,8 +772,8 @@ export default function ProcessChart() {
   const [newCodeForm, setNewCodeForm] = useState({ code: '', description: '', type: 'icd', category: 'Secondary' });
   const [submitPopupOpen, setSubmitPopupOpen] = useState(false); // review & submit popup
 
-  // WebSocket job status tracking
-  const jobId = uploadResult?.jobId || null;
+  // WebSocket job status tracking — recover jobId from upload result or from aiData on page reload
+  const jobId = uploadResult?.jobId || aiData?.activeJobId || null;
   const { status: jobStatus, phase: jobPhase, message: jobMessage, isConnected: wsConnected } = useJobStatus(jobId);
 
   // Phase progression for the visual tracker
@@ -1018,6 +1018,19 @@ export default function ProcessChart() {
       fetchAiData();
     }
   }, [jobStatus, fetchAiData]);
+
+  // Poll aiData while aiStatus is processing/queued (handles page refresh mid-processing)
+  useEffect(() => {
+    if (!aiData) return;
+    const status = aiData.aiStatus;
+    if (status !== 'processing' && status !== 'queued') return;
+
+    const interval = setInterval(() => {
+      fetchAiData();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [aiData?.aiStatus, fetchAiData]);
 
   // Timer logic
   useEffect(() => {
@@ -1827,8 +1840,8 @@ export default function ProcessChart() {
                     )}
                   </div>
 
-                  {/* Live Job Progress Bar (during active upload) */}
-                  {uploadResult && jobId && (() => {
+                  {/* Live Job Progress Bar (during active processing) */}
+                  {jobId && jobStatus && jobStatus !== 'completed' && jobStatus !== 'failed' && (() => {
                     const progressPercent = jobStatus === 'failed' ? Math.round(((currentPhaseIndex >= 0 ? currentPhaseIndex : 0) / (PHASES.length - 1)) * 100)
                       : jobStatus === 'completed' ? 100
                       : currentPhaseIndex >= 0 ? Math.round(((currentPhaseIndex + 0.5) / (PHASES.length - 1)) * 100)
