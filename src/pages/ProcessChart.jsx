@@ -778,7 +778,8 @@ export default function ProcessChart() {
 
   // Phase progression for the visual tracker
   const PHASES = [
-    { key: "processing", label: "Queued" },
+    { key: "pending", label: "Queued" },
+    { key: "processing", label: "Processing" },
     { key: "ocr_started", label: "OCR Started" },
     { key: "ocr_completed", label: "OCR Done" },
     { key: "ai_started", label: "AI Analysis" },
