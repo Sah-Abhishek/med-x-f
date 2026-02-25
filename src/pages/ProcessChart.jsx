@@ -2003,9 +2003,9 @@ export default function ProcessChart() {
               </div>
               {/* Row 5: POA, LOS, DRG Value */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="POA" value={formData.poa} readOnly={timerStopped} onChange={(v) => updateForm("poa", v)} />
-                <FormField label="LOS" value={formData.los} readOnly={timerStopped} onChange={(v) => updateForm("los", v)} />
-                <FormField label="DRG Value" value={formData.drgValue} readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v)} />
+                <FormField label="POA" value={formData.poa} readOnly={timerStopped} onChange={(v) => updateForm("poa", v.slice(0, 1))} />
+                <FormField label="LOS" value={formData.los} readOnly={timerStopped} onChange={(v) => updateForm("los", v.slice(0, 3))} />
+                <FormField label="DRG Value" value={formData.drgValue} readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v.slice(0, 3))} />
               </div>
               {/* Row 6: Procedure code, Sub Specialty */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
