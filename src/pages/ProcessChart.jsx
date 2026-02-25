@@ -593,6 +593,8 @@ export default function ProcessChart() {
   const [timerStopped, setTimerStopped] = useState(() => {
     try { const saved = JSON.parse(localStorage.getItem(timerStorageKey)); return saved?.stopped || false; } catch { return false; }
   });
+  const [isAnotherChartProcessing, setIsAnotherChartProcessing] = useState(null);
+  const [timerMessage, setTimerMessage] = useState("");
 
   // Toast state
   const [toast, setToast] = useState(null); // { message, type: 'error' | 'warning' | 'info' }
@@ -966,36 +968,54 @@ export default function ProcessChart() {
     }
   }, []);
 
-  // Check if a chart is under process on page load — API is source of truth for timer state
+  // Check if a chart is under process on page load
   const checkTimerStatus = useCallback(async () => {
     try {
       const res = await api.get("/users/processing-chart");
       if (res.data?.success) {
-        if (res.data.isChartUnderProcess) {
-          // Chart is under process — timer should be running, fields editable
-          if (!timerRunning) {
-            setTimerRunning(true);
-            if (!timerStartTime) setTimerStartTime(now());
-          }
-          setTimerStopped(false);
-        } else {
-          // No chart under process — timer should not be running, fields disabled
-          if (timerRunning) {
-            setTimerRunning(false);
-          }
-          setTimerStopped(true);
-        }
+        setIsAnotherChartProcessing(res.data.isChartUnderProcess);
       }
     } catch (e) {
       console.error("Failed to check timer status on load:", e.message);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchChart();
     fetchAiData();
     checkTimerStatus();
   }, [fetchChart, fetchAiData, checkTimerStatus]);
+
+  // Combined timer logic: decide timer state from MilestoneId + isAnotherChartProcessing
+  useEffect(() => {
+    if (!chart || isAnotherChartProcessing === null) return;
+
+    if (chart.MilestoneId === 3) {
+      // Chart is being coded — compute elapsed from server timestamp
+      if (chart.timer) {
+        const serverStart = new Date(chart.timer).getTime();
+        const elapsed = Math.max(0, Math.floor((Date.now() - serverStart) / 1000));
+        setTimerSeconds(elapsed);
+      } else {
+        setTimerSeconds(0);
+      }
+      setTimerRunning(true);
+      setTimerStopped(false);
+      setTimerStartTime(now());
+      setTimerMessage("");
+    } else {
+      // MilestoneId < 3 — chart is NOT under coding
+      setTimerSeconds(0);
+      setTimerRunning(false);
+      setTimerStopped(true);
+      setTimerStartTime(null);
+      if (isAnotherChartProcessing) {
+        setTimerMessage("Another chart is in process");
+      } else {
+        setTimerMessage("");
+      }
+    }
+  }, [chart, isAnotherChartProcessing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Refetch AI data when job completes
   useEffect(() => {
@@ -1012,17 +1032,6 @@ export default function ProcessChart() {
     }
     return () => clearInterval(interval);
   }, [timerRunning]);
-
-  // Recover elapsed time if timer was running when page was refreshed
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(timerStorageKey));
-      if (saved?.running && saved?.runStartedAt) {
-        const elapsed = Math.floor((Date.now() - saved.runStartedAt) / 1000);
-        if (elapsed > 0) setTimerSeconds(saved.seconds + elapsed);
-      }
-    } catch { /* ignore */ }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist timer state to localStorage
   useEffect(() => {
@@ -1159,6 +1168,7 @@ export default function ProcessChart() {
     setTimerRunning(true);
     setTimerStartTime(now());
     setTimerStopTime(null);
+    setTimerMessage("");
   };
 
   const handleTimerStop = async () => {
@@ -1451,14 +1461,25 @@ export default function ProcessChart() {
                 color: "#fff", textAlign: "center",
               }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, letterSpacing: 1 }}>Timer</div>
-                <div style={{ fontSize: 36, fontWeight: 700, letterSpacing: 2, marginBottom: 16 }}>
+                <div style={{ fontSize: 36, fontWeight: 700, letterSpacing: 2, marginBottom: timerMessage ? 8 : 16 }}>
                   {formatTime(timerSeconds)}
                 </div>
+                {timerMessage && (
+                  <div style={{
+                    background: "rgba(255,255,255,0.25)", borderRadius: 20,
+                    padding: "4px 14px", fontSize: 11, fontWeight: 600,
+                    marginBottom: 12, color: "#fff", letterSpacing: 0.3,
+                  }}>
+                    {timerMessage}
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                  <button onClick={handleTimerStart} style={{
+                  <button onClick={handleTimerStart} disabled={!!timerMessage} style={{
                     padding: "8px 24px", borderRadius: 8, border: "none",
-                    background: timerRunning ? "rgba(255,255,255,0.3)" : "#10b981",
-                    color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: timerRunning || timerMessage ? "rgba(255,255,255,0.3)" : "#10b981",
+                    color: "#fff", fontSize: 13, fontWeight: 600,
+                    cursor: timerMessage ? "not-allowed" : "pointer",
+                    opacity: timerMessage ? 0.6 : 1,
                   }}>Start</button>
                   <button onClick={handleTimerStop} style={{
                     padding: "8px 24px", borderRadius: 8, border: "none",
