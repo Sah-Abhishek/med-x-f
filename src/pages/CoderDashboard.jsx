@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
+import axios from "axios";
+import { MEDX_API_URL } from "../utils/constants";
 import { useChartsStore } from "../store/chartsStore";
 
 const fmtElapsed = (s) => {
@@ -139,6 +141,9 @@ export default function MyToDoList() {
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const columnsDropdownRef = useRef(null);
 
+  // AI processing status for each chart (sessionId -> aiStatus)
+  const [aiStatusMap, setAiStatusMap] = useState({});
+
   // Sync visibleColumns to store whenever it changes
   useEffect(() => {
     setStoredVisibleColumns([...visibleColumns]);
@@ -195,6 +200,20 @@ export default function MyToDoList() {
   useEffect(() => {
     fetchUserStats();
   }, [fetchUserStats]);
+
+  // Fetch AI processing status for the current page of charts
+  useEffect(() => {
+    if (charts.length === 0) { setAiStatusMap({}); return; }
+    const sessionIds = charts.map((c) => c.Id);
+    const token = localStorage.getItem("token");
+    axios.post(`${MEDX_API_URL}/charts/batch-status`, { sessionIds }, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    }).then((res) => {
+      if (res.data?.success) setAiStatusMap(res.data.data);
+    }).catch((e) => {
+      console.error("Failed to fetch AI status:", e.message);
+    });
+  }, [charts]);
 
   const [elapsed, setElapsed] = useState(null);
   useEffect(() => {
@@ -810,9 +829,16 @@ export default function MyToDoList() {
                       </td>
                     </tr>
                   ) : (
-                    charts.map((chart, idx) => (
+                    charts.map((chart, idx) => {
+                      const aiSt = aiStatusMap[String(chart.Id)];
+                      const aiBorderColor = aiSt === "processing" ? "#f59e0b"
+                        : aiSt === "queued" ? "#3b82f6"
+                        : aiSt === "ready" || aiSt === "submitted" ? "#10b981"
+                        : "transparent";
+                      return (
                       <tr key={chart.Id} style={{
                         borderBottom: "1px solid #f4f5f7",
+                        borderLeft: aiBorderColor !== "transparent" ? `3px solid ${aiBorderColor}` : "3px solid transparent",
                         background: selectedRows.has(chart.Id) ? "#fffbf0" : idx % 2 === 0 ? "#fff" : "#fdfdfe",
                         transition: "background 0.1s",
                       }}
@@ -829,7 +855,8 @@ export default function MyToDoList() {
                           </td>
                         ))}
                       </tr>
-                    ))
+                      );
+                    })
                   )}
                 </tbody>
               </table>
