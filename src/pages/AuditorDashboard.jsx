@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ListChecks, ClipboardCheck, MessageSquareWarning, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ChevronDown, ListChecks, ClipboardCheck, MessageSquareWarning, CheckCircle2, AlertCircle, SlidersHorizontal, Filter, ArrowRightLeft } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import api from '../services/api';
 
@@ -187,7 +187,7 @@ const MilestoneBadge = ({ milestone }) => {
 
 /* ── Table Config ────────────────────────────────────────────────── */
 const COLUMNS = [
-  { key: "SNo", label: "S. NO.", width: 60 },
+  { key: "SNo", label: "S. NO.", width: 60, alwaysVisible: true },
   { key: "Worklist", label: "WORKLIST #", width: 100 },
   { key: "Client", label: "CLIENT", width: 80 },
   { key: "Location", label: "LOCATION", width: 160 },
@@ -246,6 +246,11 @@ const AuditorDashboard = () => {
   const [sortCol, setSortCol] = useState("MilestoneId");
   const [sortDir, setSortDir] = useState("ASC");
 
+  // Column visibility
+  const [visibleColumns, setVisibleColumns] = useState(() => new Set(COLUMNS.map(c => c.key)));
+  const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
+  const columnsDropdownRef = useRef(null);
+
   // ── Fetch master data on mount ────────────────────────────────────
   useEffect(() => {
     api.get('/hn-master-data')
@@ -296,10 +301,31 @@ const AuditorDashboard = () => {
     const handler = (e) => {
       if (clientRef.current && !clientRef.current.contains(e.target)) setClientOpen(false);
       if (locationRef.current && !locationRef.current.contains(e.target)) setLocationOpen(false);
+      if (columnsDropdownRef.current && !columnsDropdownRef.current.contains(e.target)) setColumnsDropdownOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  // ── Column visibility helpers ────────────────────────────────────
+  const toggleColumnVisibility = (key) => {
+    setVisibleColumns(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+  const selectAllColumns = () => setVisibleColumns(new Set(COLUMNS.map(c => c.key)));
+  const deselectAllColumns = () => setVisibleColumns(new Set(COLUMNS.filter(c => c.alwaysVisible).map(c => c.key)));
+
+  const displayedColumns = useMemo(
+    () => COLUMNS.filter(col => col.alwaysVisible || visibleColumns.has(col.key)),
+    [visibleColumns]
+  );
+  const toggleableColumns = COLUMNS.filter(c => !c.alwaysVisible);
+  const allToggleableVisible = toggleableColumns.every(c => visibleColumns.has(c.key));
+  const noneToggleableVisible = toggleableColumns.every(c => !visibleColumns.has(c.key));
+  const visibleCount = toggleableColumns.filter(c => visibleColumns.has(c.key)).length;
 
   // ── Derived data ──────────────────────────────────────────────────
   const clients = masterData?.clients || [];
@@ -429,15 +455,15 @@ const AuditorDashboard = () => {
           background: "#fff", borderRadius: 14, border: "1px solid #e8eaed",
           boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden",
         }}>
-          {/* Priority Tabs + Page Size */}
+          {/* Priority Tabs + Page Size + Toolbar */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "0 20px", borderBottom: "1px solid #f0f1f3",
+            padding: "0 12px", borderBottom: "1px solid #f0f1f3",
           }}>
             <div style={{ display: "flex", gap: 0 }}>
               {tabs.map(tab => (
                 <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
-                  padding: "14px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+                  padding: "14px 14px", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
                   background: "none", border: "none", position: "relative",
                   color: activeTab === tab.key ? "#1a1d23" : "#8c919a",
                   borderBottom: activeTab === tab.key ? "2.5px solid #f5a623" : "2.5px solid transparent",
@@ -447,12 +473,134 @@ const AuditorDashboard = () => {
                 </button>
               ))}
             </div>
-            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }} style={{
-              padding: "7px 12px", borderRadius: 8, border: "1px solid #e0e2e6",
-              fontSize: 13, color: "#4a4f58", cursor: "pointer", background: "#fff",
-            }}>
-              {[10, 25, 50].map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }} style={{
+                padding: "7px 12px", borderRadius: 8, border: "1px solid #e0e2e6",
+                fontSize: 13, color: "#4a4f58", cursor: "pointer", background: "#fff",
+              }}>
+                {[10, 25, 50].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+
+              {/* Columns dropdown */}
+              <div ref={columnsDropdownRef} style={{ position: "relative" }}>
+                <button
+                  onClick={() => setColumnsDropdownOpen(prev => !prev)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "7px 14px", borderRadius: 20,
+                    border: "1px solid #f5a623",
+                    background: "linear-gradient(135deg, #fdf6e3, #fef9ee)",
+                    fontSize: 13, fontWeight: 600, color: "#b8860b",
+                    cursor: "pointer", transition: "all 0.15s ease",
+                    boxShadow: columnsDropdownOpen ? "0 0 0 2px rgba(245,166,35,0.2)" : "none",
+                  }}
+                >
+                  <SlidersHorizontal size={14} />
+                  Columns
+                  {!allToggleableVisible && (
+                    <span style={{
+                      background: "#f5a623", color: "#fff", fontSize: 10, fontWeight: 700,
+                      borderRadius: 10, padding: "1px 6px", lineHeight: "16px",
+                    }}>
+                      {visibleCount}
+                    </span>
+                  )}
+                  <ChevronDown size={12} style={{ transform: columnsDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                </button>
+
+                {columnsDropdownOpen && (
+                  <div style={{
+                    position: "absolute", top: "calc(100% + 6px)", right: 0,
+                    width: 280, maxHeight: 420, overflowY: "auto",
+                    background: "#fff", borderRadius: 12,
+                    border: "1px solid #e8eaed",
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+                    zIndex: 1000,
+                  }}>
+                    <div style={{
+                      padding: "12px 16px 10px", borderBottom: "1px solid #f0f1f3",
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                    }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1d23" }}>Toggle Columns</span>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={selectAllColumns} style={{
+                          background: "none", border: "none", fontSize: 12, fontWeight: 600,
+                          color: allToggleableVisible ? "#b0b5be" : "#f5a623",
+                          cursor: allToggleableVisible ? "default" : "pointer", padding: "2px 0",
+                        }}>Show All</button>
+                        <span style={{ color: "#e0e2e6" }}>|</span>
+                        <button onClick={deselectAllColumns} style={{
+                          background: "none", border: "none", fontSize: 12, fontWeight: 600,
+                          color: noneToggleableVisible ? "#b0b5be" : "#f5a623",
+                          cursor: noneToggleableVisible ? "default" : "pointer", padding: "2px 0",
+                        }}>Hide All</button>
+                      </div>
+                    </div>
+                    <div style={{ padding: "4px 0" }}>
+                      {toggleableColumns.map(col => {
+                        const isVisible = visibleColumns.has(col.key);
+                        return (
+                          <label key={col.key} style={{
+                            display: "flex", alignItems: "center", gap: 10,
+                            padding: "9px 16px", cursor: "pointer", transition: "background 0.1s",
+                          }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "#fafbfc"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                          >
+                            <div
+                              onClick={(e) => { e.preventDefault(); toggleColumnVisibility(col.key); }}
+                              style={{
+                                width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                                border: isVisible ? "2px solid #f5a623" : "2px solid #d0d3d9",
+                                background: isVisible ? "#f5a623" : "#fff",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                transition: "all 0.15s ease", cursor: "pointer",
+                              }}
+                            >
+                              {isVisible && (
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                              )}
+                            </div>
+                            <span style={{
+                              fontSize: 13, fontWeight: 500,
+                              color: isVisible ? "#1a1d23" : "#8c919a", userSelect: "none",
+                            }}>{col.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Filter button */}
+              <button style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "7px 14px", borderRadius: 20,
+                border: "1px solid #f5a623",
+                background: "linear-gradient(135deg, #fdf6e3, #fef9ee)",
+                fontSize: 13, fontWeight: 600, color: "#b8860b",
+                cursor: "pointer", transition: "all 0.15s ease",
+              }}>
+                <Filter size={14} />
+                Filter
+              </button>
+
+              {/* Reallocation button */}
+              <button style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "7px 14px", borderRadius: 20,
+                border: "1px solid #f5a623",
+                background: "linear-gradient(135deg, #fdf6e3, #fef9ee)",
+                fontSize: 13, fontWeight: 600, color: "#b8860b",
+                cursor: "pointer", transition: "all 0.15s ease",
+              }}>
+                <ArrowRightLeft size={14} />
+                Reallocation
+              </button>
+            </div>
           </div>
 
           {/* Loading */}
@@ -473,18 +621,18 @@ const AuditorDashboard = () => {
             <div style={{ overflowX: "auto" }}>
               <table style={{
                 width: "100%", borderCollapse: "collapse",
-                minWidth: COLUMNS.reduce((s, c) => s + c.width, 0),
+                minWidth: displayedColumns.reduce((s, c) => s + c.width, 0),
               }}>
                 <thead>
                   <tr style={{ background: "#fafbfc" }}>
-                    {COLUMNS.map(col => {
+                    {displayedColumns.map(col => {
                       const isSortable = !!SORT_MAP[col.key];
                       const isActive = col.key === activeSortKey;
                       return (
                         <th key={col.key}
                           onClick={() => isSortable && handleSort(col.key)}
                           style={{
-                            padding: "12px 14px", fontSize: 10.5, fontWeight: 700,
+                            padding: "10px 8px", fontSize: 10.5, fontWeight: 700,
                             color: "#8c919a", textAlign: "left", textTransform: "uppercase",
                             letterSpacing: "0.6px", whiteSpace: "nowrap",
                             borderBottom: "1px solid #f0f1f3", width: col.width,
@@ -507,7 +655,7 @@ const AuditorDashboard = () => {
                 <tbody>
                   {charts.length === 0 ? (
                     <tr>
-                      <td colSpan={COLUMNS.length} style={{ padding: 60, textAlign: "center", color: "#b0b5be", fontSize: 14 }}>
+                      <td colSpan={displayedColumns.length} style={{ padding: 60, textAlign: "center", color: "#b0b5be", fontSize: 14 }}>
                         No charts found for this priority level.
                       </td>
                     </tr>
@@ -523,9 +671,9 @@ const AuditorDashboard = () => {
                         onMouseEnter={e => { e.currentTarget.style.background = "#fafbfc"; }}
                         onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#fdfdfe"; }}
                       >
-                        {COLUMNS.map(col => (
+                        {displayedColumns.map(col => (
                           <td key={col.key} style={{
-                            padding: "14px 14px", fontSize: 13, color: "#3a3f48",
+                            padding: "10px 8px", fontSize: 13, color: "#3a3f48",
                             whiteSpace: col.key === "Location" ? "normal" : "nowrap",
                             verticalAlign: "middle",
                           }}>
@@ -544,7 +692,7 @@ const AuditorDashboard = () => {
           {!loading && totalPages > 1 && (
             <div style={{
               display: "flex", justifyContent: "center", alignItems: "center",
-              padding: "16px 20px", gap: 6, borderTop: "1px solid #f0f1f3",
+              padding: "16px 12px", gap: 6, borderTop: "1px solid #f0f1f3",
             }}>
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
                 style={{
