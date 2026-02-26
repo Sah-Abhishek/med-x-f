@@ -122,6 +122,39 @@ const StatusCard = ({ value, label, accent, icon: Icon }) => (
   </div>
 );
 
+/* ── Avatar + User Cell ──────────────────────────────────────────── */
+const Avatar = ({ src, name, size = 28 }) => {
+  const [err, setErr] = useState(false);
+  if (!src || err) {
+    const initials = (name || "").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: "50%",
+        background: "linear-gradient(135deg, #f5a623, #f7c948)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "#fff", fontSize: size * 0.38, fontWeight: 700, flexShrink: 0,
+      }}>{initials}</div>
+    );
+  }
+  return (
+    <img src={src} alt={name || ""} onError={() => setErr(true)}
+      style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+  );
+};
+
+const UserCell = ({ imageUrl, firstName, lastName }) => {
+  if (!firstName) return <span style={{ color: "#ccc" }}>—</span>;
+  const name = `${firstName} ${lastName || ""}`.trim();
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <Avatar src={imageUrl} name={name} />
+      <span style={{ fontSize: 12.5, fontWeight: 500, color: "#3a3f48", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 100 }}>
+        {name}
+      </span>
+    </div>
+  );
+};
+
 /* ── Badge Components ────────────────────────────────────────────── */
 const StatusBadge = ({ status }) => {
   const isComplete = status === "Complete";
@@ -162,8 +195,10 @@ const COLUMNS = [
   { key: "chart_no", label: "CHART #", width: 100 },
   { key: "DateOfService", label: "DATE OF SERVICE", width: 115 },
   { key: "ReceivedDate", label: "RECEIVED DATE", width: 115 },
-  { key: "OriginalCoder", label: "ORIGINAL CODER", width: 120 },
-  { key: "OriginalAuditor", label: "ORIGINAL AUDITOR", width: 120 },
+  { key: "OriginalCoder", label: "ORIGINAL CODER", width: 150 },
+  { key: "FollowUpCoder", label: "FOLLOW UP CODER", width: 150 },
+  { key: "OriginalAuditor", label: "ORIGINAL AUDITOR", width: 150 },
+  { key: "AllocatedUser", label: "ALLOCATED USER", width: 150 },
   { key: "Status", label: "CHART STATUS", width: 110 },
   { key: "Milestone", label: "MILESTONE", width: 140 },
   { key: "qc_status", label: "QC STATUS", width: 90 },
@@ -320,17 +355,21 @@ const AuditorDashboard = () => {
   const renderCell = (chart, col) => {
     switch (col.key) {
       case "Status":
-        return chart.Status ? <StatusBadge status={chart.Status} /> : "--";
+        return chart.Status ? <StatusBadge status={chart.Status} /> : <span style={{ color: "#ccc" }}>—</span>;
       case "Milestone":
-        return chart.Milestone ? <MilestoneBadge milestone={chart.Milestone} /> : "--";
+        return chart.Milestone ? <MilestoneBadge milestone={chart.Milestone} /> : <span style={{ color: "#ccc" }}>—</span>;
       case "OriginalCoder":
-        return chart.CoderFirstName ? `${chart.CoderFirstName} ${chart.CoderLastName || ""}`.trim() : "--";
+        return <UserCell imageUrl={chart.coder_image_url} firstName={chart.CoderFirstName} lastName={chart.CoderLastName} />;
+      case "FollowUpCoder":
+        return <UserCell imageUrl={chart.follow_up_coder_image_url} firstName={chart.FollowUpCoderFirstName} lastName={chart.FollowUpCoderLastName} />;
       case "OriginalAuditor":
-        return chart.AuditorFirstName ? `${chart.AuditorFirstName} ${chart.AuditorLastName || ""}`.trim() : "--";
+        return <UserCell imageUrl={chart.auditor_image_url} firstName={chart.AuditorFirstName} lastName={chart.AuditorLastName} />;
+      case "AllocatedUser":
+        return <UserCell imageUrl={chart.UserImageUrl} firstName={chart.UserFirstName} lastName={chart.UserLastName} />;
       case "qc_status":
-        return chart.qc_status || "--";
+        return chart.qc_status || <span style={{ color: "#ccc" }}>—</span>;
       default:
-        return chart[col.key] ?? "--";
+        return chart[col.key] ?? <span style={{ color: "#ccc" }}>—</span>;
     }
   };
 
