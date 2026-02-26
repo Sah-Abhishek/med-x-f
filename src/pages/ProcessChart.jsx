@@ -934,7 +934,7 @@ export default function ProcessChart() {
   const fetchConfiguration = useCallback(async (clientId = 0, locationId = 1) => {
     try {
       const response = await api.get(
-        `https://uat-app.valerionhealth.com/users/getcongfiguration/${clientId}/${locationId}`
+        `https://uat-app.valerionhealth.com/integrations/ai/users/getcongfiguration/0/${locationId}`
       );
       if (response.data.success) {
         setConfig(response.data.data);
@@ -1093,23 +1093,29 @@ export default function ProcessChart() {
   const handleSave = async () => {
     if (saving) return;
 
-    // --- Required field validation ---
+    // --- Required field validation (driven by chartFieldConfiguration) ---
     const missing = [];
-    if (!formData.chartNo) missing.push("Chart #");
-    if (!formData.mrNo) missing.push("MR#");
-    if (!formData.dateOfService) missing.push("Date of Service");
-    if (!formData.admitDate) missing.push("Admit Date");
-    if (!formData.dischargeDate) missing.push("Discharge Date");
-    if (!formData.disposition) missing.push("Disposition");
-    if (!formData.primaryDiagnosis) missing.push("Primary Diagnosis");
-    if (!formData.facility) missing.push("Facility");
-    if (!formData.poa) missing.push("POA");
-    if (!formData.los) missing.push("LOS");
-    if (!formData.drgValue) missing.push("DRG Value");
-    if (!formData.subSpecialty) missing.push("Sub Specialty");
-    if (!formData.chartStatus || formData.chartStatus === "Open") missing.push("Chart Status");
+    if (isFieldRequired("chart_no") && !formData.chartNo) missing.push("Chart #");
+    if (isFieldRequired("mr_no") && !formData.mrNo) missing.push("MR#");
+    if (isFieldRequired("date_of_service") && !formData.dateOfService) missing.push("Date of Service");
+    if (isFieldRequired("admit_date") && !formData.admitDate) missing.push("Admit Date");
+    if (isFieldRequired("discharge_date") && !formData.dischargeDate) missing.push("Discharge Date");
+    if (isFieldRequired("disposition") && !formData.disposition) missing.push("Disposition");
+    if (isFieldRequired("em") && !formData.em) missing.push("EM");
+    if (isFieldRequired("primary_diagnosis") && !formData.primaryDiagnosis) missing.push("Primary Diagnosis");
+    if (isFieldRequired("primary_health") && !formData.primaryHealth) missing.push("Primary Health Plan");
+    if (isFieldRequired("facility") && !formData.facility) missing.push("Facility");
+    if (isFieldRequired("poa") && !formData.poa) missing.push("POA");
+    if (isFieldRequired("los") && !formData.los) missing.push("LOS");
+    if (isFieldRequired("drg") && !formData.drgValue) missing.push("DRG Value");
+    if (isFieldRequired("procedure_code") && !formData.procedureCode) missing.push("Procedure Code");
+    if (isFieldRequired("sub_specialty") && !formData.subSpecialty) missing.push("Sub Specialty");
+    if (isFieldRequired("chart_status") && (!formData.chartStatus || formData.chartStatus === "Open")) missing.push("Chart Status");
     if (formData.chartStatus === "Incomplete" && (!formData.holdReason || formData.holdReason.length === 0)) missing.push("Hold Reason");
-    if (!formData.coderComments || !formData.coderComments.trim()) missing.push("Coder Comments");
+    if (isFieldRequired("coder_comments") && (!formData.coderComments || !formData.coderComments.trim())) missing.push("Coder Comments");
+    if (isFieldRequired("rejection_comments") && (!formData.rejectionComments || !formData.rejectionComments.trim())) missing.push("Rejection Comments");
+    if (isFieldRequired("deficiency_comments") && (!formData.deficiencyComments || !formData.deficiencyComments.trim())) missing.push("Deficiency Comments");
+    if (isFieldRequired("responsible_parties") && (!formData.responsibleParty || formData.responsibleParty.length === 0)) missing.push("Responsible Party");
 
     // Custom mandatory fields
     for (const field of customFields) {
@@ -1299,6 +1305,26 @@ export default function ProcessChart() {
   }
 
   const userName = [chart.UserFirstName, chart.UserLastName].filter(Boolean).join(" ");
+
+  // Resolve the chart's SpecialtyId from config specialties by name
+  const chartSpecialtyId = config?.specialties?.find(s => s.spec_name === chart?.Specialty)?.id || 0;
+
+  // Helper: get field validation from chartFieldConfiguration
+  // Returns "M" (mandatory), "NM" (not mandatory), or "NA" (not applicable / hidden)
+  // Specialty-specific entries (SpecialtyId matches chart) override the default (SpecialtyId === 0)
+  const getFieldValidation = (fieldName) => {
+    const entries = config?.chartFieldConfiguration?.filter(f => f.field === fieldName) || [];
+    // Try specialty-specific first
+    const specific = entries.find(f => f.SpecialtyId === chartSpecialtyId && chartSpecialtyId !== 0);
+    if (specific) return specific.validation;
+    // Fallback to default (SpecialtyId === 0)
+    const defaultEntry = entries.find(f => f.SpecialtyId === 0);
+    return defaultEntry?.validation || "NM"; // default to not mandatory if no config
+  };
+
+  // Convenience: whether a field should be visible (not "NA") and whether it's required ("M")
+  const isFieldVisible = (fieldName) => getFieldValidation(fieldName) !== "NA";
+  const isFieldRequired = (fieldName) => getFieldValidation(fieldName) === "M";
 
   const renderCustomFields = (placement) => {
     const fields = customFields.filter(f => f.placement === placement);
@@ -2049,39 +2075,47 @@ export default function ProcessChart() {
               <div style={timerStopped ? { pointerEvents: "none" } : {}}>
               {/* Row 1: Chart #, MR#, Date of Service */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Chart #" value={formData.chartNo} required readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />
-                <FormField label="MR#" value={formData.mrNo} required readOnly={timerStopped} onChange={(v) => updateForm("mrNo", v)} />
-                <FormField label="Date of Service" value={formData.dateOfService} required readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />
+                {isFieldVisible("chart_no") && <FormField label="Chart #" value={formData.chartNo} required={isFieldRequired("chart_no")} readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />}
+                {isFieldVisible("mr_no") && <FormField label="MR#" value={formData.mrNo} required={isFieldRequired("mr_no")} readOnly={timerStopped} onChange={(v) => updateForm("mrNo", v)} />}
+                {isFieldVisible("date_of_service") && <FormField label="Date of Service" value={formData.dateOfService} required={isFieldRequired("date_of_service")} readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />}
               </div>
               {/* Row 2: Admit date, Discharge date */}
+              {(isFieldVisible("admit_date") || isFieldVisible("discharge_date")) && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Admit date" value={formData.admitDate} required readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />
-                <FormField label="Discharge date" value={formData.dischargeDate} required readOnly={timerStopped} onChange={(v) => updateForm("dischargeDate", v)} />
+                {isFieldVisible("admit_date") && <FormField label="Admit date" value={formData.admitDate} required={isFieldRequired("admit_date")} readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />}
+                {isFieldVisible("discharge_date") && <FormField label="Discharge date" value={formData.dischargeDate} required={isFieldRequired("discharge_date")} readOnly={timerStopped} onChange={(v) => updateForm("dischargeDate", v)} />}
                 <div />
               </div>
+              )}
               {/* Row 3: Disposition, EM, Primary diagnosis */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Disposition" value={formData.disposition} type="select" required readOnly={timerStopped} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />
-                <FormField label="EM" value={formData.em} readOnly={timerStopped} onChange={(v) => updateForm("em", v)} />
-                <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} required readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} />
+                {isFieldVisible("disposition") && <FormField label="Disposition" value={formData.disposition} type="select" required={isFieldRequired("disposition")} readOnly={timerStopped} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />}
+                {isFieldVisible("em") && <FormField label="EM" value={formData.em} required={isFieldRequired("em")} readOnly={timerStopped} onChange={(v) => updateForm("em", v)} />}
+                {isFieldVisible("primary_diagnosis") && <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} required={isFieldRequired("primary_diagnosis")} readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} />}
               </div>
               {/* Row 4: Primary Health Plan, Facility */}
+              {(isFieldVisible("primary_health") || isFieldVisible("facility")) && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Primary Health Plan" value={formData.primaryHealth} type="select" readOnly={timerStopped} onChange={(v) => updateForm("primaryHealth", v)} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />
-                <FormField label="Facility" value={formData.facility} type="select" required readOnly={timerStopped} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />
+                {isFieldVisible("primary_health") && <FormField label="Primary Health Plan" value={formData.primaryHealth} type="select" required={isFieldRequired("primary_health")} readOnly={timerStopped} onChange={(v) => updateForm("primaryHealth", v)} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />}
+                {isFieldVisible("facility") && <FormField label="Facility" value={formData.facility} type="select" required={isFieldRequired("facility")} readOnly={timerStopped} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />}
               </div>
+              )}
               {/* Row 5: POA, LOS, DRG Value */}
+              {(isFieldVisible("poa") || isFieldVisible("los") || isFieldVisible("drg")) && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="POA" value={formData.poa} required readOnly={timerStopped} onChange={(v) => updateForm("poa", v.slice(0, 1))} />
-                <FormField label="LOS" value={formData.los} required readOnly={timerStopped} onChange={(v) => updateForm("los", v.slice(0, 3))} />
-                <FormField label="DRG Value" value={formData.drgValue} required readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v.slice(0, 3))} />
+                {isFieldVisible("poa") && <FormField label="POA" value={formData.poa} required={isFieldRequired("poa")} readOnly={timerStopped} onChange={(v) => updateForm("poa", v.slice(0, 1))} />}
+                {isFieldVisible("los") && <FormField label="LOS" value={formData.los} required={isFieldRequired("los")} readOnly={timerStopped} onChange={(v) => updateForm("los", v.slice(0, 3))} />}
+                {isFieldVisible("drg") && <FormField label="DRG Value" value={formData.drgValue} required={isFieldRequired("drg")} readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v.slice(0, 3))} />}
               </div>
+              )}
               {/* Row 6: Procedure code, Sub Specialty */}
+              {(isFieldVisible("procedure_code") || isFieldVisible("sub_specialty")) && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                <FormField label="Procedure code" value={formData.procedureCode} readOnly={timerStopped} onChange={(v) => updateForm("procedureCode", v)} />
-                <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" required readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />
+                {isFieldVisible("procedure_code") && <FormField label="Procedure code" value={formData.procedureCode} required={isFieldRequired("procedure_code")} readOnly={timerStopped} onChange={(v) => updateForm("procedureCode", v)} />}
+                {isFieldVisible("sub_specialty") && <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" required={isFieldRequired("sub_specialty")} readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />}
                 <div />
               </div>
+              )}
               {renderCustomFields("Chart Info")}
               </div>
             </CollapsibleCard>
@@ -2090,10 +2124,11 @@ export default function ProcessChart() {
             <CollapsibleCard title="Processing Info" subtitle="All fields related to processing this chart" defaultOpen={true}>
               <div style={timerStopped ? { pointerEvents: "none" } : {}}>
               {/* Row 1: Chart status, Responsible party */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 3fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" required readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />
+              <div style={{ display: "grid", gridTemplateColumns: isFieldVisible("responsible_parties") ? "1fr 3fr" : "1fr", gap: 16, marginBottom: 16 }}>
+                {isFieldVisible("chart_status") && <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" required={isFieldRequired("chart_status")} readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />}
+                {isFieldVisible("responsible_parties") && (
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Responsible party</label>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Responsible party{isFieldRequired("responsible_parties") && <span style={{ color: "#ef4444" }}> *</span>}</label>
                   <FormFieldMultiSelect
                     value={formData.responsibleParty || []}
                     onChange={(v) => updateForm("responsibleParty", v)}
@@ -2102,6 +2137,7 @@ export default function ProcessChart() {
                     readOnly={timerStopped}
                   />
                 </div>
+                )}
               </div>
               {/* Row 2: Hold reason — disabled when Open or Complete */}
               <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none") }}>
@@ -2117,9 +2153,10 @@ export default function ProcessChart() {
                 </div>
               </div>
               {/* Row 3: Coder comments to client — disabled when Complete */}
+              {isFieldVisible("coder_comments") && (
               <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Complete" ? 0.5 : 1), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Complete" ? "none" : "auto") }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                  Coder comments to client<span style={{ color: "#ef4444" }}> *</span>
+                  Coder comments to client{isFieldRequired("coder_comments") && <span style={{ color: "#ef4444" }}> *</span>}
                 </label>
                 <textarea rows={3} value={formData.coderComments || ""} readOnly={timerStopped || (formData.chartStatus || "Open") === "Complete"} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
@@ -2130,10 +2167,12 @@ export default function ProcessChart() {
                   cursor: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "not-allowed" : "text",
                 }} />
               </div>
+              )}
               {/* Row 4: Rejection / Denial Comments */}
+              {isFieldVisible("rejection_comments") && (
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                  Rejection / Denial Comments
+                  Rejection / Denial Comments{isFieldRequired("rejection_comments") && <span style={{ color: "#ef4444" }}> *</span>}
                 </label>
                 <textarea rows={3} value={formData.rejectionComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("rejectionComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
@@ -2143,10 +2182,12 @@ export default function ProcessChart() {
                   cursor: timerStopped ? "not-allowed" : "text",
                 }} />
               </div>
+              )}
               {/* Row 5: Deficiency Comments */}
+              {isFieldVisible("deficiency_comments") && (
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                  Deficiency Comments
+                  Deficiency Comments{isFieldRequired("deficiency_comments") && <span style={{ color: "#ef4444" }}> *</span>}
                 </label>
                 <textarea rows={3} value={formData.deficiencyComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("deficiencyComments", e.target.value)} style={{
                   width: "100%", padding: "10px 12px", borderRadius: 8,
@@ -2156,6 +2197,7 @@ export default function ProcessChart() {
                   cursor: timerStopped ? "not-allowed" : "text",
                 }} />
               </div>
+              )}
               {/* Row 6: Date of completion, Audit options, Coder QC Status */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <FormField label="Date of completion" value={new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} readOnly />
