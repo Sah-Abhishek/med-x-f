@@ -68,7 +68,7 @@ function App() {
         <Route
           path="/process-chart/:id"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.CODER]}>
+            <ProtectedRoute allowedRoles={[ROLES.CODER, ROLES.AUDITOR]}>
               <ProcessChart />
             </ProtectedRoute>
           }
