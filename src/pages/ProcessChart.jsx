@@ -839,6 +839,9 @@ export default function ProcessChart() {
       if (response.data.success) {
         setUploadStatus("success");
         setUploadResult(response.data);
+        // Refetch AI data so aiStatus becomes 'queued'/'processing',
+        // enabling the REST polling fallback if WebSocket misses updates
+        fetchAiData();
       } else {
         setUploadStatus("error");
         setUploadError(response.data.message || "Upload failed");
@@ -915,10 +918,12 @@ export default function ProcessChart() {
         setAiData(response.data.chart);
         setAiNoSession(false);
       } else {
+        setAiData(null);
         setAiNoSession(true);
       }
     } catch (e) {
       // No AI data for this session yet
+      setAiData(null);
       setAiNoSession(true);
       console.log("No AI data found for session:", id);
     } finally {
@@ -974,6 +979,15 @@ export default function ProcessChart() {
       console.error("Failed to check timer status on load:", e.message);
     }
   }, []);
+
+  // Reset stale state when navigating to a different chart
+  useEffect(() => {
+    setUploadResult(null);
+    setUploadStatus(null);
+    setUploadError(null);
+    setAiData(null);
+    setAiNoSession(false);
+  }, [id]);
 
   useEffect(() => {
     fetchChart();
