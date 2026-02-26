@@ -396,6 +396,12 @@ const AuditorDashboard = () => {
   // ── Render cell ───────────────────────────────────────────────────
   const renderCell = (chart, col) => {
     switch (col.key) {
+      case "SNo":
+        return <span onClick={(e) => { e.stopPropagation(); navigate(`/process-chart/${chart.Id}`); }} style={{ color: "#f5a623", fontWeight: 700, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>{chart.SNo}</span>;
+      case "chart_no":
+        return chart.chart_no
+          ? <span onClick={(e) => { e.stopPropagation(); navigate(`/process-chart/${chart.Id}`); }} style={{ color: "#f5a623", fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>{chart.chart_no}</span>
+          : <span style={{ color: "#ccc" }}>—</span>;
       case "Status":
         return chart.Status ? <StatusBadge status={chart.Status} /> : <span style={{ color: "#ccc" }}>—</span>;
       case "Milestone":
