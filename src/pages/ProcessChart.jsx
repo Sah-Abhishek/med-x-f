@@ -4,13 +4,14 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import api from "../services/api";
 import { MEDX_API_URL } from "../utils/constants";
 import { useChartsStore } from "../store/chartsStore";
+import { useAuthStore } from "../store/authStore";
 import { useJobStatus } from "../hooks/useJobStatus";
 import axios from "axios";
 import {
   FileText, File as FileIcon, FileImage, Layers,
   ClipboardPaste, X, Plus, Trash2, Upload, Loader2, CheckCircle2, AlertCircle,
   Eye, ExternalLink, Wifi, WifiOff, Clock, ChevronLeft, ChevronRight, List,
-  Minimize2, Maximize2, Sparkles, ChevronDown, ChevronUp, Check, XCircle, Pencil, Save,
+  Minimize2, Maximize2, Sparkles, ChevronDown, ChevronUp, Check, XCircle, Pencil, Save, Send,
 } from "lucide-react";
 
 /* ── SVG Icon components ── */
@@ -593,6 +594,12 @@ export default function ProcessChart() {
   // Toast state
   const [toast, setToast] = useState(null); // { message, type: 'error' | 'warning' | 'info' }
 
+  // Comments state
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [postingComment, setPostingComment] = useState(false);
+  const profile = useAuthStore((s) => s.profile);
+
   // Upload section state
   const [activeTab] = useState("coding"); // default tab context
   const [dragActive, setDragActive] = useState({ document: false, image: false });
@@ -968,6 +975,40 @@ export default function ProcessChart() {
     }
   }, []);
 
+  // Fetch comments for this chart
+  const fetchComments = useCallback(async () => {
+    try {
+      const response = await api.get(`/charts/${id}/comments`);
+      if (response.data?.success) {
+        setComments(response.data.data || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch comments:", e.message);
+    }
+  }, [id]);
+
+  // Post a new comment
+  const postComment = async () => {
+    const msg = commentText.trim();
+    if (!msg || postingComment) return;
+    setPostingComment(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `https://uat-app.valerionhealth.com/charts/${id}/comments`,
+        { comment_msg: msg, UserId: profile?.id, edit: false },
+        { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
+      );
+      setCommentText("");
+      fetchComments();
+    } catch (e) {
+      console.error("Failed to post comment:", e.message);
+      showToast("Failed to post comment. Please try again.", "error");
+    } finally {
+      setPostingComment(false);
+    }
+  };
+
   // Check if a chart is under process on page load
   const checkTimerStatus = useCallback(async () => {
     try {
@@ -991,13 +1032,16 @@ export default function ProcessChart() {
     setStagedImages([]);
     setGroupLabel("");
     setTextInput("");
+    setComments([]);
+    setCommentText("");
   }, [id]);
 
   useEffect(() => {
     fetchChart();
     fetchAiData();
     checkTimerStatus();
-  }, [fetchChart, fetchAiData, checkTimerStatus]);
+    fetchComments();
+  }, [fetchChart, fetchAiData, checkTimerStatus, fetchComments]);
 
   // Combined timer logic: decide timer state from MilestoneId + isAnotherChartProcessing
   useEffect(() => {
@@ -2429,18 +2473,81 @@ export default function ProcessChart() {
             </CollapsibleSection>
 
             {/* Conversation Log */}
-            <CollapsibleSection title="Conversation Log" subtitle="Internal comments within the team"
-              headerAction={
-                <button onClick={(e) => e.stopPropagation()} style={{
-                  width: 24, height: 24, borderRadius: "50%", border: "none",
-                  background: "#fff3e0", color: "#f5a623", fontSize: 14, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                </button>
-              }
-            >
-              <p style={{ color: "#94a3b8", fontSize: 12, textAlign: "center", padding: "8px 0" }}>No comments yet</p>
+            <CollapsibleSection title="Conversation Log" subtitle="Internal comments within the team">
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                {/* Comments list */}
+                {comments.length > 0 ? (
+                  <div style={{ maxHeight: 300, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 12, paddingRight: 4 }}>
+                    {comments.map((c) => (
+                      <div key={c.id} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                        {/* Avatar */}
+                        <div style={{
+                          width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+                          background: "#f0f1f3", display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 700, color: "#64748b", overflow: "hidden",
+                        }}>
+                          {c.user_image_url
+                            ? <img src={c.user_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : `${(c.user_first_name || "?")[0]}${(c.user_last_name || "")[0]}`.toUpperCase()
+                          }
+                        </div>
+                        {/* Content */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#1a1d23" }}>
+                              {c.user_first_name} {c.user_last_name}
+                            </span>
+                            <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}>
+                              {c.role}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.5, margin: 0, wordBreak: "break-word" }}>
+                            {c.comment_msg}
+                          </p>
+                          <span style={{ fontSize: 10, color: "#94a3b8", marginTop: 3, display: "block" }}>
+                            {c.comment_timestamp}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: "#94a3b8", fontSize: 12, textAlign: "center", padding: "8px 0", marginBottom: 12 }}>No comments yet</p>
+                )}
+
+                {/* Comment input */}
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type="text"
+                    placeholder="Comment for chart..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); postComment(); } }}
+                    disabled={!timerRunning}
+                    style={{
+                      flex: 1, padding: "9px 12px", borderRadius: 8,
+                      border: "1px solid #e2e8f0", fontSize: 13,
+                      background: !timerRunning ? "#f1f5f9" : "#fff",
+                      color: !timerRunning ? "#94a3b8" : "#1a1d23",
+                      cursor: !timerRunning ? "not-allowed" : "text",
+                      outline: "none",
+                    }}
+                  />
+                  <button
+                    onClick={postComment}
+                    disabled={!timerRunning || !commentText.trim() || postingComment}
+                    style={{
+                      width: 36, height: 36, borderRadius: 8, border: "none",
+                      background: timerRunning && commentText.trim() ? "#1a1d23" : "#e2e8f0",
+                      color: timerRunning && commentText.trim() ? "#fff" : "#94a3b8",
+                      cursor: timerRunning && commentText.trim() ? "pointer" : "not-allowed",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}
+                  >
+                    {postingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
             </CollapsibleSection>
 
             {/* Time Tracker */}
