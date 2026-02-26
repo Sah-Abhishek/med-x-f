@@ -1,50 +1,65 @@
 import { useEffect, useRef, useState } from 'react';
 import { MEDX_WS_URL } from '../utils/constants';
 
+const POLL_INTERVAL = 10000; // 10 seconds
+
 /**
- * Hook that subscribes to real-time chart AI status updates via WebSocket.
- * Used on the dashboard to show live processing indicators.
+ * Hook that subscribes to real-time chart AI status updates via WebSocket,
+ * with a polling fallback that re-fetches statuses every 10s.
  *
  * @param {string[]} sessionIds - Array of chart session IDs to watch
- * @param {Object} initialStatusMap - Initial status map from the REST batch-status call
+ * @param {Function} fetchStatuses - Async function that returns { [sessionId]: aiStatus }
  * @returns {Object} statusMap - { [sessionId]: aiStatus }
  */
-export function useChartStatuses(sessionIds, initialStatusMap = {}) {
-  const [statusMap, setStatusMap] = useState(initialStatusMap);
+export function useChartStatuses(sessionIds, fetchStatuses) {
+  const [statusMap, setStatusMap] = useState({});
   const wsRef = useRef(null);
   const retriesRef = useRef(0);
   const reconnectTimerRef = useRef(null);
   const maxRetries = 5;
   const sessionIdsRef = useRef(sessionIds);
   sessionIdsRef.current = sessionIds;
-  // Track which sessionIds have received a live WS update — don't overwrite these with stale REST data
-  const wsUpdatedRef = useRef(new Set());
 
-  // Merge initial status map whenever it changes from the REST call,
-  // but do NOT overwrite keys that already have a fresher WebSocket value
-  useEffect(() => {
-    if (!initialStatusMap || Object.keys(initialStatusMap).length === 0) return;
-    console.log('[useChartStatuses] REST initialStatusMap received:', initialStatusMap);
-    setStatusMap(prev => {
-      const merged = { ...prev };
-      for (const [key, value] of Object.entries(initialStatusMap)) {
-        // Only apply REST value if WS hasn't sent a fresher update for this key
-        if (!wsUpdatedRef.current.has(String(key))) {
-          merged[String(key)] = value;
-        } else {
-          console.log(`[useChartStatuses] Skipping REST overwrite for ${key} — WS already has fresher value: ${prev[String(key)]}`);
-        }
-      }
-      return merged;
-    });
-  }, [initialStatusMap]);
-
-  // Derive a stable key so the effect re-runs when the set of IDs changes
+  // Derive a stable key so effects re-run when the set of IDs changes
   const sessionKey = sessionIds?.length > 0 ? sessionIds.map(String).sort().join(',') : '';
 
+  // ── Polling fallback ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!sessionKey || !fetchStatuses) return;
+
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const data = await fetchStatuses();
+        if (!cancelled && data) {
+          setStatusMap(prev => {
+            const merged = { ...prev };
+            for (const [key, value] of Object.entries(data)) {
+              merged[String(key)] = value;
+            }
+            return merged;
+          });
+        }
+      } catch {
+        // ignore polling errors
+      }
+    };
+
+    // Fetch immediately on mount / sessionKey change
+    poll();
+
+    const interval = setInterval(poll, POLL_INTERVAL);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [sessionKey, fetchStatuses]);
+
+  // ── WebSocket (instant updates when available) ────────────────────
   useEffect(() => {
     if (!sessionKey) {
-      // No sessions to watch — close any existing connection
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
@@ -53,15 +68,13 @@ export function useChartStatuses(sessionIds, initialStatusMap = {}) {
         clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
       }
+      setStatusMap({});
       return;
     }
 
-    // Reset WS-updated tracking when the page of charts changes
-    wsUpdatedRef.current = new Set();
     retriesRef.current = 0;
 
     function connect() {
-      // Close stale connection if any
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
@@ -83,9 +96,8 @@ export function useChartStatuses(sessionIds, initialStatusMap = {}) {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('[useChartStatuses] WS message received:', data);
           if (data.type === 'chart_status_update' && data.sessionId) {
-            wsUpdatedRef.current.add(String(data.sessionId));
+            console.log('[useChartStatuses] WS update:', data.sessionId, '→', data.aiStatus);
             setStatusMap(prev => ({ ...prev, [String(data.sessionId)]: data.aiStatus }));
           }
         } catch {
@@ -94,18 +106,15 @@ export function useChartStatuses(sessionIds, initialStatusMap = {}) {
       };
 
       ws.onclose = (e) => {
-        console.log('[useChartStatuses] WebSocket CLOSED, code:', e.code, 'reason:', e.reason);
-        // Only reconnect if this ws is still the active one
+        console.log('[useChartStatuses] WebSocket CLOSED, code:', e.code);
         if (wsRef.current === ws && retriesRef.current < maxRetries) {
           const delay = Math.min(1000 * 2 ** retriesRef.current, 10000);
           retriesRef.current++;
-          console.log(`[useChartStatuses] Reconnecting in ${delay}ms (attempt ${retriesRef.current}/${maxRetries})`);
           reconnectTimerRef.current = setTimeout(connect, delay);
         }
       };
 
-      ws.onerror = (err) => {
-        console.error('[useChartStatuses] WebSocket ERROR:', err);
+      ws.onerror = () => {
         ws.close();
       };
     }
@@ -113,7 +122,6 @@ export function useChartStatuses(sessionIds, initialStatusMap = {}) {
     connect();
 
     return () => {
-      console.log('[useChartStatuses] Cleanup — closing WebSocket');
       if (reconnectTimerRef.current) {
         clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
@@ -125,10 +133,9 @@ export function useChartStatuses(sessionIds, initialStatusMap = {}) {
     };
   }, [sessionKey]);
 
-  // Re-subscribe when sessionIds change but the WebSocket is already open
+  // Re-subscribe when sessionIds change but WS is already open
   useEffect(() => {
     if (wsRef.current && wsRef.current.readyState === 1 && sessionIds?.length > 0) {
-      console.log('[useChartStatuses] Re-subscribing with updated sessionIds:', sessionIds.length);
       wsRef.current.send(JSON.stringify({ type: 'unsubscribe_charts' }));
       wsRef.current.send(JSON.stringify({
         type: 'subscribe_charts',
