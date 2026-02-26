@@ -995,7 +995,7 @@ export default function ProcessChart() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `https://uat-app.valerionhealth.com/charts/${id}/comments`,
+        `https://uat-app.valerionhealth.com/integrations/ai/charts/${id}/comments`,
         { comment_msg: msg, UserId: profile?.id, edit: false },
         { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
       );
