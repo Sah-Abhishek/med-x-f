@@ -987,6 +987,10 @@ export default function ProcessChart() {
     setUploadError(null);
     setAiData(null);
     setAiNoSession(false);
+    setUploads({ coding: { documents: [], imageGroups: [], texts: [] } });
+    setStagedImages([]);
+    setGroupLabel("");
+    setTextInput("");
   }, [id]);
 
   useEffect(() => {
