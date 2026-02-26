@@ -222,6 +222,14 @@ const SORT_MAP = {
 
 const PRIORITY_TABS = ["Critical", "High", "Medium", "Low", "Done"];
 
+/* ── localStorage helpers ─────────────────────────────────────────── */
+const LS_PREFIX = 'auditorDash_';
+const lsGet = (key, fallback) => {
+  try { const v = localStorage.getItem(LS_PREFIX + key); return v !== null ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+};
+const lsSet = (key, value) => { try { localStorage.setItem(LS_PREFIX + key, JSON.stringify(value)); } catch {} };
+
 /* ── Main Component ──────────────────────────────────────────────── */
 const AuditorDashboard = () => {
   const navigate = useNavigate();
@@ -236,20 +244,28 @@ const AuditorDashboard = () => {
   const clientRef = useRef(null);
   const locationRef = useRef(null);
 
-  // Charts table state
+  // Charts table state — persisted to localStorage
   const [charts, setCharts] = useState([]);
   const [counts, setCounts] = useState({ Critical: 0, High: 0, Medium: 0, Low: 0, done: 0 });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("Critical");
+  const [activeTab, setActiveTab] = useState(() => lsGet('activeTab', 'Critical'));
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(() => lsGet('pageSize', 10));
   const [sortCol, setSortCol] = useState("MilestoneId");
   const [sortDir, setSortDir] = useState("ASC");
 
-  // Column visibility
-  const [visibleColumns, setVisibleColumns] = useState(() => new Set(COLUMNS.map(c => c.key)));
+  // Column visibility — persisted to localStorage
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const stored = lsGet('visibleColumns', null);
+    return stored ? new Set(stored) : new Set(COLUMNS.map(c => c.key));
+  });
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const columnsDropdownRef = useRef(null);
+
+  // Persist to localStorage on change
+  useEffect(() => { lsSet('activeTab', activeTab); }, [activeTab]);
+  useEffect(() => { lsSet('pageSize', pageSize); }, [pageSize]);
+  useEffect(() => { lsSet('visibleColumns', [...visibleColumns]); }, [visibleColumns]);
 
   // ── Fetch master data on mount ────────────────────────────────────
   useEffect(() => {
@@ -401,7 +417,7 @@ const AuditorDashboard = () => {
 
   // ── Render ────────────────────────────────────────────────────────
   return (
-    <DashboardLayout>
+    <DashboardLayout fullWidth>
       <div className="space-y-6">
         {/* Header row with title + filters */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
