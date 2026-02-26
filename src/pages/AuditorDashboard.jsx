@@ -231,7 +231,7 @@ const AuditorDashboard = () => {
   const fetchCharts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/charts', {
+      const res = await api.post('/charts/', {}, {
         params: {
           priority: activeTab,
           page: currentPage,
