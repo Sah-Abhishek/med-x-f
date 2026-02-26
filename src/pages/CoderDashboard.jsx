@@ -5,6 +5,7 @@ import api from "../services/api";
 import axios from "axios";
 import { MEDX_API_URL } from "../utils/constants";
 import { useChartsStore } from "../store/chartsStore";
+import { useChartStatuses } from "../hooks/useChartStatuses";
 
 const fmtElapsed = (s) => {
   if (s == null) return "--:--";
@@ -141,8 +142,10 @@ export default function MyToDoList() {
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const columnsDropdownRef = useRef(null);
 
-  // AI processing status for each chart (sessionId -> aiStatus)
-  const [aiStatusMap, setAiStatusMap] = useState({});
+  // AI processing status — initial from REST, kept live via WebSocket
+  const [initialAiStatusMap, setInitialAiStatusMap] = useState({});
+  const sessionIds = useMemo(() => charts.map((c) => c.Id), [charts]);
+  const aiStatusMap = useChartStatuses(sessionIds, initialAiStatusMap);
 
   // Sync visibleColumns to store whenever it changes
   useEffect(() => {
@@ -201,15 +204,15 @@ export default function MyToDoList() {
     fetchUserStats();
   }, [fetchUserStats]);
 
-  // Fetch AI processing status for the current page of charts
+  // Fetch initial AI processing status for the current page of charts
   useEffect(() => {
-    if (charts.length === 0) { setAiStatusMap({}); return; }
-    const sessionIds = charts.map((c) => c.Id);
+    if (charts.length === 0) { setInitialAiStatusMap({}); return; }
+    const ids = charts.map((c) => c.Id);
     const token = localStorage.getItem("token");
-    axios.post(`${MEDX_API_URL}/charts/batch-status`, { sessionIds }, {
+    axios.post(`${MEDX_API_URL}/charts/batch-status`, { sessionIds: ids }, {
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     }).then((res) => {
-      if (res.data?.success) setAiStatusMap(res.data.data);
+      if (res.data?.success) setInitialAiStatusMap(res.data.data);
     }).catch((e) => {
       console.error("Failed to fetch AI status:", e.message);
     });
