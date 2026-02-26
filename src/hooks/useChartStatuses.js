@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MEDX_WS_URL } from '../utils/constants';
 
 /**
@@ -13,6 +13,7 @@ export function useChartStatuses(sessionIds, initialStatusMap = {}) {
   const [statusMap, setStatusMap] = useState(initialStatusMap);
   const wsRef = useRef(null);
   const retriesRef = useRef(0);
+  const reconnectTimerRef = useRef(null);
   const maxRetries = 5;
   const sessionIdsRef = useRef(sessionIds);
   sessionIdsRef.current = sessionIds;
@@ -22,64 +23,86 @@ export function useChartStatuses(sessionIds, initialStatusMap = {}) {
     setStatusMap(prev => ({ ...prev, ...initialStatusMap }));
   }, [initialStatusMap]);
 
-  const connect = useCallback(() => {
-    if (!sessionIdsRef.current || sessionIdsRef.current.length === 0) return;
-
-    const ws = new WebSocket(MEDX_WS_URL);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      retriesRef.current = 0;
-      ws.send(JSON.stringify({
-        type: 'subscribe_charts',
-        sessionIds: sessionIdsRef.current.map(String)
-      }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'chart_status_update' && data.sessionId) {
-          setStatusMap(prev => ({ ...prev, [data.sessionId]: data.aiStatus }));
-        }
-      } catch {
-        // ignore malformed messages
-      }
-    };
-
-    ws.onclose = () => {
-      if (retriesRef.current < maxRetries) {
-        const delay = Math.min(1000 * 2 ** retriesRef.current, 10000);
-        retriesRef.current++;
-        setTimeout(connect, delay);
-      }
-    };
-
-    ws.onerror = () => {
-      ws.close();
-    };
-  }, []);
+  // Derive a stable key so the effect re-runs when the set of IDs changes
+  const sessionKey = sessionIds?.length > 0 ? sessionIds.map(String).sort().join(',') : '';
 
   useEffect(() => {
-    if (!sessionIds || sessionIds.length === 0) {
-      setStatusMap({});
+    if (!sessionKey) {
+      // No sessions to watch — close any existing connection
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       return;
+    }
+
+    retriesRef.current = 0;
+
+    function connect() {
+      // Close stale connection if any
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
+      const ws = new WebSocket(MEDX_WS_URL);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        retriesRef.current = 0;
+        ws.send(JSON.stringify({
+          type: 'subscribe_charts',
+          sessionIds: sessionIdsRef.current.map(String)
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'chart_status_update' && data.sessionId) {
+            setStatusMap(prev => ({ ...prev, [data.sessionId]: data.aiStatus }));
+          }
+        } catch {
+          // ignore malformed messages
+        }
+      };
+
+      ws.onclose = () => {
+        // Only reconnect if this ws is still the active one (not replaced by a new effect run)
+        if (wsRef.current === ws && retriesRef.current < maxRetries) {
+          const delay = Math.min(1000 * 2 ** retriesRef.current, 10000);
+          retriesRef.current++;
+          reconnectTimerRef.current = setTimeout(connect, delay);
+        }
+      };
+
+      ws.onerror = () => {
+        ws.close();
+      };
     }
 
     connect();
 
     return () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
       }
     };
-  }, [connect]);
+  }, [sessionKey]);
 
-  // Re-subscribe when the session IDs change (e.g. page change)
+  // Re-subscribe when sessionIds change but the WebSocket is already open
+  // (e.g. page change within the same dashboard session)
   useEffect(() => {
     if (wsRef.current && wsRef.current.readyState === 1 && sessionIds?.length > 0) {
-      // Unsubscribe old, subscribe new
       wsRef.current.send(JSON.stringify({ type: 'unsubscribe_charts' }));
       wsRef.current.send(JSON.stringify({
         type: 'subscribe_charts',
