@@ -599,6 +599,11 @@ export default function ProcessChart() {
   const [commentText, setCommentText] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const profile = useAuthStore((s) => s.profile);
+  const user = useAuthStore((s) => s.user);
+
+  // Auditor with MilestoneId 6 can edit audit info even when timer is stopped
+  const isAuditorAuditEnabled = user?.role === 'auditor' && chart?.MilestoneId === 6;
+  const auditReadOnly = timerStopped && !isAuditorAuditEnabled;
 
   // Upload section state
   const [activeTab] = useState("coding"); // default tab context
@@ -1377,6 +1382,7 @@ export default function ProcessChart() {
     for (let i = 0; i < fields.length; i += 3) {
       rows.push(fields.slice(i, i + 3));
     }
+    const isReadOnly = placement === "Audit Info" ? auditReadOnly : timerStopped;
     return rows.map((row, rowIdx) => (
       <div key={`cf-${placement}-${rowIdx}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginTop: 16 }}>
         {row.map(field => {
@@ -1393,7 +1399,7 @@ export default function ProcessChart() {
                   onChange={(v) => updateCustomField(field.id, v)}
                   options={options}
                   placeholder="Select..."
-                  readOnly={timerStopped}
+                  readOnly={isReadOnly}
                 />
               </div>
             );
@@ -1408,7 +1414,7 @@ export default function ProcessChart() {
                 type="select"
                 options={options}
                 placeholder="Select..."
-                readOnly={timerStopped}
+                readOnly={isReadOnly}
                 onChange={(v) => updateCustomField(field.id, v)}
               />
             );
@@ -1420,7 +1426,7 @@ export default function ProcessChart() {
               value={customFieldValues[field.id] || ""}
               required={isRequired}
               type={field.type === "number" ? "number" : "text"}
-              readOnly={timerStopped}
+              readOnly={isReadOnly}
               onChange={(v) => updateCustomField(field.id, v)}
             />
           );
@@ -2268,8 +2274,8 @@ export default function ProcessChart() {
             </CollapsibleCard>
 
             {/* Audit Information Section — Collapsible */}
-            <CollapsibleCard title="Audit Information" defaultOpen={false}>
-              <div style={timerStopped || chart?.MilestoneId === 3 ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 } : {}}>
+            <CollapsibleCard title="Audit Information" defaultOpen={isAuditorAuditEnabled}>
+              <div style={(timerStopped || chart?.MilestoneId === 3) && !isAuditorAuditEnabled ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 } : {}}>
                 {/* Audit table */}
                 <div style={{ border: "1px solid #e8eaed", borderRadius: 10, overflow: "visible" }}>
                   {/* Header row */}
@@ -2303,20 +2309,20 @@ export default function ProcessChart() {
                             onChange={(v) => updateAuditField(row.key, "totalCodes", v)}
                             options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
                             placeholder="Select..."
-                            readOnly={timerStopped}
+                            readOnly={auditReadOnly}
                           />
                         ) : (
                           <input
                             type="text"
                             value={auditData[row.key]?.totalCodes || ""}
-                            readOnly={timerStopped}
-                            onChange={timerStopped ? undefined : (e) => updateAuditField(row.key, "totalCodes", e.target.value)}
+                            readOnly={auditReadOnly}
+                            onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "totalCodes", e.target.value)}
                             style={{
                               width: "100%", padding: "8px 10px", borderRadius: 6,
-                              border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
-                              background: timerStopped ? "#e5e7eb" : "#fff",
-                              fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23",
-                              boxSizing: "border-box", cursor: timerStopped ? "not-allowed" : "text",
+                              border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
+                              background: auditReadOnly ? "#e5e7eb" : "#fff",
+                              fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
+                              boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
                             }}
                           />
                         )}
@@ -2328,20 +2334,20 @@ export default function ProcessChart() {
                             onChange={(v) => updateAuditField(row.key, "correctCodes", v)}
                             options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
                             placeholder="Select..."
-                            readOnly={timerStopped}
+                            readOnly={auditReadOnly}
                           />
                         ) : (
                           <input
                             type="text"
                             value={auditData[row.key]?.correctCodes || ""}
-                            readOnly={timerStopped}
-                            onChange={timerStopped ? undefined : (e) => updateAuditField(row.key, "correctCodes", e.target.value)}
+                            readOnly={auditReadOnly}
+                            onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "correctCodes", e.target.value)}
                             style={{
                               width: "100%", padding: "8px 10px", borderRadius: 6,
-                              border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
-                              background: timerStopped ? "#e5e7eb" : "#fff",
-                              fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23",
-                              boxSizing: "border-box", cursor: timerStopped ? "not-allowed" : "text",
+                              border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
+                              background: auditReadOnly ? "#e5e7eb" : "#fff",
+                              fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
+                              boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
                             }}
                           />
                         )}
@@ -2353,7 +2359,7 @@ export default function ProcessChart() {
                             onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
                             options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
                             placeholder="Select..."
-                            readOnly={timerStopped}
+                            readOnly={auditReadOnly}
                           />
                         )}
                       </div>
@@ -2372,10 +2378,10 @@ export default function ProcessChart() {
                       onChange={(v) => updateForm("feedbackType", v)}
                       options={config?.feedback_types?.map(f => f.feed_type_name) || []}
                       placeholder="Select..."
-                      readOnly={timerStopped}
+                      readOnly={auditReadOnly}
                     />
                   </div>
-                  <FormField label="Auditor QC Status" value={formData.auditorQcStatus} required type="select" readOnly={timerStopped} onChange={(v) => updateForm("auditorQcStatus", v)} placeholder="Select..." />
+                  <FormField label="Auditor QC Status" value={formData.auditorQcStatus} required type="select" readOnly={auditReadOnly} onChange={(v) => updateForm("auditorQcStatus", v)} placeholder="Select..." />
                 </div>
 
                 {renderCustomFields("Audit Info")}
