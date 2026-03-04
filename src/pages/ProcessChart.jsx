@@ -786,7 +786,12 @@ export default function ProcessChart() {
 
   // WebSocket job status tracking — recover jobId from upload result or from aiData on page reload
   const jobId = uploadResult?.jobId || aiData?.activeJobId || null;
-  const { status: jobStatus, phase: jobPhase, message: jobMessage, isConnected: wsConnected } = useJobStatus(jobId);
+  const { status: wsJobStatus, phase: wsJobPhase, message: wsJobMessage, isConnected: wsConnected } = useJobStatus(jobId);
+
+  // Fall back to polled aiData when WebSocket is disconnected (fixes progress bar freezing)
+  const jobStatus = wsJobStatus || aiData?.activeJobStatus || null;
+  const jobPhase = wsJobPhase || aiData?.activeJobPhase || null;
+  const jobMessage = wsJobMessage || null;
 
   // Phase progression for the visual tracker
   const PHASES = [
@@ -1957,7 +1962,7 @@ export default function ProcessChart() {
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className={`text-lg font-bold ${textColor}`}>{progressPercent}%</span>
+                            {/* <span className={`text-lg font-bold ${textColor}`}>{progressPercent}%</span> */}
                             <div className="flex items-center gap-1">
                               {wsConnected ? <Wifi className="w-3 h-3 text-emerald-500" /> : <WifiOff className="w-3 h-3 text-slate-400" />}
                             </div>
