@@ -2395,7 +2395,7 @@ export default function ProcessChart() {
                     readOnly={timerStopped}
                   />
                 </div>
-                <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={timerStopped || chart?.MilestoneId !== 4} onChange={(v) => updateForm("qcStatus", v)} placeholder="Select..." />
+                <FormField label="Coder QC Status" value={formData.qcStatus} required type="select" readOnly={timerStopped || chart?.MilestoneId !== 4} onChange={(v) => updateForm("qcStatus", v)} options={masterData?.qc_status?.map(q => q.name) || []} placeholder="Select..." />
               </div>
               {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
