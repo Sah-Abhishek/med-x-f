@@ -611,6 +611,7 @@ export default function ProcessChart() {
   });
   const [timerStopped, setTimerStopped] = useState(true);
   const [isAnotherChartProcessing, setIsAnotherChartProcessing] = useState(null);
+  const [currentChartStats, setCurrentChartStats] = useState(null);
   const [timerMessage, setTimerMessage] = useState("");
 
   // Toast state
@@ -1072,9 +1073,15 @@ export default function ProcessChart() {
   // Check if a chart is under process on page load
   const checkTimerStatus = useCallback(async () => {
     try {
-      const res = await api.get("/users/processing-chart");
-      if (res.data?.success) {
-        setIsAnotherChartProcessing(res.data.isChartUnderProcess);
+      const [procRes, statsRes] = await Promise.all([
+        api.get("/users/processing-chart"),
+        api.get("/charts/user-stats"),
+      ]);
+      if (procRes.data?.success) {
+        setIsAnotherChartProcessing(procRes.data.isChartUnderProcess);
+      }
+      if (statsRes.data?.success) {
+        setCurrentChartStats(statsRes.data.data?.current_chart_stats || null);
       }
     } catch (e) {
       console.error("Failed to check timer status on load:", e.message);
@@ -1105,14 +1112,20 @@ export default function ProcessChart() {
     fetchComments();
   }, [fetchChart, fetchAiData, checkTimerStatus, fetchComments]);
 
-  // Combined timer logic: decide timer state from MilestoneId + isAnotherChartProcessing
+  // Combined timer logic: decide timer state from MilestoneId + isAnotherChartProcessing + userStats
   useEffect(() => {
     if (!chart || isAnotherChartProcessing === null) return;
 
-    if (chart.MilestoneId === 3) {
+    // Check if THIS chart is the one currently being processed (via userstats)
+    const isThisChartActive = currentChartStats?.chartId?.toString() === id?.toString()
+      && currentChartStats?.timer;
+
+    if (chart.MilestoneId === 3 || isThisChartActive) {
       // Chart is being coded — compute elapsed from server timestamp
-      if (chart.timer) {
-        const serverStart = new Date(chart.timer).getTime();
+      // Prefer chart.timer, fall back to userstats timer
+      const timerValue = chart.timer || (isThisChartActive ? currentChartStats.timer : null);
+      if (timerValue) {
+        const serverStart = new Date(timerValue).getTime();
         const elapsed = Math.max(0, Math.floor((Date.now() - serverStart) / 1000));
         setTimerSeconds(elapsed);
       } else {
@@ -1123,7 +1136,7 @@ export default function ProcessChart() {
       setTimerStartTime(now());
       setTimerMessage("");
     } else {
-      // MilestoneId < 3 — chart is NOT under coding
+      // Chart is NOT under coding
       setTimerSeconds(0);
       setTimerRunning(false);
       setTimerStopped(true);
@@ -1134,7 +1147,7 @@ export default function ProcessChart() {
         setTimerMessage("");
       }
     }
-  }, [chart, isAnotherChartProcessing]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [chart, isAnotherChartProcessing, currentChartStats, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Refetch AI data when job completes
   useEffect(() => {
