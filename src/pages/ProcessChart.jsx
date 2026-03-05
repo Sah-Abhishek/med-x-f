@@ -574,6 +574,7 @@ export default function ProcessChart() {
   const [masterData, setMasterData] = useState(null);
   const [formData, setFormData] = useState({});
   const [aiFilledFields, setAiFilledFields] = useState(new Set());
+  const aiAutoFillDone = React.useRef(false);
   const updateForm = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear AI tag when user manually edits the field
@@ -1093,6 +1094,8 @@ export default function ProcessChart() {
     setTextInput("");
     setComments([]);
     setCommentText("");
+    aiAutoFillDone.current = false;
+    setAiFilledFields(new Set());
   }, [id]);
 
   useEffect(() => {
@@ -1153,50 +1156,50 @@ export default function ProcessChart() {
     return () => clearInterval(interval);
   }, [aiData?.aiStatus, fetchAiData]);
 
-  // Auto-fill form fields from AI results when processing completes
+  // Auto-fill form fields from AI results once both chart and AI data are loaded.
+  // Uses setFormData(prev => ...) to read the LATEST form state (avoids stale closure
+  // from race between fetchChart and fetchAiData). Ref prevents duplicate fills.
   useEffect(() => {
-    if (!aiData || aiData.aiStatus !== 'ready') return;
+    if (!aiData || aiData.aiStatus !== 'ready' || !chart) return;
+    if (aiAutoFillDone.current) return;
+    aiAutoFillDone.current = true;
 
-    const updates = {};
-    const filled = new Set();
-
-    // Primary diagnosis — use first primary or principal diagnosis
+    // Extract AI values
     const primaryDx = aiData.diagnosisCodes?.primary_diagnosis?.[0]
       || aiData.diagnosisCodes?.principal_diagnosis;
-    if (primaryDx && !formData.primaryDiagnosis) {
-      const code = primaryDx.icd_10_code || primaryDx.code || '';
-      const desc = primaryDx.description || primaryDx.finding || '';
-      if (code) {
-        updates.primaryDiagnosis = desc ? `${code} - ${desc}` : code;
+    const firstProc = aiData.procedures?.[0];
+    const emLevel = aiData.diagnosisCodes?.ed_em_level?.[0];
+
+    const primaryCode = primaryDx?.icd_10_code || primaryDx?.code || '';
+    const primaryDesc = primaryDx?.description || primaryDx?.finding || '';
+    const procCode = firstProc?.cpt_code || firstProc?.code || '';
+    const emCode = emLevel?.icd_10_code || emLevel?.code || '';
+
+    // Use functional update to read latest formData (not stale closure)
+    setFormData(prev => {
+      const updates = {};
+      const filled = new Set();
+
+      if (primaryCode && !prev.primaryDiagnosis) {
+        updates.primaryDiagnosis = primaryDesc ? `${primaryCode} - ${primaryDesc}` : primaryCode;
         filled.add('primaryDiagnosis');
       }
-    }
-
-    // Procedure code — use first procedure CPT code
-    const firstProc = aiData.procedures?.[0];
-    if (firstProc && !formData.procedureCode) {
-      const code = firstProc.cpt_code || firstProc.code || '';
-      if (code) {
-        updates.procedureCode = code;
+      if (procCode && !prev.procedureCode) {
+        updates.procedureCode = procCode;
         filled.add('procedureCode');
       }
-    }
-
-    // EM level
-    const emLevel = aiData.diagnosisCodes?.ed_em_level?.[0];
-    if (emLevel && !formData.em) {
-      const code = emLevel.icd_10_code || emLevel.code || '';
-      if (code) {
-        updates.em = code;
+      if (emCode && !prev.em) {
+        updates.em = emCode;
         filled.add('em');
       }
-    }
 
-    if (Object.keys(updates).length > 0) {
-      setFormData(prev => ({ ...prev, ...updates }));
-      setAiFilledFields(prev => new Set([...prev, ...filled]));
-    }
-  }, [aiData?.aiStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+      if (filled.size > 0) {
+        setAiFilledFields(prev => new Set([...prev, ...filled]));
+        return { ...prev, ...updates };
+      }
+      return prev;
+    });
+  }, [aiData?.aiStatus, chart]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Timer logic
   useEffect(() => {
