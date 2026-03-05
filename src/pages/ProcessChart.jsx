@@ -814,7 +814,9 @@ export default function ProcessChart() {
 
   const processDocuments = async () => {
     const docs = currentUploads.documents;
-    if (docs.length === 0) return;
+    const imageGroups = currentUploads.imageGroups;
+    const texts = currentUploads.texts;
+    if (docs.length === 0 && imageGroups.length === 0 && texts.length === 0) return;
 
     setUploadStatus("uploading");
     setUploadResult(null);
@@ -822,18 +824,44 @@ export default function ProcessChart() {
 
     try {
       const formData = new FormData();
+      const transactions = [];
+      let fileIndex = 0;
 
-      // Append each file
+      // Append document files (PDF / Word)
       docs.forEach((doc) => {
         formData.append("files", doc.file);
+        transactions.push({
+          type: doc.type === "application/pdf" ? "pdf" : "doc",
+          fileIndex: fileIndex++,
+          label: doc.name,
+        });
       });
 
-      // Build transactions array
-      const transactions = docs.map((doc, idx) => ({
-        type: doc.type === "application/pdf" ? "pdf" : "doc",
-        fileIndex: idx,
-        label: doc.name,
-      }));
+      // Append image group files — each group shares a transaction ID
+      imageGroups.forEach((group) => {
+        const fileIndices = [];
+        group.images.forEach((img) => {
+          formData.append("files", img.file);
+          fileIndices.push(fileIndex++);
+        });
+        transactions.push({
+          type: "image_group",
+          fileIndices,
+          label: group.label,
+        });
+      });
+
+      // Append clinical text entries as plain-text files (skip OCR on backend)
+      texts.forEach((entry, i) => {
+        const blob = new Blob([entry.text], { type: "text/plain" });
+        const textFile = new File([blob], `clinical-text-${i + 1}.txt`, { type: "text/plain" });
+        formData.append("files", textFile);
+        transactions.push({
+          type: "text",
+          fileIndex: fileIndex++,
+          label: `Clinical Text ${i + 1}`,
+        });
+      });
 
       formData.append("sessionId", id);
       formData.append("documentType", "ed-notes");
@@ -1915,7 +1943,7 @@ export default function ProcessChart() {
                   <div className="flex items-center gap-4">
                     <button
                       onClick={processDocuments}
-                      disabled={currentUploads.documents.length === 0 || uploadStatus === "uploading"}
+                      disabled={(currentUploads.documents.length === 0 && currentUploads.imageGroups.length === 0 && currentUploads.texts.length === 0) || uploadStatus === "uploading"}
                       className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
                     >
                       {uploadStatus === "uploading" ? (
