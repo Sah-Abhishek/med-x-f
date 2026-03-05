@@ -1075,7 +1075,7 @@ export default function ProcessChart() {
     try {
       const [procRes, statsRes] = await Promise.all([
         api.get("/users/processing-chart"),
-        api.get("/charts/user-stats"),
+        api.get("/charts/user-stats", { params: { client: 0, location: 0 } }),
       ]);
       if (procRes.data?.success) {
         setIsAnotherChartProcessing(procRes.data.isChartUnderProcess);
