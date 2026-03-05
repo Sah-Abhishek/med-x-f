@@ -1181,7 +1181,7 @@ export default function ProcessChart() {
       const filled = new Set();
 
       if (primaryCode && !prev.primaryDiagnosis) {
-        updates.primaryDiagnosis = primaryDesc ? `${primaryCode} - ${primaryDesc}` : primaryCode;
+        updates.primaryDiagnosis = primaryCode;
         filled.add('primaryDiagnosis');
       }
       if (procCode && !prev.procedureCode) {
