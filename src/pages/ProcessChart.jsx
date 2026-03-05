@@ -1364,7 +1364,7 @@ export default function ProcessChart() {
         PrimaryHealthId: primaryHealthId,
         SubSpecialtyId: subSpecialtyId,
         StatusId: statusId,
-        QCStatusId: qcStatusId,
+        qc_status_id: qcStatusId,
         AuditOptions: auditOptionIds,
         comment_msg: formData.coderComments || null,
         chartInfoCustomFields: customFieldValues,
