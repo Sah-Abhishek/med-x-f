@@ -1722,12 +1722,17 @@ export default function ProcessChart() {
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                  <button onClick={handleTimerStart} disabled={!!timerMessage} style={{
+                  <button onClick={() => {
+                    if (timerMessage) {
+                      showToast("Another chart is in progress. Please save that chart first to start working on this one.", "warning");
+                      return;
+                    }
+                    handleTimerStart();
+                  }} style={{
                     padding: "8px 24px", borderRadius: 8, border: "none",
-                    background: timerRunning || timerMessage ? "rgba(255,255,255,0.3)" : "#10b981",
+                    background: timerRunning ? "rgba(255,255,255,0.3)" : "#10b981",
                     color: "#fff", fontSize: 13, fontWeight: 600,
-                    cursor: timerMessage ? "not-allowed" : "pointer",
-                    opacity: timerMessage ? 0.6 : 1,
+                    cursor: "pointer",
                   }}>Start</button>
                   <button onClick={handleTimerStop} style={{
                     padding: "8px 24px", borderRadius: 8, border: "none",

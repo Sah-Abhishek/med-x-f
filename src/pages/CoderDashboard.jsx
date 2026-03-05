@@ -748,7 +748,7 @@ export default function MyToDoList() {
                 Reallocation
               </button>
 
-              <button style={{
+              {/* <button style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "8px 16px", borderRadius: 10, border: "2px solid #1a1d23",
                 background: "#fff", fontSize: 13, fontWeight: 600, color: "#1a1d23",
@@ -756,7 +756,7 @@ export default function MyToDoList() {
               }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
                 Add Chart
-              </button>
+              </button> */}
             </div>
           </div>
 
