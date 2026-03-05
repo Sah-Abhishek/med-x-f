@@ -1242,28 +1242,35 @@ export default function ProcessChart() {
     if (saving) return;
 
     // --- Required field validation (driven by chartFieldConfiguration) ---
+    // Helper: only validate fields that are both visible (not "NA") and currently enabled
+    const reqVisible = (key) => isFieldVisible(key) && isFieldRequired(key);
+    const chartStatus = formData.chartStatus || "Open";
+    const isComplete = chartStatus === "Complete";
+    const isIncomplete = chartStatus === "Incomplete";
+
     const missing = [];
-    if (isFieldRequired("chart_no") && !formData.chartNo) missing.push("Chart #");
-    if (isFieldRequired("mr_no") && !formData.mrNo) missing.push("MR#");
-    if (isFieldRequired("date_of_service") && !formData.dateOfService) missing.push("Date of Service");
-    if (isFieldRequired("admit_date") && !formData.admitDate) missing.push("Admit Date");
-    if (isFieldRequired("discharge_date") && !formData.dischargeDate) missing.push("Discharge Date");
-    if (isFieldRequired("disposition") && !formData.disposition) missing.push("Disposition");
-    if (isFieldRequired("em") && !formData.em) missing.push("EM");
-    if (isFieldRequired("primary_diagnosis") && !formData.primaryDiagnosis) missing.push("Primary Diagnosis");
-    if (isFieldRequired("primary_health") && !formData.primaryHealth) missing.push("Primary Health Plan");
-    if (isFieldRequired("facility") && !formData.facility) missing.push("Facility");
-    if (isFieldRequired("poa") && !formData.poa) missing.push("POA");
-    if (isFieldRequired("los") && !formData.los) missing.push("LOS");
-    if (isFieldRequired("drg") && !formData.drgValue) missing.push("DRG Value");
-    if (isFieldRequired("procedure_code") && !formData.procedureCode) missing.push("Procedure Code");
-    if (isFieldRequired("sub_specialty") && !formData.subSpecialty) missing.push("Sub Specialty");
-    if (isFieldRequired("chart_status") && (!formData.chartStatus || formData.chartStatus === "Open")) missing.push("Chart Status");
-    if (formData.chartStatus === "Incomplete" && (!formData.holdReason || formData.holdReason.length === 0)) missing.push("Hold Reason");
-    if (isFieldRequired("coder_comments") && (!formData.coderComments || !formData.coderComments.trim())) missing.push("Coder Comments");
-    if (isFieldRequired("rejection_comments") && (!formData.rejectionComments || !formData.rejectionComments.trim())) missing.push("Rejection Comments");
-    if (isFieldRequired("deficiency_comments") && (!formData.deficiencyComments || !formData.deficiencyComments.trim())) missing.push("Deficiency Comments");
-    if (isFieldRequired("responsible_parties") && (!formData.responsibleParty || formData.responsibleParty.length === 0)) missing.push("Responsible Party");
+    if (reqVisible("chart_no") && !formData.chartNo) missing.push("Chart #");
+    if (reqVisible("mr_no") && !formData.mrNo) missing.push("MR#");
+    if (reqVisible("date_of_service") && !formData.dateOfService) missing.push("Date of Service");
+    if (reqVisible("admit_date") && !formData.admitDate) missing.push("Admit Date");
+    if (reqVisible("discharge_date") && !formData.dischargeDate) missing.push("Discharge Date");
+    if (reqVisible("disposition") && !formData.disposition) missing.push("Disposition");
+    if (reqVisible("em") && !formData.em) missing.push("EM");
+    if (reqVisible("primary_diagnosis") && !formData.primaryDiagnosis) missing.push("Primary Diagnosis");
+    if (reqVisible("primary_health") && !formData.primaryHealth) missing.push("Primary Health Plan");
+    if (reqVisible("facility") && !formData.facility) missing.push("Facility");
+    if (reqVisible("poa") && !formData.poa) missing.push("POA");
+    if (reqVisible("los") && !formData.los) missing.push("LOS");
+    if (reqVisible("drg") && !formData.drgValue) missing.push("DRG Value");
+    if (reqVisible("procedure_code") && !formData.procedureCode) missing.push("Procedure Code");
+    if (reqVisible("sub_specialty") && !formData.subSpecialty) missing.push("Sub Specialty");
+    if (reqVisible("chart_status") && (chartStatus === "Open")) missing.push("Chart Status");
+    if (isIncomplete && (!formData.holdReason || formData.holdReason.length === 0)) missing.push("Hold Reason");
+    // Coder comments are disabled when status is Complete — skip validation in that case
+    if (reqVisible("coder_comments") && !isComplete && (!formData.coderComments || !formData.coderComments.trim())) missing.push("Coder Comments");
+    if (reqVisible("rejection_comments") && (!formData.rejectionComments || !formData.rejectionComments.trim())) missing.push("Rejection Comments");
+    if (reqVisible("deficiency_comments") && (!formData.deficiencyComments || !formData.deficiencyComments.trim())) missing.push("Deficiency Comments");
+    if (reqVisible("responsible_parties") && (!formData.responsibleParty || formData.responsibleParty.length === 0)) missing.push("Responsible Party");
 
     // Custom mandatory fields
     for (const field of customFields) {
