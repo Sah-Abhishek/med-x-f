@@ -1270,16 +1270,21 @@ export default function ProcessChart() {
     if (reqVisible("date_of_service") && !formData.dateOfService) missing.push("Date of Service");
     if (reqVisible("admit_date") && !formData.admitDate) missing.push("Admit Date");
     if (reqVisible("discharge_date") && !formData.dischargeDate) missing.push("Discharge Date");
-    if (reqVisible("disposition") && !formData.disposition) missing.push("Disposition");
+    const dispositionOpts = config?.dispositions || [];
+    const primaryHealthOpts = config?.primary_health || [];
+    const facilityOpts = config?.facility || [];
+    const subSpecialtyOpts = config?.subspecialties || [];
+
+    if (reqVisible("disposition") && dispositionOpts.length > 0 && !formData.disposition) missing.push("Disposition");
     if (reqVisible("em") && !formData.em) missing.push("EM");
     if (reqVisible("primary_diagnosis") && !formData.primaryDiagnosis) missing.push("Primary Diagnosis");
-    if (reqVisible("primary_health") && !formData.primaryHealth) missing.push("Primary Health Plan");
-    if (reqVisible("facility") && !formData.facility) missing.push("Facility");
+    if (reqVisible("primary_health") && primaryHealthOpts.length > 0 && !formData.primaryHealth) missing.push("Primary Health Plan");
+    if (reqVisible("facility") && facilityOpts.length > 0 && !formData.facility) missing.push("Facility");
     if (reqVisible("poa") && !formData.poa) missing.push("POA");
     if (reqVisible("los") && !formData.los) missing.push("LOS");
     if (reqVisible("drg") && !formData.drgValue) missing.push("DRG Value");
     if (reqVisible("procedure_code") && !formData.procedureCode) missing.push("Procedure Code");
-    if (reqVisible("sub_specialty") && !formData.subSpecialty) missing.push("Sub Specialty");
+    if (reqVisible("sub_specialty") && subSpecialtyOpts.length > 0 && !formData.subSpecialty) missing.push("Sub Specialty");
     if (reqVisible("chart_status") && (chartStatus === "Open")) missing.push("Chart Status");
     if (isIncomplete && (!formData.holdReason || formData.holdReason.length === 0)) missing.push("Hold Reason");
     // Coder comments are disabled when status is Complete — skip validation in that case
@@ -1292,8 +1297,15 @@ export default function ProcessChart() {
     for (const field of customFields) {
       if (field.validation === "Mandatory") {
         const val = customFieldValues[field.id];
-        if (field.type === "dropdown" && field.isMultiSelect) {
-          if (!val || !Array.isArray(val) || val.length === 0) missing.push(field.name);
+        // Skip mandatory check for dropdowns with no options
+        if (field.type === "dropdown") {
+          const dropdownOpts = field.ChartInfoDropdowns || [];
+          if (dropdownOpts.length === 0) continue;
+          if (field.isMultiSelect) {
+            if (!val || !Array.isArray(val) || val.length === 0) missing.push(field.name);
+          } else {
+            if (!val) missing.push(field.name);
+          }
         } else {
           if (!val) missing.push(field.name);
         }
@@ -2395,9 +2407,9 @@ export default function ProcessChart() {
               </div>
             </CollapsibleCard>
 
-            {/* Audit Information Section — Collapsible */}
-            <CollapsibleCard title="Audit Information" defaultOpen={isAuditorAuditEnabled}>
-              <div style={(timerStopped || chart?.MilestoneId === 3) && !isAuditorAuditEnabled ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 } : {}}>
+            {/* Audit Information Section — Collapsible (disabled) */}
+            <CollapsibleCard title="Audit Information" defaultOpen={false}>
+              <div style={{ pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 }}>
                 {/* Audit table */}
                 <div style={{ border: "1px solid #e8eaed", borderRadius: 10, overflow: "visible" }}>
                   {/* Header row */}
