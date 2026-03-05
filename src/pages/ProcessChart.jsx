@@ -346,10 +346,21 @@ const FormFieldDropdown = ({ value, onChange, options = [], placeholder, readOnl
   );
 };
 
-const FormField = ({ label, value, required, type = "text", options, placeholder, readOnly = true, onChange }) => (
+const FormField = ({ label, value, required, type = "text", options, placeholder, readOnly = true, onChange, aiTag }) => (
   <div style={{ flex: 1, minWidth: 0 }}>
-    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
+    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
       {label}{required && <span style={{ color: "#ef4444" }}> *</span>}
+      {aiTag && (
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 3,
+          padding: "1px 6px", borderRadius: 4, fontSize: 10, fontWeight: 700,
+          background: "linear-gradient(135deg, #ede9fe, #e0e7ff)", color: "#6d28d9",
+          border: "1px solid #c4b5fd", letterSpacing: "0.02em",
+        }}>
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M8 1l2.1 4.3L15 6l-3.5 3.4.8 4.8L8 12l-4.3 2.2.8-4.8L1 6l4.9-.7L8 1z" fill="#7c3aed"/></svg>
+          AI Generated
+        </span>
+      )}
     </label>
     {type === "select" ? (
       <FormFieldDropdown
@@ -364,8 +375,8 @@ const FormField = ({ label, value, required, type = "text", options, placeholder
         onChange={readOnly ? undefined : (e) => onChange?.(e.target.value)}
         style={{
           width: "100%", padding: "10px 12px", borderRadius: 8,
-          border: `1px solid ${readOnly ? "#d1d5db" : "#e2e8f0"}`,
-          background: readOnly ? "#e5e7eb" : "#fff",
+          border: `1px solid ${aiTag ? "#c4b5fd" : readOnly ? "#d1d5db" : "#e2e8f0"}`,
+          background: aiTag ? "#faf5ff" : readOnly ? "#e5e7eb" : "#fff",
           fontSize: 13, color: readOnly ? "#6b7280" : "#1a1d23", boxSizing: "border-box",
           cursor: readOnly ? "not-allowed" : "text",
         }} />
@@ -562,7 +573,17 @@ export default function ProcessChart() {
   const [config, setConfig] = useState(null);
   const [masterData, setMasterData] = useState(null);
   const [formData, setFormData] = useState({});
-  const updateForm = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+  const [aiFilledFields, setAiFilledFields] = useState(new Set());
+  const updateForm = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear AI tag when user manually edits the field
+    setAiFilledFields(prev => {
+      if (!prev.has(field)) return prev;
+      const next = new Set(prev);
+      next.delete(field);
+      return next;
+    });
+  };
   const [customFields, setCustomFields] = useState([]);
   const [customFieldValues, setCustomFieldValues] = useState({});
   const updateCustomField = (fieldId, value) => setCustomFieldValues(prev => ({ ...prev, [fieldId]: value }));
@@ -1131,6 +1152,51 @@ export default function ProcessChart() {
 
     return () => clearInterval(interval);
   }, [aiData?.aiStatus, fetchAiData]);
+
+  // Auto-fill form fields from AI results when processing completes
+  useEffect(() => {
+    if (!aiData || aiData.aiStatus !== 'ready') return;
+
+    const updates = {};
+    const filled = new Set();
+
+    // Primary diagnosis — use first primary or principal diagnosis
+    const primaryDx = aiData.diagnosisCodes?.primary_diagnosis?.[0]
+      || aiData.diagnosisCodes?.principal_diagnosis;
+    if (primaryDx && !formData.primaryDiagnosis) {
+      const code = primaryDx.icd_10_code || primaryDx.code || '';
+      const desc = primaryDx.description || primaryDx.finding || '';
+      if (code) {
+        updates.primaryDiagnosis = desc ? `${code} - ${desc}` : code;
+        filled.add('primaryDiagnosis');
+      }
+    }
+
+    // Procedure code — use first procedure CPT code
+    const firstProc = aiData.procedures?.[0];
+    if (firstProc && !formData.procedureCode) {
+      const code = firstProc.cpt_code || firstProc.code || '';
+      if (code) {
+        updates.procedureCode = code;
+        filled.add('procedureCode');
+      }
+    }
+
+    // EM level
+    const emLevel = aiData.diagnosisCodes?.ed_em_level?.[0];
+    if (emLevel && !formData.em) {
+      const code = emLevel.icd_10_code || emLevel.code || '';
+      if (code) {
+        updates.em = code;
+        filled.add('em');
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setFormData(prev => ({ ...prev, ...updates }));
+      setAiFilledFields(prev => new Set([...prev, ...filled]));
+    }
+  }, [aiData?.aiStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Timer logic
   useEffect(() => {
@@ -2173,8 +2239,8 @@ export default function ProcessChart() {
               {/* Row 3: Disposition, EM, Primary diagnosis */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 {isFieldVisible("disposition") && <FormField label="Disposition" value={formData.disposition} type="select" required={isFieldRequired("disposition")} readOnly={timerStopped} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />}
-                {isFieldVisible("em") && <FormField label="EM" value={formData.em} required={isFieldRequired("em")} readOnly={timerStopped} onChange={(v) => updateForm("em", v)} />}
-                {isFieldVisible("primary_diagnosis") && <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} required={isFieldRequired("primary_diagnosis")} readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} />}
+                {isFieldVisible("em") && <FormField label="EM" value={formData.em} required={isFieldRequired("em")} readOnly={timerStopped} onChange={(v) => updateForm("em", v)} aiTag={aiFilledFields.has("em")} />}
+                {isFieldVisible("primary_diagnosis") && <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} required={isFieldRequired("primary_diagnosis")} readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} aiTag={aiFilledFields.has("primaryDiagnosis")} />}
               </div>
               {/* Row 4: Primary Health Plan, Facility */}
               {(isFieldVisible("primary_health") || isFieldVisible("facility")) && (
@@ -2194,7 +2260,7 @@ export default function ProcessChart() {
               {/* Row 6: Procedure code, Sub Specialty */}
               {(isFieldVisible("procedure_code") || isFieldVisible("sub_specialty")) && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                {isFieldVisible("procedure_code") && <FormField label="Procedure code" value={formData.procedureCode} required={isFieldRequired("procedure_code")} readOnly={timerStopped} onChange={(v) => updateForm("procedureCode", v)} />}
+                {isFieldVisible("procedure_code") && <FormField label="Procedure code" value={formData.procedureCode} required={isFieldRequired("procedure_code")} readOnly={timerStopped} onChange={(v) => updateForm("procedureCode", v)} aiTag={aiFilledFields.has("procedureCode")} />}
                 {isFieldVisible("sub_specialty") && <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" required={isFieldRequired("sub_specialty")} readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />}
                 <div />
               </div>
