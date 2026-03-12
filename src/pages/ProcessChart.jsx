@@ -545,12 +545,12 @@ const PriorityBadge = ({ priority }) => {
 /* ── Audit rows configuration ── */
 const AUDIT_ROWS = [
   { key: "primaryDiagnosis", label: "Primary Diagnosis", feedKey: "prim_diag_feed" },
-  { key: "secondaryDiagnosis", label: "Secondary Diagnosis", feedKey: "sec_diag_feed" },
-  { key: "procedures", label: "Procedures", feedKey: "procedure_feed" },
+  { key: "secondaryDiagnosis", label: "Secondary Diagnosis", feedKey: "sec_diag_feed", multiFeedback: true },
+  { key: "procedures", label: "Procedures", feedKey: "procedure_feed", multiFeedback: true },
   { key: "edEmLevel", label: "ED/EM Level", feedKey: "ed_em_feed", totalCodesOptions: ["0", "1"] },
-  { key: "modifier", label: "Modifier", feedKey: "modifier_feed" },
-  { key: "poaIndicator", label: "POA Indicator", feedKey: "poa_feed" },
-  { key: "drgValue", label: "DRG Value", feedKey: "drug_feed" },
+  { key: "modifier", label: "Modifier", feedKey: "modifier_feed", multiFeedback: true },
+  { key: "poaIndicator", label: "POA Indicator", feedKey: "poa_feed", multiFeedback: true },
+  { key: "drgValue", label: "DRG Value", feedKey: "drug_feed", multiFeedback: true },
 ];
 
 /* ── Metadata item with icon ── */
@@ -2537,13 +2537,23 @@ export default function ProcessChart() {
                       </div>
                       {/* Feedback Category — disabled when totalCodes === correctCodes */}
                       <div style={{ padding: "8px 12px" }}>
-                        <FormFieldDropdown
-                          value={auditData[row.key]?.feedbackCategory || ""}
-                          onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
-                          options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
-                          placeholder="Select..."
-                          readOnly={feedbackDisabled}
-                        />
+                        {row.multiFeedback ? (
+                          <FormFieldMultiSelect
+                            value={auditData[row.key]?.feedbackCategory || []}
+                            onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
+                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
+                            placeholder="Select..."
+                            readOnly={feedbackDisabled}
+                          />
+                        ) : (
+                          <FormFieldDropdown
+                            value={auditData[row.key]?.feedbackCategory || ""}
+                            onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
+                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
+                            placeholder="Select..."
+                            readOnly={feedbackDisabled}
+                          />
+                        )}
                       </div>
                     </div>
                     );
