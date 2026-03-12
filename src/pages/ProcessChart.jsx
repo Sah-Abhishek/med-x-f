@@ -978,6 +978,7 @@ export default function ProcessChart() {
           auditorQcStatus: c.AuditorQcStatus || "",
           allocateAuditor: c.AllocateAuditor || "",
           allocateCoder: c.AllocateCoder || "",
+          auditAllocateCoder: c.AuditAllocateCoder || "",
         });
         fetchCustomFields(c.ClientId, c.LocationId);
         fetchConfiguration(c.ClientId, c.LocationId);
@@ -2537,8 +2538,8 @@ export default function ProcessChart() {
                   })}
                 </div>
 
-                {/* Feedback Type & Auditor QC Status below table */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 20 }}>
+                {/* Feedback Type, Auditor QC Status & Allocate to Coder below table */}
+                <div style={{ display: "grid", gridTemplateColumns: formData.auditorQcStatus === "Agreed" ? "1fr 1fr" : "1fr 1fr 1fr", gap: 16, marginTop: 20 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
                       <span style={{ background: "#fef3c7", borderRadius: 3, padding: "1px 4px" }}>Feedback</span> Type<span style={{ color: "#ef4444" }}> *</span>
@@ -2552,6 +2553,17 @@ export default function ProcessChart() {
                     />
                   </div>
                   <FormField label="Auditor QC Status" value={formData.auditorQcStatus} required type="select" readOnly={auditReadOnly} onChange={(v) => updateForm("auditorQcStatus", v)} placeholder="Select..." options={["Agreed", "Feedback Provided"]} />
+                  {formData.auditorQcStatus !== "Agreed" && (
+                    <FormField
+                      label="Allocate to Coder"
+                      value={formData.auditAllocateCoder}
+                      type="select"
+                      readOnly={auditReadOnly || formData.auditorQcStatus !== "Feedback Provided"}
+                      onChange={(v) => updateForm("auditAllocateCoder", v)}
+                      placeholder="Select..."
+                      options={masterData?.coders?.map(c => ({ value: `${c.first_name} ${c.last_name}`, label: `${c.first_name} ${c.last_name}` })) || []}
+                    />
+                  )}
                 </div>
 
                 {renderCustomFields("Audit Info")}
