@@ -551,7 +551,6 @@ const AUDIT_ROWS = [
   { key: "modifier", label: "Modifier", feedKey: "modifier_feed" },
   { key: "poaIndicator", label: "POA Indicator", feedKey: "poa_feed" },
   { key: "drgValue", label: "DRG Value", feedKey: "drug_feed" },
-  { key: "total", label: "Total", noFeedback: true },
 ];
 
 /* ── Metadata item with icon ── */
@@ -588,6 +587,7 @@ export default function ProcessChart() {
   const [customFields, setCustomFields] = useState([]);
   const [customFieldValues, setCustomFieldValues] = useState({});
   const updateCustomField = (fieldId, value) => setCustomFieldValues(prev => ({ ...prev, [fieldId]: value }));
+  const [feedbackCategories, setFeedbackCategories] = useState([]);
   const [auditData, setAuditData] = useState({});
   const updateAuditField = (rowKey, field, value) =>
     setAuditData(prev => {
@@ -983,6 +983,7 @@ export default function ProcessChart() {
         fetchCustomFields(c.ClientId, c.LocationId);
         fetchConfiguration(c.ClientId, c.LocationId);
         fetchMasterData(c.ClientId, c.LocationId);
+        fetchFeedbackCategories(c.ClientId, c.LocationId);
       } else {
         setError("Failed to load chart data");
       }
@@ -1054,6 +1055,19 @@ export default function ProcessChart() {
       }
     } catch (e) {
       console.error("Failed to fetch custom fields:", e.message);
+    }
+  }, []);
+
+  const fetchFeedbackCategories = useCallback(async (clientId, locationId) => {
+    try {
+      const response = await api.get(
+        `https://uat-app.valerionhealth.com/integrations/ai/users/configuration/feedback-categories/${clientId}/${locationId}`
+      );
+      if (response.data?.success) {
+        setFeedbackCategories(response.data.data || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch feedback categories:", e.message);
     }
   }, []);
 
@@ -2463,7 +2477,7 @@ export default function ProcessChart() {
                       <span style={{ background: "#fef3c7", borderRadius: 3, padding: "1px 4px" }}>Feedback</span> Category
                     </div>
                   </div>
-                  {/* Data rows */}
+                  {/* Data rows — static */}
                   {AUDIT_ROWS.map((row, idx) => {
                     const totalVal = auditData[row.key]?.totalCodes || "";
                     const correctVal = auditData[row.key]?.correctCodes || "";
@@ -2472,7 +2486,7 @@ export default function ProcessChart() {
                     return (
                     <div key={row.key} style={{
                       display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
-                      borderBottom: idx < AUDIT_ROWS.length - 1 ? "1px solid #f0f1f3" : "none",
+                      borderBottom: "1px solid #f0f1f3",
                       alignItems: "center",
                     }}>
                       <div style={{
@@ -2523,19 +2537,121 @@ export default function ProcessChart() {
                       </div>
                       {/* Feedback Category — disabled when totalCodes === correctCodes */}
                       <div style={{ padding: "8px 12px" }}>
-                        {!row.noFeedback && (
-                          <FormFieldDropdown
-                            value={auditData[row.key]?.feedbackCategory || ""}
-                            onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
-                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
-                            placeholder="Select..."
-                            readOnly={feedbackDisabled}
-                          />
-                        )}
+                        <FormFieldDropdown
+                          value={auditData[row.key]?.feedbackCategory || ""}
+                          onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
+                          options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
+                          placeholder="Select..."
+                          readOnly={feedbackDisabled}
+                        />
                       </div>
                     </div>
                     );
                   })}
+                  {/* Dynamic feedback category rows */}
+                  {feedbackCategories.map((cat) => {
+                    const catKey = `feedbackCat_${cat.id}`;
+                    const totalVal = auditData[catKey]?.totalCodes || "";
+                    const correctVal = auditData[catKey]?.correctCodes || "";
+                    const feedbackEnabled = !auditReadOnly && totalVal !== "" && correctVal !== "" && parseInt(correctVal, 10) < parseInt(totalVal, 10);
+                    const feedbackDisabled = !feedbackEnabled;
+                    return (
+                    <div key={catKey} style={{
+                      display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
+                      borderBottom: "1px solid #f0f1f3",
+                      alignItems: "center",
+                    }}>
+                      <div style={{
+                        padding: "8px 14px", fontSize: 13, fontWeight: 500, color: "#334155",
+                        borderRight: "1px dashed #e8eaed",
+                      }}>{cat.name}</div>
+                      <div style={{ padding: "8px 12px" }}>
+                        <input
+                          type="text"
+                          value={totalVal}
+                          readOnly={auditReadOnly}
+                          onChange={auditReadOnly ? undefined : (e) => updateAuditField(catKey, "totalCodes", e.target.value)}
+                          style={{
+                            width: "100%", padding: "8px 10px", borderRadius: 6,
+                            border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
+                            background: auditReadOnly ? "#e5e7eb" : "#fff",
+                            fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
+                            boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
+                          }}
+                        />
+                      </div>
+                      <div style={{ padding: "8px 12px" }}>
+                        <input
+                          type="text"
+                          value={correctVal}
+                          readOnly={auditReadOnly}
+                          onChange={auditReadOnly ? undefined : (e) => updateAuditField(catKey, "correctCodes", e.target.value)}
+                          style={{
+                            width: "100%", padding: "8px 10px", borderRadius: 6,
+                            border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
+                            background: auditReadOnly ? "#e5e7eb" : "#fff",
+                            fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
+                            boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
+                          }}
+                        />
+                      </div>
+                      <div style={{ padding: "8px 12px" }}>
+                        <FormFieldDropdown
+                          value={auditData[catKey]?.feedbackCategory || ""}
+                          onChange={(v) => updateAuditField(catKey, "feedbackCategory", v)}
+                          options={cat.FeedbackCategoryDropdowns?.map(d => d.name) || []}
+                          placeholder="Select..."
+                          readOnly={feedbackDisabled}
+                        />
+                      </div>
+                    </div>
+                    );
+                  })}
+                  {/* Total row — auto-computed, always disabled */}
+                  {(() => {
+                    const allKeys = [...AUDIT_ROWS.map(r => r.key), ...feedbackCategories.map(c => `feedbackCat_${c.id}`)];
+                    const totalSum = allKeys.reduce((sum, k) => sum + (parseInt(auditData[k]?.totalCodes, 10) || 0), 0);
+                    const correctSum = allKeys.reduce((sum, k) => sum + (parseInt(auditData[k]?.correctCodes, 10) || 0), 0);
+                    return (
+                      <div style={{
+                        display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
+                        alignItems: "center", background: "#f9fafb",
+                        borderRadius: "0 0 10px 10px",
+                      }}>
+                        <div style={{
+                          padding: "8px 14px", fontSize: 13, fontWeight: 700, color: "#1e293b",
+                          borderRight: "1px dashed #e8eaed",
+                        }}>Total</div>
+                        <div style={{ padding: "8px 12px" }}>
+                          <input
+                            type="text"
+                            value={totalSum || ""}
+                            readOnly
+                            style={{
+                              width: "100%", padding: "8px 10px", borderRadius: 6,
+                              border: "1px solid #d1d5db", background: "#e5e7eb",
+                              fontSize: 13, fontWeight: 600, color: "#1e293b",
+                              boxSizing: "border-box", cursor: "not-allowed",
+                            }}
+                          />
+                        </div>
+                        <div style={{ padding: "8px 12px" }}>
+                          <input
+                            type="text"
+                            value={correctSum || ""}
+                            readOnly
+                            style={{
+                              width: "100%", padding: "8px 10px", borderRadius: 6,
+                              border: "1px solid #d1d5db", background: "#e5e7eb",
+                              fontSize: 13, fontWeight: 600, color: "#1e293b",
+                              boxSizing: "border-box", cursor: "not-allowed",
+                            }}
+                          />
+                        </div>
+                        <div style={{ padding: "8px 12px" }} />
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Feedback Type, Auditor QC Status & Allocate to Coder below table */}
