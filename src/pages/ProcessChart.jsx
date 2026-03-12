@@ -547,7 +547,7 @@ const AUDIT_ROWS = [
   { key: "primaryDiagnosis", label: "Primary Diagnosis", feedKey: "prim_diag_feed" },
   { key: "secondaryDiagnosis", label: "Secondary Diagnosis", feedKey: "sec_diag_feed" },
   { key: "procedures", label: "Procedures", feedKey: "procedure_feed" },
-  { key: "edEmLevel", label: "ED/EM Level", isDropdown: true, feedKey: "ed_em_feed" },
+  { key: "edEmLevel", label: "ED/EM Level", feedKey: "ed_em_feed", totalCodesOptions: ["0", "1"] },
   { key: "modifier", label: "Modifier", feedKey: "modifier_feed" },
   { key: "poaIndicator", label: "POA Indicator", feedKey: "poa_feed" },
   { key: "drgValue", label: "DRG Value", feedKey: "drug_feed" },
@@ -590,7 +590,26 @@ export default function ProcessChart() {
   const updateCustomField = (fieldId, value) => setCustomFieldValues(prev => ({ ...prev, [fieldId]: value }));
   const [auditData, setAuditData] = useState({});
   const updateAuditField = (rowKey, field, value) =>
-    setAuditData(prev => ({ ...prev, [rowKey]: { ...prev[rowKey], [field]: value } }));
+    setAuditData(prev => {
+      const row = { ...prev[rowKey], [field]: value };
+      // Correct codes must always be <= total codes
+      if (field === "correctCodes") {
+        const total = parseInt(row.totalCodes, 10);
+        const correct = parseInt(value, 10);
+        if (!isNaN(total) && !isNaN(correct) && correct > total) {
+          row.correctCodes = String(total);
+        }
+      }
+      // If total codes is reduced below correct codes, cap correct codes
+      if (field === "totalCodes") {
+        const total = parseInt(value, 10);
+        const correct = parseInt(row.correctCodes, 10);
+        if (!isNaN(total) && !isNaN(correct) && correct > total) {
+          row.correctCodes = String(total);
+        }
+      }
+      return { ...prev, [rowKey]: row };
+    });
 
   // Chart navigation from Zustand store
   const getPrevId = useChartsStore((s) => s.getPrevId);
@@ -1430,6 +1449,15 @@ export default function ProcessChart() {
     setTimerStartTime(now());
     setTimerStopTime(null);
     setTimerMessage("");
+
+    // Auto-fill Primary Diagnosis total codes with 1
+    setAuditData(prev => ({
+      ...prev,
+      primaryDiagnosis: {
+        ...prev.primaryDiagnosis,
+        totalCodes: prev.primaryDiagnosis?.totalCodes || "1",
+      },
+    }));
   };
 
   const handleTimerStop = async () => {
@@ -2435,7 +2463,11 @@ export default function ProcessChart() {
                     </div>
                   </div>
                   {/* Data rows */}
-                  {AUDIT_ROWS.map((row, idx) => (
+                  {AUDIT_ROWS.map((row, idx) => {
+                    const totalVal = auditData[row.key]?.totalCodes || "";
+                    const correctVal = auditData[row.key]?.correctCodes || "";
+                    const feedbackDisabled = auditReadOnly || totalVal === correctVal || (!totalVal && !correctVal);
+                    return (
                     <div key={row.key} style={{
                       display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
                       borderBottom: idx < AUDIT_ROWS.length - 1 ? "1px solid #f0f1f3" : "none",
@@ -2445,19 +2477,20 @@ export default function ProcessChart() {
                         padding: "8px 14px", fontSize: 13, fontWeight: 500, color: "#334155",
                         borderRight: "1px dashed #e8eaed",
                       }}>{row.label}</div>
+                      {/* Total Codes */}
                       <div style={{ padding: "8px 12px" }}>
-                        {row.isDropdown ? (
+                        {row.totalCodesOptions ? (
                           <FormFieldDropdown
-                            value={auditData[row.key]?.totalCodes || ""}
+                            value={totalVal}
                             onChange={(v) => updateAuditField(row.key, "totalCodes", v)}
-                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
+                            options={row.totalCodesOptions}
                             placeholder="Select..."
                             readOnly={auditReadOnly}
                           />
                         ) : (
                           <input
                             type="text"
-                            value={auditData[row.key]?.totalCodes || ""}
+                            value={totalVal}
                             readOnly={auditReadOnly}
                             onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "totalCodes", e.target.value)}
                             style={{
@@ -2470,31 +2503,23 @@ export default function ProcessChart() {
                           />
                         )}
                       </div>
+                      {/* Correct Codes */}
                       <div style={{ padding: "8px 12px" }}>
-                        {row.isDropdown ? (
-                          <FormFieldDropdown
-                            value={auditData[row.key]?.correctCodes || ""}
-                            onChange={(v) => updateAuditField(row.key, "correctCodes", v)}
-                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
-                            placeholder="Select..."
-                            readOnly={auditReadOnly}
-                          />
-                        ) : (
-                          <input
-                            type="text"
-                            value={auditData[row.key]?.correctCodes || ""}
-                            readOnly={auditReadOnly}
-                            onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "correctCodes", e.target.value)}
-                            style={{
-                              width: "100%", padding: "8px 10px", borderRadius: 6,
-                              border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
-                              background: auditReadOnly ? "#e5e7eb" : "#fff",
-                              fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
-                              boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
-                            }}
-                          />
-                        )}
+                        <input
+                          type="text"
+                          value={correctVal}
+                          readOnly={auditReadOnly}
+                          onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "correctCodes", e.target.value)}
+                          style={{
+                            width: "100%", padding: "8px 10px", borderRadius: 6,
+                            border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
+                            background: auditReadOnly ? "#e5e7eb" : "#fff",
+                            fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
+                            boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
+                          }}
+                        />
                       </div>
+                      {/* Feedback Category — disabled when totalCodes === correctCodes */}
                       <div style={{ padding: "8px 12px" }}>
                         {!row.noFeedback && (
                           <FormFieldDropdown
@@ -2502,12 +2527,13 @@ export default function ProcessChart() {
                             onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
                             options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
                             placeholder="Select..."
-                            readOnly={auditReadOnly}
+                            readOnly={feedbackDisabled}
                           />
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Feedback Type & Auditor QC Status below table */}
