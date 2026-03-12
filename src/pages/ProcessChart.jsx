@@ -624,9 +624,10 @@ export default function ProcessChart() {
   const profile = useAuthStore((s) => s.profile);
   const user = useAuthStore((s) => s.user);
 
-  // Auditor with MilestoneId 6 can edit audit info even when timer is stopped
-  const isAuditorAuditEnabled = user?.role === 'auditor' && chart?.MilestoneId === 6;
-  const auditReadOnly = timerStopped && !isAuditorAuditEnabled;
+  // Auditor can edit audit info only while timer is running
+  const isAuditor = user?.role === 'auditor';
+  const auditSectionDisabled = isAuditor ? !timerRunning : true;
+  const auditReadOnly = isAuditor ? !timerRunning : true;
 
   // Upload section state
   const [activeTab] = useState("coding"); // default tab context
@@ -1382,13 +1383,22 @@ export default function ProcessChart() {
   const handleTimerStart = async () => {
     if (timerRunning) return;
 
-    // Step 1: Check if documents are uploaded
-    if (aiNoSession || !aiData?.documents || aiData.documents.length === 0) {
-      showToast("Please upload documents before starting the timer.", "warning");
-      return;
+    if (isAuditor) {
+      // Auditor flow: verify this chart is assigned to the auditor
+      if (chart?.UserId !== profile?.id) {
+        showToast("You are not assigned to this chart.", "warning");
+        return;
+      }
+      // Auditors skip document upload check
+    } else {
+      // Coder flow: check if documents are uploaded
+      if (aiNoSession || !aiData?.documents || aiData.documents.length === 0) {
+        showToast("Please upload documents before starting the timer.", "warning");
+        return;
+      }
     }
 
-    // Step 2: Check if another chart is already being processed
+    // Check if another chart is already being processed
     try {
       const res = await api.get("/users/processing-chart");
       if (res.data?.success && res.data?.isChartUnderProcess) {
@@ -1401,7 +1411,7 @@ export default function ProcessChart() {
       return;
     }
 
-    // Step 3: Call timer API to register start on backend
+    // Call timer API to register start on backend
     try {
       const timerRes = await api.post(`/charts/${id}/timer`);
       if (!timerRes.data?.success) {
@@ -2406,9 +2416,9 @@ export default function ProcessChart() {
               </div>
             </CollapsibleCard>
 
-            {/* Audit Information Section — Collapsible (disabled) */}
+            {/* Audit Information Section — Collapsible */}
             <CollapsibleCard title="Audit Information" defaultOpen={false}>
-              <div style={{ pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 }}>
+              <div style={{ ...(auditSectionDisabled ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6" } : {}), borderRadius: 10, padding: 12 }}>
                 {/* Audit table */}
                 <div style={{ border: "1px solid #e8eaed", borderRadius: 10, overflow: "visible" }}>
                   {/* Header row */}
