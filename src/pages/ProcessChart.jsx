@@ -2466,7 +2466,8 @@ export default function ProcessChart() {
                   {AUDIT_ROWS.map((row, idx) => {
                     const totalVal = auditData[row.key]?.totalCodes || "";
                     const correctVal = auditData[row.key]?.correctCodes || "";
-                    const feedbackDisabled = auditReadOnly || totalVal === correctVal || (!totalVal && !correctVal);
+                    const feedbackEnabled = !auditReadOnly && totalVal !== "" && correctVal !== "" && parseInt(correctVal, 10) < parseInt(totalVal, 10);
+                    const feedbackDisabled = !feedbackEnabled;
                     return (
                     <div key={row.key} style={{
                       display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
