@@ -2551,7 +2551,7 @@ export default function ProcessChart() {
                       readOnly={auditReadOnly}
                     />
                   </div>
-                  <FormField label="Auditor QC Status" value={formData.auditorQcStatus} required type="select" readOnly={auditReadOnly} onChange={(v) => updateForm("auditorQcStatus", v)} placeholder="Select..." />
+                  <FormField label="Auditor QC Status" value={formData.auditorQcStatus} required type="select" readOnly={auditReadOnly} onChange={(v) => updateForm("auditorQcStatus", v)} placeholder="Select..." options={["Agreed", "Feedback Provided"]} />
                 </div>
 
                 {renderCustomFields("Audit Info")}
