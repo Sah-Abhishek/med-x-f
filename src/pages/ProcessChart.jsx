@@ -2308,7 +2308,7 @@ export default function ProcessChart() {
 
             {/* Chart Info Section — Collapsible */}
             <CollapsibleCard title="Chart Info" subtitle="All relevant chart fields" defaultOpen={true}>
-              <div style={timerStopped ? { pointerEvents: "none" } : {}}>
+              <div style={isAuditor ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 } : (timerStopped ? { pointerEvents: "none" } : {})}>
               {/* Row 1: Chart #, MR#, Date of Service */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                 {isFieldVisible("chart_no") && <FormField label="Chart #" value={formData.chartNo} required={isFieldRequired("chart_no")} readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />}
@@ -2358,7 +2358,7 @@ export default function ProcessChart() {
 
             {/* Processing Info Section — Collapsible */}
             <CollapsibleCard title="Processing Info" subtitle="All fields related to processing this chart" defaultOpen={true}>
-              <div style={timerStopped ? { pointerEvents: "none" } : {}}>
+              <div style={isAuditor ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 } : (timerStopped ? { pointerEvents: "none" } : {})}>
               {/* Row 1: Chart status, Responsible party */}
               <div style={{ display: "grid", gridTemplateColumns: isFieldVisible("responsible_parties") ? "1fr 3fr" : "1fr", gap: 16, marginBottom: 16 }}>
                 {isFieldVisible("chart_status") && <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" required={isFieldRequired("chart_status")} readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />}
