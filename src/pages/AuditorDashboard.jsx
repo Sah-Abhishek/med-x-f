@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ListChecks, ClipboardCheck, MessageSquareWarning, CheckCircle2, AlertCircle, SlidersHorizontal, Filter, ArrowRightLeft } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -75,6 +75,58 @@ const SectionHeader = ({ children }) => (
     <span style={{ flex: 1, height: 1, borderBottom: "2px dotted #cbd5e1" }} />
   </div>
 );
+
+/* ── Current Chart Card ──────────────────────────────────────────── */
+const CurrentChartCard = ({ chartStats, onClick }) => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!chartStats?.timer) { setElapsed(0); return; }
+    const serverStart = new Date(chartStats.timer).getTime();
+    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - serverStart) / 1000)));
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [chartStats?.timer]);
+
+  const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const secs = String(elapsed % 60).padStart(2, "0");
+
+  if (!chartStats?.chartId) {
+    return (
+      <div style={{
+        background: "linear-gradient(135deg, #e0e7ff, #f0f4ff)",
+        borderRadius: 14, padding: "28px 24px", textAlign: "center",
+        color: "#94a3b8", fontSize: 13, fontWeight: 500, minHeight: 130,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        No chart currently in progress
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: "linear-gradient(135deg, #38bdf8, #06b6d4, #0891b2)",
+        borderRadius: 14, padding: "28px 24px", cursor: "pointer",
+        textAlign: "center", color: "#fff", minHeight: 130,
+        display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", gap: 6,
+        transition: "transform 0.15s, box-shadow 0.15s",
+        boxShadow: "0 4px 16px rgba(6, 182, 212, 0.3)",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(6, 182, 212, 0.4)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(6, 182, 212, 0.3)"; }}
+    >
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: 0.5 }}>{chartStats.chart_no}</div>
+      <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.85 }}>{chartStats.milestone}</div>
+      <div style={{ fontSize: 38, fontWeight: 700, letterSpacing: 3, marginTop: 4 }}>{mins} : {secs}</div>
+      <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.7, marginTop: 4 }}>Tap to view</div>
+    </div>
+  );
+};
 
 /* ── Milestone Card ──────────────────────────────────────────────── */
 const MilestoneCard = ({ icon: Icon, value, label, subtitle, bg, accent, iconBg }) => (
@@ -469,6 +521,16 @@ const AuditorDashboard = () => {
               <StatusCard value={userStats?.complete_status ?? 0} label="Complete" accent="#10b981" icon={CheckCircle2} />
               <StatusCard value={userStats?.incomplete_status ?? 0} label="Incomplete" accent="#ef4444" icon={AlertCircle} />
             </div>
+          </div>
+          <div style={{ flex: "0 0 200px", minWidth: 0 }}>
+            <SectionHeader>Current Chart</SectionHeader>
+            <CurrentChartCard
+              chartStats={userStats?.current_chart_stats}
+              onClick={() => {
+                const chartId = userStats?.current_chart_stats?.chartId;
+                if (chartId) navigate(`/process-chart/${chartId}`);
+              }}
+            />
           </div>
         </div>
 
