@@ -1362,58 +1362,117 @@ export default function ProcessChart() {
 
     setSaving(true);
     try {
-      // Resolve next_user_id from allocateCoder or allocateAuditor
-      let nextUserId = null;
-      if (formData.allocateCoder) {
-        const coder = masterData?.coders_active?.find(c => c.name === formData.allocateCoder);
-        nextUserId = coder?.id || null;
-      } else if (formData.allocateAuditor) {
-        const auditor = masterData?.auditors_active?.find(a => a.name === formData.allocateAuditor);
-        nextUserId = auditor?.id || null;
+      if (isAuditor) {
+        // Helper to resolve feedback IDs from config by name
+        const feedId = (feedKey, name) => config?.[feedKey]?.find(f => f.feedback_name === name)?.id || null;
+        const feedIds = (feedKey, names) => (names || []).map(n => feedId(feedKey, n)).filter(Boolean);
+
+        // Resolve next_user_id from auditAllocateCoder
+        const auditCoder = masterData?.coders?.find(c => `${c.first_name} ${c.last_name}` === formData.auditAllocateCoder);
+        const auditNextUserId = auditCoder?.id || null;
+
+        // Resolve FeedbackTypeId
+        const feedbackTypeId = config?.feedback_types?.find(f => f.feed_type_name === formData.feedbackType)?.id || null;
+
+        // Resolve QCStatusId
+        const auditQcStatusId = masterData?.qc_status?.find(q =>
+          q.name === formData.auditorQcStatus || (formData.auditorQcStatus === "Agreed" && q.name === "Agree")
+        )?.id || null;
+
+        // Compute totals
+        const allKeys = [...AUDIT_ROWS.map(r => r.key), ...feedbackCategories.map(c => `feedbackCat_${c.id}`)];
+        const totalTotal = allKeys.reduce((sum, k) => sum + (parseInt(auditData[k]?.totalCodes, 10) || 0), 0);
+        const totalCorrect = allKeys.reduce((sum, k) => sum + (parseInt(auditData[k]?.correctCodes, 10) || 0), 0);
+
+        const auditPayload = {
+          prim_diag_total: parseInt(auditData.primaryDiagnosis?.totalCodes, 10) || 0,
+          prim_diag_correct: parseInt(auditData.primaryDiagnosis?.correctCodes, 10) || 0,
+          PrimDiagFeedbacks: feedId("prim_diag_feed", auditData.primaryDiagnosis?.feedbackCategory),
+          sec_diag_total: parseInt(auditData.secondaryDiagnosis?.totalCodes, 10) || 0,
+          sec_diag_correct: parseInt(auditData.secondaryDiagnosis?.correctCodes, 10) || 0,
+          SecDiagFeedbacks: feedIds("sec_diag_feed", auditData.secondaryDiagnosis?.feedbackCategory),
+          proc_total: parseInt(auditData.procedures?.totalCodes, 10) || 0,
+          proc_correct: parseInt(auditData.procedures?.correctCodes, 10) || 0,
+          ProceduresFeedbacks: feedIds("procedure_feed", auditData.procedures?.feedbackCategory),
+          ed_em_total: parseInt(auditData.edEmLevel?.totalCodes, 10) || 0,
+          ed_em_correct: parseInt(auditData.edEmLevel?.correctCodes, 10) || 0,
+          EdEmFeedbacks: feedId("ed_em_feed", auditData.edEmLevel?.feedbackCategory),
+          modifier_total: parseInt(auditData.modifier?.totalCodes, 10) || 0,
+          modifier_correct: parseInt(auditData.modifier?.correctCodes, 10) || 0,
+          ModifierFeedbacks: feedIds("modifier_feed", auditData.modifier?.feedbackCategory),
+          poa_total: parseInt(auditData.poaIndicator?.totalCodes, 10) || 0,
+          poa_correct: parseInt(auditData.poaIndicator?.correctCodes, 10) || 0,
+          POAFeedbacks: feedIds("poa_feed", auditData.poaIndicator?.feedbackCategory),
+          drg_total: parseInt(auditData.drgValue?.totalCodes, 10) || 0,
+          drg_correct: parseInt(auditData.drgValue?.correctCodes, 10) || 0,
+          DrugFeedbacks: feedIds("drug_feed", auditData.drgValue?.feedbackCategory),
+          total_total: totalTotal,
+          total_correct: totalCorrect,
+          FeedbackTypeId: feedbackTypeId,
+          QCStatusId: auditQcStatusId,
+          next_user_id: auditNextUserId,
+          comment_msg: "",
+        };
+
+        await api.post(
+          `https://uat-app.valerionhealth.com/integrations/ai/charts/${id}/audit-info`,
+          auditPayload
+        );
+        showToast("Audit information saved successfully!", "success");
+      } else {
+        // Resolve next_user_id from allocateCoder or allocateAuditor
+        let nextUserId = null;
+        if (formData.allocateCoder) {
+          const coder = masterData?.coders_active?.find(c => c.name === formData.allocateCoder);
+          nextUserId = coder?.id || null;
+        } else if (formData.allocateAuditor) {
+          const auditor = masterData?.auditors_active?.find(a => a.name === formData.allocateAuditor);
+          nextUserId = auditor?.id || null;
+        }
+
+        // Resolve IDs from config
+        const dispositionId = config?.dispositions?.find(d => d.disposition_name === formData.disposition)?.id || null;
+        const facilityId = config?.facility?.find(f => f.FacilityName === formData.facility)?.id || null;
+        const primaryHealthId = config?.primary_health?.find(p => p.PrimaryHealthName === formData.primaryHealth)?.id || null;
+        const subSpecialtyId = config?.subspecialties?.find(s => s.SubSpecialtyName === formData.subSpecialty)?.id || null;
+        const statusId = formData.chartStatus === "Complete" ? 2 : formData.chartStatus === "Incomplete" ? 3 : null;
+        const qcStatusId = masterData?.qc_status?.find(q => q.name === formData.qcStatus)?.id || null;
+        const responsiblePartyIds = (formData.responsibleParty || []).map(name => config?.responsible_parties?.find(r => r.resp_party_name === name)?.id).filter(Boolean);
+        const holdReasonIds = (formData.holdReason || []).map(name => config?.hold_reasons?.find(h => h.hold_reason === name)?.id).filter(Boolean);
+        const auditOptionIds = (formData.auditOption || []).map(name => config?.audit_options?.find(a => a.audit_opt === name)?.id).filter(Boolean);
+
+        const payload = {
+          admit_date: formData.admitDate || null,
+          chart_no: formData.chartNo || null,
+          coder_comments: null,
+          date_of_completion: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
+          date_of_service: formData.dateOfService || null,
+          discharge_date: formData.dischargeDate || null,
+          em: formData.em || null,
+          mr_no: formData.mrNo || null,
+          primary_diagnosis: formData.primaryDiagnosis || null,
+          next_user_id: nextUserId,
+          poa: formData.poa || null,
+          los: formData.los ? Number(formData.los) : null,
+          drg_value: formData.drgValue ? Number(formData.drgValue) : null,
+          procedure_code: formData.procedureCode || null,
+          denial_comments: formData.rejectionComments || null,
+          ResponsibleParties: responsiblePartyIds,
+          deficiency_comments: formData.deficiencyComments || null,
+          HoldReasons: holdReasonIds,
+          DispositionId: dispositionId,
+          FacilityId: facilityId,
+          PrimaryHealthId: primaryHealthId,
+          SubSpecialtyId: subSpecialtyId,
+          StatusId: statusId,
+          AuditOptions: auditOptionIds,
+          comment_msg: formData.coderComments || null,
+          chartInfoCustomFields: customFieldValues,
+        };
+
+        await api.post(`/charts/${id}`, payload);
+        showToast("Chart saved successfully!", "success");
       }
-
-      // Resolve IDs from config
-      const dispositionId = config?.dispositions?.find(d => d.disposition_name === formData.disposition)?.id || null;
-      const facilityId = config?.facility?.find(f => f.FacilityName === formData.facility)?.id || null;
-      const primaryHealthId = config?.primary_health?.find(p => p.PrimaryHealthName === formData.primaryHealth)?.id || null;
-      const subSpecialtyId = config?.subspecialties?.find(s => s.SubSpecialtyName === formData.subSpecialty)?.id || null;
-      const statusId = formData.chartStatus === "Complete" ? 2 : formData.chartStatus === "Incomplete" ? 3 : null;
-      const qcStatusId = masterData?.qc_status?.find(q => q.name === formData.qcStatus)?.id || null;
-      const responsiblePartyIds = (formData.responsibleParty || []).map(name => config?.responsible_parties?.find(r => r.resp_party_name === name)?.id).filter(Boolean);
-      const holdReasonIds = (formData.holdReason || []).map(name => config?.hold_reasons?.find(h => h.hold_reason === name)?.id).filter(Boolean);
-      const auditOptionIds = (formData.auditOption || []).map(name => config?.audit_options?.find(a => a.audit_opt === name)?.id).filter(Boolean);
-
-      const payload = {
-        admit_date: formData.admitDate || null,
-        chart_no: formData.chartNo || null,
-        coder_comments: null,
-        date_of_completion: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
-        date_of_service: formData.dateOfService || null,
-        discharge_date: formData.dischargeDate || null,
-        em: formData.em || null,
-        mr_no: formData.mrNo || null,
-        primary_diagnosis: formData.primaryDiagnosis || null,
-        next_user_id: nextUserId,
-        poa: formData.poa || null,
-        los: formData.los ? Number(formData.los) : null,
-        drg_value: formData.drgValue ? Number(formData.drgValue) : null,
-        procedure_code: formData.procedureCode || null,
-        denial_comments: formData.rejectionComments || null,
-        ResponsibleParties: responsiblePartyIds,
-        deficiency_comments: formData.deficiencyComments || null,
-        HoldReasons: holdReasonIds,
-        DispositionId: dispositionId,
-        FacilityId: facilityId,
-        PrimaryHealthId: primaryHealthId,
-        SubSpecialtyId: subSpecialtyId,
-        StatusId: statusId,
-        AuditOptions: auditOptionIds,
-        comment_msg: formData.coderComments || null,
-        chartInfoCustomFields: customFieldValues,
-      };
-
-      await api.post(`/charts/${id}`, payload);
-      showToast("Chart saved successfully!", "success");
     } catch (e) {
       console.error("Failed to save chart:", e.message);
       showToast("Failed to save chart. Please try again.", "error");
