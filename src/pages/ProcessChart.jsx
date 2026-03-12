@@ -1414,10 +1414,29 @@ export default function ProcessChart() {
           comment_msg: "",
         };
 
-        await api.post(
-          `https://uat-app.valerionhealth.com/integrations/ai/charts/${id}/audit-info`,
-          auditPayload
-        );
+        // Build v2 payload from dynamic feedback category rows
+        const v2Payload = {};
+        for (const cat of feedbackCategories) {
+          const catKey = `feedbackCat_${cat.id}`;
+          const catData = auditData[catKey];
+          const selectedDropdown = cat.FeedbackCategoryDropdowns?.find(d => d.name === catData?.feedbackCategory);
+          v2Payload[cat.name] = {
+            totalCodes: parseInt(catData?.totalCodes, 10) || 0,
+            correctCodes: parseInt(catData?.correctCodes, 10) || 0,
+            FeedbackCategoryId: selectedDropdown?.id || null,
+          };
+        }
+
+        await Promise.all([
+          api.post(
+            `https://uat-app.valerionhealth.com/integrations/ai/charts/${id}/audit-info`,
+            auditPayload
+          ),
+          api.post(
+            `https://uat-app.valerionhealth.com/integrations/ai/v2/charts/${id}/audit-info`,
+            v2Payload
+          ),
+        ]);
         showToast("Audit information saved successfully!", "success");
       } else {
         // Resolve next_user_id from allocateCoder or allocateAuditor
