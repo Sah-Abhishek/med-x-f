@@ -4563,7 +4563,7 @@ export default function ProcessChart() {
                   </div>
 
                   {/* Code Badges Grid */}
-                  <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
+                  <div style={{ padding: "10px 20px", overflowY: "auto", flex: 1 }}>
                     {/* Add Code Form */}
                     {addingCode && (
                       <div style={{ background: "#fdf4ff", borderRadius: 14, border: "1.5px solid #e879f9", padding: 18, marginBottom: 16, boxShadow: "0 4px 20px rgba(168, 85, 247, 0.08)" }}>
@@ -4672,7 +4672,7 @@ export default function ProcessChart() {
                       </div>
                     ) : allCodes.length > 0 ? (
                       <>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                           {(() => {
                             const categoryOrder = ['Principal', 'Reason for Admit', 'Primary', 'Secondary', 'E/M Level', 'Procedure'];
                             const categoryColors = {
@@ -4695,19 +4695,19 @@ export default function ProcessChart() {
                             ];
                             return sortedCategories.map(category => (
                               <div key={category}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                                   <span style={{
-                                    width: 7, height: 7, borderRadius: "50%",
+                                    width: 6, height: 6, borderRadius: "50%",
                                     background: categoryColors[category]?.dot || '#d946ef',
                                   }} />
                                   <span style={{
-                                    fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
+                                    fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
                                     color: categoryColors[category]?.label || '#86198f',
                                   }}>
                                     {category} ({grouped[category].length})
                                   </span>
                                 </div>
-                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingLeft: 13 }}>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, paddingLeft: 13 }}>
                                   {grouped[category].map((code) => {
                                     const style = getBadgeStyle(code);
                                     const decision = codeDecisions[code._key];
@@ -4718,7 +4718,7 @@ export default function ProcessChart() {
                                         onClick={() => { setSelectedCode(code); setEditingCode(null); }}
                                         style={{
                                           display: "inline-flex", alignItems: "center", gap: 5,
-                                          padding: "6px 12px", borderRadius: 8,
+                                          padding: "4px 10px", borderRadius: 8,
                                           border: code._isCustom ? `2px dashed #d946ef` : `1.5px solid ${style.border}`,
                                           background: style.bg, color: style.color,
                                           fontSize: 12, fontWeight: 600, cursor: "pointer",
@@ -4741,7 +4741,7 @@ export default function ProcessChart() {
                         </div>
 
                         {/* Legend */}
-                        <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
                           {[
                             { label: "Accepted", bg: "#dcfce7", border: "#86efac" },
                             { label: "Rejected", bg: "#fef2f2", border: "#fca5a5" },
@@ -4760,10 +4760,10 @@ export default function ProcessChart() {
                         {selectedCode && (
                           <div style={{
                             background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0",
-                            padding: 16, marginTop: 4,
+                            padding: 12, marginTop: 2,
                           }}>
-                            <div style={{ marginBottom: 12 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                            <div style={{ marginBottom: 8 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
                                 <span style={{
                                   display: "inline-flex", alignItems: "center", gap: 6,
                                   fontSize: 10, fontWeight: 700, color: selectedCode._isCustom ? "#86198f" : "#f59e0b",
@@ -4956,7 +4956,7 @@ export default function ProcessChart() {
                             {/* Prev / Next Navigation */}
                             <div style={{
                               display: "flex", justifyContent: "space-between", alignItems: "center",
-                              marginTop: 14, paddingTop: 12, borderTop: "1px solid #e2e8f0",
+                              marginTop: 10, paddingTop: 8, borderTop: "1px solid #e2e8f0",
                             }}>
                               <button
                                 onClick={goToPrev}
