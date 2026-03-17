@@ -4672,7 +4672,7 @@ export default function ProcessChart() {
                       </div>
                     ) : allCodes.length > 0 ? (
                       <>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px", marginBottom: 10 }}>
                           {(() => {
                             const categoryOrder = ['Principal', 'Reason for Admit', 'Primary', 'Secondary', 'E/M Level', 'Procedure'];
                             const categoryColors = {
@@ -4693,9 +4693,11 @@ export default function ProcessChart() {
                               ...categoryOrder.filter(c => grouped[c]),
                               ...Object.keys(grouped).filter(c => !categoryOrder.includes(c)),
                             ];
-                            return sortedCategories.map(category => (
-                              <div key={category}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                            return sortedCategories.map(category => {
+                              const isWide = category === 'Secondary' || (grouped[category]?.length > 3);
+                              return (
+                              <div key={category} style={isWide ? { gridColumn: "1 / -1" } : {}}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
                                   <span style={{
                                     width: 6, height: 6, borderRadius: "50%",
                                     background: categoryColors[category]?.dot || '#d946ef',
@@ -4707,7 +4709,7 @@ export default function ProcessChart() {
                                     {category} ({grouped[category].length})
                                   </span>
                                 </div>
-                                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, paddingLeft: 13 }}>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 11 }}>
                                   {grouped[category].map((code) => {
                                     const style = getBadgeStyle(code);
                                     const decision = codeDecisions[code._key];
@@ -4717,11 +4719,11 @@ export default function ProcessChart() {
                                         key={code._key}
                                         onClick={() => { setSelectedCode(code); setEditingCode(null); }}
                                         style={{
-                                          display: "inline-flex", alignItems: "center", gap: 5,
-                                          padding: "4px 10px", borderRadius: 8,
+                                          display: "inline-flex", alignItems: "center", gap: 4,
+                                          padding: "3px 8px", borderRadius: 6,
                                           border: code._isCustom ? `2px dashed #d946ef` : `1.5px solid ${style.border}`,
                                           background: style.bg, color: style.color,
-                                          fontSize: 12, fontWeight: 600, cursor: "pointer",
+                                          fontSize: 11, fontWeight: 600, cursor: "pointer",
                                           transition: "all 0.15s",
                                           outline: selectedCode?._key === code._key ? `2px solid #f59e0b` : "none",
                                           outlineOffset: 1,
@@ -4736,7 +4738,7 @@ export default function ProcessChart() {
                                   })}
                                 </div>
                               </div>
-                            ));
+                            );});
                           })()}
                         </div>
 
