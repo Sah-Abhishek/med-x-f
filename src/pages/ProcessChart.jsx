@@ -1485,6 +1485,7 @@ export default function ProcessChart() {
           SubSpecialtyId: subSpecialtyId,
           StatusId: statusId,
           AuditOptions: auditOptionIds,
+          qc_status_id: qcStatusId,
           comment_msg: formData.coderComments || null,
           chartInfoCustomFields: customFieldValues,
         };
@@ -2533,7 +2534,7 @@ export default function ProcessChart() {
                     readOnly={timerStopped}
                   />
                 </div>
-                <FormField label="Coder QC Status" value={formData.qcStatus} type="select" readOnly={true} options={masterData?.qc_status?.map(q => q.name) || []} placeholder="Select..." />
+                <FormField label="Coder QC Status" value={formData.qcStatus} type="select" readOnly={!(chart?.coders?.length > 1) || timerStopped} onChange={(v) => updateForm("qcStatus", v)} options={masterData?.qc_status?.map(q => q.name) || []} placeholder="Select..." />
               </div>
               {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
