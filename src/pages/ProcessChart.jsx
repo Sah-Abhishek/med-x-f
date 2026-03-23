@@ -1455,7 +1455,7 @@ export default function ProcessChart() {
         const primaryHealthId = config?.primary_health?.find(p => p.PrimaryHealthName === formData.primaryHealth)?.id || null;
         const subSpecialtyId = config?.subspecialties?.find(s => s.SubSpecialtyName === formData.subSpecialty)?.id || null;
         const statusId = formData.chartStatus === "Complete" ? 2 : formData.chartStatus === "Incomplete" ? 3 : null;
-        const qcStatusId = masterData?.qc_status?.find(q => q.name === formData.qcStatus)?.id || null;
+        const qcStatusId = masterData?.qc_status?.find(q => q.name === formData.qcStatus)?.id?.toString() || null;
         const responsiblePartyIds = (formData.responsibleParty || []).map(name => config?.responsible_parties?.find(r => r.resp_party_name === name)?.id).filter(Boolean);
         const holdReasonIds = (formData.holdReason || []).map(name => config?.hold_reasons?.find(h => h.hold_reason === name)?.id).filter(Boolean);
         const auditOptionIds = (formData.auditOption || []).map(name => config?.audit_options?.find(a => a.audit_opt === name)?.id).filter(Boolean);
