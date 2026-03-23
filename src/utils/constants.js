@@ -27,6 +27,7 @@ export const ROUTES = {
   TEAM_LEAD: '/teamlead',
   CODER: '/coder',
   AUDITOR: '/auditor',
+  ADMIN_ANALYTICS: '/admin/analytics',
   UNAUTHORIZED: '/unauthorized',
   NOT_FOUND: '/404'
 };

@@ -5,6 +5,7 @@ import { ROLES } from './utils/constants';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ProcessingAnalytics from './pages/ProcessingAnalytics';
 import TeamLeadDashboard from './pages/TeamLeadDashboard';
 import CoderDashboard from './pages/CoderDashboard';
 import ProcessChart from './pages/ProcessChart';
@@ -42,6 +43,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/analytics"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <ProcessingAnalytics />
             </ProtectedRoute>
           }
         />
