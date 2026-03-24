@@ -357,7 +357,7 @@ const FormField = ({ label, value, required, type = "text", options, placeholder
           background: "linear-gradient(135deg, #ede9fe, #e0e7ff)", color: "#6d28d9",
           border: "1px solid #c4b5fd", letterSpacing: "0.02em",
         }}>
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M8 1l2.1 4.3L15 6l-3.5 3.4.8 4.8L8 12l-4.3 2.2.8-4.8L1 6l4.9-.7L8 1z" fill="#7c3aed"/></svg>
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M8 1l2.1 4.3L15 6l-3.5 3.4.8 4.8L8 12l-4.3 2.2.8-4.8L1 6l4.9-.7L8 1z" fill="#7c3aed" /></svg>
           AI Generated
         </span>
       )}
@@ -1455,7 +1455,7 @@ export default function ProcessChart() {
         const primaryHealthId = config?.primary_health?.find(p => p.PrimaryHealthName === formData.primaryHealth)?.id || null;
         const subSpecialtyId = config?.subspecialties?.find(s => s.SubSpecialtyName === formData.subSpecialty)?.id || null;
         const statusId = formData.chartStatus === "Complete" ? 2 : formData.chartStatus === "Incomplete" ? 3 : null;
-        const qcStatusId = masterData?.qc_status?.find(q => q.name === formData.qcStatus)?.id?.toString() || null;
+        const qcStatusId = masterData?.qc_status?.find(q => q.name === formData.qcStatus)?.id || null;
         const responsiblePartyIds = (formData.responsibleParty || []).map(name => config?.responsible_parties?.find(r => r.resp_party_name === name)?.id).filter(Boolean);
         const holdReasonIds = (formData.holdReason || []).map(name => config?.hold_reasons?.find(h => h.hold_reason === name)?.id).filter(Boolean);
         const auditOptionIds = (formData.auditOption || []).map(name => config?.audit_options?.find(a => a.audit_opt === name)?.id).filter(Boolean);
@@ -1485,7 +1485,7 @@ export default function ProcessChart() {
           SubSpecialtyId: subSpecialtyId,
           StatusId: statusId,
           AuditOptions: auditOptionIds,
-          qc_status_id: qcStatusId,
+          QcStatusId: qcStatusId,
           comment_msg: formData.coderComments || null,
           chartInfoCustomFields: customFieldValues,
         };
@@ -1725,11 +1725,11 @@ export default function ProcessChart() {
         }}>
           <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
             {toast.type === "warning" ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
             ) : toast.type === "error" ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
             ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
             )}
           </span>
           <span style={{ flex: 1 }}>{toast.message}</span>
@@ -2211,8 +2211,8 @@ export default function ProcessChart() {
                   {jobId && jobStatus && jobStatus !== 'completed' && jobStatus !== 'failed' && (() => {
                     const progressPercent = jobStatus === 'failed' ? Math.round(((currentPhaseIndex >= 0 ? currentPhaseIndex : 0) / (PHASES.length - 1)) * 100)
                       : jobStatus === 'completed' ? 100
-                      : currentPhaseIndex >= 0 ? Math.round(((currentPhaseIndex + 0.5) / (PHASES.length - 1)) * 100)
-                      : 0;
+                        : currentPhaseIndex >= 0 ? Math.round(((currentPhaseIndex + 0.5) / (PHASES.length - 1)) * 100)
+                          : 0;
                     const isFailed = jobStatus === 'failed';
                     const isComplete = jobStatus === 'completed';
                     const barColor = isFailed ? 'bg-red-500' : isComplete ? 'bg-emerald-500' : 'bg-amber-500';
@@ -2223,8 +2223,8 @@ export default function ProcessChart() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             {isComplete ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> :
-                             isFailed ? <AlertCircle className="w-4 h-4 text-red-500" /> :
-                             <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />}
+                              isFailed ? <AlertCircle className="w-4 h-4 text-red-500" /> :
+                                <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />}
                             <span className={`text-sm font-semibold ${textColor}`}>
                               {isComplete ? 'Processing Complete' : isFailed ? 'Processing Failed' : 'Processing...'}
                             </span>
@@ -2258,36 +2258,34 @@ export default function ProcessChart() {
                       {/* AI Status Header */}
                       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                            aiData.aiStatus === 'ready' ? 'bg-emerald-50' :
-                            aiData.aiStatus === 'failed' ? 'bg-red-50' :
-                            aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50' :
-                            'bg-slate-50'
-                          }`}>
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${aiData.aiStatus === 'ready' ? 'bg-emerald-50' :
+                              aiData.aiStatus === 'failed' ? 'bg-red-50' :
+                                aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50' :
+                                  'bg-slate-50'
+                            }`}>
                             {aiData.aiStatus === 'ready' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> :
-                             aiData.aiStatus === 'failed' ? <AlertCircle className="w-5 h-5 text-red-500" /> :
-                             aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? <Loader2 className="w-5 h-5 text-amber-500 animate-spin" /> :
-                             <Clock className="w-5 h-5 text-slate-400" />}
+                              aiData.aiStatus === 'failed' ? <AlertCircle className="w-5 h-5 text-red-500" /> :
+                                aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? <Loader2 className="w-5 h-5 text-amber-500 animate-spin" /> :
+                                  <Clock className="w-5 h-5 text-slate-400" />}
                           </div>
                           <div>
                             <h4 className="text-sm font-semibold text-slate-800">AI Processing</h4>
                             <p className="text-xs text-slate-500">
                               {aiData.aiStatus === 'ready' ? 'Completed — AI results available' :
-                               aiData.aiStatus === 'failed' ? 'Failed — processing encountered an error' :
-                               aiData.aiStatus === 'processing' ? 'Processing — AI is analyzing documents' :
-                               aiData.aiStatus === 'queued' ? 'Queued — waiting for processing' :
-                               aiData.aiStatus === 'submitted' ? 'Submitted — codes sent to NextCode' :
-                               `Status: ${aiData.aiStatus}`}
+                                aiData.aiStatus === 'failed' ? 'Failed — processing encountered an error' :
+                                  aiData.aiStatus === 'processing' ? 'Processing — AI is analyzing documents' :
+                                    aiData.aiStatus === 'queued' ? 'Queued — waiting for processing' :
+                                      aiData.aiStatus === 'submitted' ? 'Submitted — codes sent to NextCode' :
+                                        `Status: ${aiData.aiStatus}`}
                             </p>
                           </div>
                         </div>
-                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                          aiData.aiStatus === 'ready' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                          aiData.aiStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
-                          aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                          aiData.aiStatus === 'submitted' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                          'bg-slate-50 text-slate-600 border border-slate-200'
-                        }`}>
+                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${aiData.aiStatus === 'ready' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                            aiData.aiStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
+                              aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                aiData.aiStatus === 'submitted' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                  'bg-slate-50 text-slate-600 border border-slate-200'
+                          }`}>
                           {aiData.aiStatus?.toUpperCase()}
                         </span>
                       </div>
@@ -2340,15 +2338,14 @@ export default function ProcessChart() {
                                       </span>
                                       <span className="text-[10px] text-slate-400">
                                         {doc.fileSize < 1024 ? doc.fileSize + ' B' :
-                                         doc.fileSize < 1048576 ? (doc.fileSize / 1024).toFixed(1) + ' KB' :
-                                         (doc.fileSize / 1048576).toFixed(1) + ' MB'}
+                                          doc.fileSize < 1048576 ? (doc.fileSize / 1024).toFixed(1) + ' KB' :
+                                            (doc.fileSize / 1048576).toFixed(1) + ' MB'}
                                       </span>
                                       {doc.ocrStatus && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                          doc.ocrStatus === 'completed' ? 'bg-emerald-50 text-emerald-600' :
-                                          doc.ocrStatus === 'failed' ? 'bg-red-50 text-red-600' :
-                                          'bg-amber-50 text-amber-600'
-                                        }`}>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${doc.ocrStatus === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                                            doc.ocrStatus === 'failed' ? 'bg-red-50 text-red-600' :
+                                              'bg-amber-50 text-amber-600'
+                                          }`}>
                                           OCR: {doc.ocrStatus}
                                         </span>
                                       )}
@@ -2396,153 +2393,153 @@ export default function ProcessChart() {
             {/* Chart Info Section — Collapsible */}
             <CollapsibleCard title="Chart Info" subtitle="All relevant chart fields" defaultOpen={true}>
               <div style={isAuditor ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 } : (timerStopped ? { pointerEvents: "none" } : {})}>
-              {/* Row 1: Chart #, MR#, Date of Service */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                {isFieldVisible("chart_no") && <FormField label="Chart #" value={formData.chartNo} required={isFieldRequired("chart_no")} readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />}
-                {isFieldVisible("mr_no") && <FormField label="MR#" value={formData.mrNo} required={isFieldRequired("mr_no")} readOnly={timerStopped} onChange={(v) => updateForm("mrNo", v)} />}
-                {isFieldVisible("date_of_service") && <FormField label="Date of Service" value={formData.dateOfService} required={isFieldRequired("date_of_service")} readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />}
-              </div>
-              {/* Row 2: Admit date, Discharge date */}
-              {(isFieldVisible("admit_date") || isFieldVisible("discharge_date")) && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                {isFieldVisible("admit_date") && <FormField label="Admit date" value={formData.admitDate} required={isFieldRequired("admit_date")} readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />}
-                {isFieldVisible("discharge_date") && <FormField label="Discharge date" value={formData.dischargeDate} required={isFieldRequired("discharge_date")} readOnly={timerStopped} onChange={(v) => updateForm("dischargeDate", v)} />}
-                <div />
-              </div>
-              )}
-              {/* Row 3: Disposition, EM, Primary diagnosis */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                {isFieldVisible("disposition") && <FormField label="Disposition" value={formData.disposition} type="select" required={isFieldRequired("disposition")} readOnly={timerStopped} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />}
-                {isFieldVisible("em") && <FormField label="EM" value={formData.em} required={isFieldRequired("em")} readOnly={timerStopped} onChange={(v) => updateForm("em", v)} aiTag={aiFilledFields.has("em")} />}
-                {isFieldVisible("primary_diagnosis") && <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} required={isFieldRequired("primary_diagnosis")} readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} aiTag={aiFilledFields.has("primaryDiagnosis")} />}
-              </div>
-              {/* Row 4: Primary Health Plan, Facility */}
-              {(isFieldVisible("primary_health") || isFieldVisible("facility")) && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                {isFieldVisible("primary_health") && <FormField label="Primary Health Plan" value={formData.primaryHealth} type="select" required={isFieldRequired("primary_health")} readOnly={timerStopped} onChange={(v) => updateForm("primaryHealth", v)} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />}
-                {isFieldVisible("facility") && <FormField label="Facility" value={formData.facility} type="select" required={isFieldRequired("facility")} readOnly={timerStopped} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />}
-              </div>
-              )}
-              {/* Row 5: POA, LOS, DRG Value */}
-              {(isFieldVisible("poa") || isFieldVisible("los") || isFieldVisible("drg")) && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                {isFieldVisible("poa") && <FormField label="POA" value={formData.poa} required={isFieldRequired("poa")} readOnly={timerStopped} onChange={(v) => updateForm("poa", v.slice(0, 1))} />}
-                {isFieldVisible("los") && <FormField label="LOS" value={formData.los} required={isFieldRequired("los")} readOnly={timerStopped} onChange={(v) => updateForm("los", v.slice(0, 3))} />}
-                {isFieldVisible("drg") && <FormField label="DRG Value" value={formData.drgValue} required={isFieldRequired("drg")} readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v.slice(0, 3))} />}
-              </div>
-              )}
-              {/* Row 6: Procedure code, Sub Specialty */}
-              {(isFieldVisible("procedure_code") || isFieldVisible("sub_specialty")) && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                {isFieldVisible("procedure_code") && <FormField label="Procedure code" value={formData.procedureCode} required={isFieldRequired("procedure_code")} readOnly={timerStopped} onChange={(v) => updateForm("procedureCode", v)} aiTag={aiFilledFields.has("procedureCode")} />}
-                {isFieldVisible("sub_specialty") && <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" required={isFieldRequired("sub_specialty")} readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />}
-                <div />
-              </div>
-              )}
-              {renderCustomFields("Chart Info")}
+                {/* Row 1: Chart #, MR#, Date of Service */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+                  {isFieldVisible("chart_no") && <FormField label="Chart #" value={formData.chartNo} required={isFieldRequired("chart_no")} readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />}
+                  {isFieldVisible("mr_no") && <FormField label="MR#" value={formData.mrNo} required={isFieldRequired("mr_no")} readOnly={timerStopped} onChange={(v) => updateForm("mrNo", v)} />}
+                  {isFieldVisible("date_of_service") && <FormField label="Date of Service" value={formData.dateOfService} required={isFieldRequired("date_of_service")} readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />}
+                </div>
+                {/* Row 2: Admit date, Discharge date */}
+                {(isFieldVisible("admit_date") || isFieldVisible("discharge_date")) && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+                    {isFieldVisible("admit_date") && <FormField label="Admit date" value={formData.admitDate} required={isFieldRequired("admit_date")} readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />}
+                    {isFieldVisible("discharge_date") && <FormField label="Discharge date" value={formData.dischargeDate} required={isFieldRequired("discharge_date")} readOnly={timerStopped} onChange={(v) => updateForm("dischargeDate", v)} />}
+                    <div />
+                  </div>
+                )}
+                {/* Row 3: Disposition, EM, Primary diagnosis */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+                  {isFieldVisible("disposition") && <FormField label="Disposition" value={formData.disposition} type="select" required={isFieldRequired("disposition")} readOnly={timerStopped} onChange={(v) => updateForm("disposition", v)} options={config?.dispositions?.map(d => d.disposition_name) || []} />}
+                  {isFieldVisible("em") && <FormField label="EM" value={formData.em} required={isFieldRequired("em")} readOnly={timerStopped} onChange={(v) => updateForm("em", v)} aiTag={aiFilledFields.has("em")} />}
+                  {isFieldVisible("primary_diagnosis") && <FormField label="Primary diagnosis" value={formData.primaryDiagnosis} required={isFieldRequired("primary_diagnosis")} readOnly={timerStopped} onChange={(v) => updateForm("primaryDiagnosis", v)} aiTag={aiFilledFields.has("primaryDiagnosis")} />}
+                </div>
+                {/* Row 4: Primary Health Plan, Facility */}
+                {(isFieldVisible("primary_health") || isFieldVisible("facility")) && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+                    {isFieldVisible("primary_health") && <FormField label="Primary Health Plan" value={formData.primaryHealth} type="select" required={isFieldRequired("primary_health")} readOnly={timerStopped} onChange={(v) => updateForm("primaryHealth", v)} options={config?.primary_health?.map(p => p.PrimaryHealthName) || []} />}
+                    {isFieldVisible("facility") && <FormField label="Facility" value={formData.facility} type="select" required={isFieldRequired("facility")} readOnly={timerStopped} onChange={(v) => updateForm("facility", v)} options={config?.facility?.map(f => f.FacilityName) || []} />}
+                  </div>
+                )}
+                {/* Row 5: POA, LOS, DRG Value */}
+                {(isFieldVisible("poa") || isFieldVisible("los") || isFieldVisible("drg")) && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+                    {isFieldVisible("poa") && <FormField label="POA" value={formData.poa} required={isFieldRequired("poa")} readOnly={timerStopped} onChange={(v) => updateForm("poa", v.slice(0, 1))} />}
+                    {isFieldVisible("los") && <FormField label="LOS" value={formData.los} required={isFieldRequired("los")} readOnly={timerStopped} onChange={(v) => updateForm("los", v.slice(0, 3))} />}
+                    {isFieldVisible("drg") && <FormField label="DRG Value" value={formData.drgValue} required={isFieldRequired("drg")} readOnly={timerStopped} onChange={(v) => updateForm("drgValue", v.slice(0, 3))} />}
+                  </div>
+                )}
+                {/* Row 6: Procedure code, Sub Specialty */}
+                {(isFieldVisible("procedure_code") || isFieldVisible("sub_specialty")) && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                    {isFieldVisible("procedure_code") && <FormField label="Procedure code" value={formData.procedureCode} required={isFieldRequired("procedure_code")} readOnly={timerStopped} onChange={(v) => updateForm("procedureCode", v)} aiTag={aiFilledFields.has("procedureCode")} />}
+                    {isFieldVisible("sub_specialty") && <FormField label="Sub Specialty" value={formData.subSpecialty} type="select" required={isFieldRequired("sub_specialty")} readOnly={timerStopped} onChange={(v) => updateForm("subSpecialty", v)} options={config?.subspecialties?.map(s => s.SubSpecialtyName) || []} />}
+                    <div />
+                  </div>
+                )}
+                {renderCustomFields("Chart Info")}
               </div>
             </CollapsibleCard>
 
             {/* Processing Info Section — Collapsible */}
             <CollapsibleCard title="Processing Info" subtitle="All fields related to processing this chart" defaultOpen={true}>
               <div style={isAuditor ? { pointerEvents: "none", opacity: 0.5, filter: "grayscale(0.6)", background: "#f3f4f6", borderRadius: 10, padding: 12 } : (timerStopped ? { pointerEvents: "none" } : {})}>
-              {/* Row 1: Chart status, Responsible party */}
-              <div style={{ display: "grid", gridTemplateColumns: isFieldVisible("responsible_parties") ? "1fr 3fr" : "1fr", gap: 16, marginBottom: 16 }}>
-                {isFieldVisible("chart_status") && <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" required={isFieldRequired("chart_status")} readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />}
-                {isFieldVisible("responsible_parties") && (
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Responsible party{isFieldRequired("responsible_parties") && <span style={{ color: "#ef4444" }}> *</span>}</label>
-                  <FormFieldMultiSelect
-                    value={formData.responsibleParty || []}
-                    onChange={(v) => updateForm("responsibleParty", v)}
-                    options={config?.responsible_parties?.map(r => r.resp_party_name) || []}
-                    placeholder="Select..."
-                    readOnly={timerStopped}
-                  />
+                {/* Row 1: Chart status, Responsible party */}
+                <div style={{ display: "grid", gridTemplateColumns: isFieldVisible("responsible_parties") ? "1fr 3fr" : "1fr", gap: 16, marginBottom: 16 }}>
+                  {isFieldVisible("chart_status") && <FormField label="Chart status" value={formData.chartStatus || "Open"} type="select" required={isFieldRequired("chart_status")} readOnly={timerStopped} onChange={(v) => updateForm("chartStatus", v)} options={["Complete", "Incomplete"]} />}
+                  {isFieldVisible("responsible_parties") && (
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Responsible party{isFieldRequired("responsible_parties") && <span style={{ color: "#ef4444" }}> *</span>}</label>
+                      <FormFieldMultiSelect
+                        value={formData.responsibleParty || []}
+                        onChange={(v) => updateForm("responsibleParty", v)}
+                        options={config?.responsible_parties?.map(r => r.resp_party_name) || []}
+                        placeholder="Select..."
+                        readOnly={timerStopped}
+                      />
+                    </div>
+                  )}
                 </div>
+                {/* Row 2: Hold reason — disabled when Open or Complete */}
+                <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none") }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Hold reason{(formData.chartStatus === "Incomplete") && <span style={{ color: "#ef4444" }}> *</span>}</label>
+                    <FormFieldMultiSelect
+                      value={formData.holdReason || []}
+                      onChange={(v) => updateForm("holdReason", v)}
+                      options={config?.hold_reasons?.map(h => h.hold_reason) || []}
+                      placeholder="Select..."
+                      readOnly={timerStopped || (formData.chartStatus || "Open") !== "Incomplete"}
+                    />
+                  </div>
+                </div>
+                {/* Row 3: Coder comments to client — disabled when Complete */}
+                {isFieldVisible("coder_comments") && (
+                  <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Complete" ? 0.5 : 1), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Complete" ? "none" : "auto") }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
+                      Coder comments to client{isFieldRequired("coder_comments") && <span style={{ color: "#ef4444" }}> *</span>}
+                    </label>
+                    <textarea rows={3} value={formData.coderComments || ""} readOnly={timerStopped || (formData.chartStatus || "Open") === "Complete"} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
+                      width: "100%", padding: "10px 12px", borderRadius: 8,
+                      border: `1px solid ${timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#d1d5db" : "#e2e8f0"}`,
+                      background: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#e5e7eb" : "#fff",
+                      fontSize: 13, color: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#6b7280" : "#1a1d23",
+                      resize: "vertical", boxSizing: "border-box",
+                      cursor: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "not-allowed" : "text",
+                    }} />
+                  </div>
                 )}
-              </div>
-              {/* Row 2: Hold reason — disabled when Open or Complete */}
-              <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Incomplete" ? 1 : 0.5), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Incomplete" ? "auto" : "none") }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Hold reason{(formData.chartStatus === "Incomplete") && <span style={{ color: "#ef4444" }}> *</span>}</label>
-                  <FormFieldMultiSelect
-                    value={formData.holdReason || []}
-                    onChange={(v) => updateForm("holdReason", v)}
-                    options={config?.hold_reasons?.map(h => h.hold_reason) || []}
-                    placeholder="Select..."
-                    readOnly={timerStopped || (formData.chartStatus || "Open") !== "Incomplete"}
-                  />
+                {/* Row 4: Rejection / Denial Comments */}
+                {isFieldVisible("rejection_comments") && (
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
+                      Rejection / Denial Comments{isFieldRequired("rejection_comments") && <span style={{ color: "#ef4444" }}> *</span>}
+                    </label>
+                    <textarea rows={3} value={formData.rejectionComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("rejectionComments", e.target.value)} style={{
+                      width: "100%", padding: "10px 12px", borderRadius: 8,
+                      border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
+                      background: timerStopped ? "#e5e7eb" : "#fff",
+                      fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                      cursor: timerStopped ? "not-allowed" : "text",
+                    }} />
+                  </div>
+                )}
+                {/* Row 5: Deficiency Comments */}
+                {isFieldVisible("deficiency_comments") && (
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
+                      Deficiency Comments{isFieldRequired("deficiency_comments") && <span style={{ color: "#ef4444" }}> *</span>}
+                    </label>
+                    <textarea rows={3} value={formData.deficiencyComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("deficiencyComments", e.target.value)} style={{
+                      width: "100%", padding: "10px 12px", borderRadius: 8,
+                      border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
+                      background: timerStopped ? "#e5e7eb" : "#fff",
+                      fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23", resize: "vertical", boxSizing: "border-box",
+                      cursor: timerStopped ? "not-allowed" : "text",
+                    }} />
+                  </div>
+                )}
+                {/* Row 6: Date of completion, Audit options, Coder QC Status */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+                  <FormField label="Date of completion" value={new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} readOnly />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Audit options<span style={{ color: "#ef4444" }}> *</span></label>
+                    <FormFieldMultiSelect
+                      value={formData.auditOption || []}
+                      onChange={(v) => updateForm("auditOption", v)}
+                      options={config?.audit_options?.map(a => a.audit_opt) || []}
+                      placeholder="Select..."
+                      readOnly={timerStopped}
+                    />
+                  </div>
+                  <FormField label="Coder QC Status" value={formData.qcStatus} type="select" readOnly={!(chart?.coders?.length > 1) || timerStopped} onChange={(v) => updateForm("qcStatus", v)} options={masterData?.qc_status?.map(q => q.name) || []} placeholder="Select..." />
                 </div>
-              </div>
-              {/* Row 3: Coder comments to client — disabled when Complete */}
-              {isFieldVisible("coder_comments") && (
-              <div style={{ marginBottom: 16, opacity: timerStopped ? 0.5 : ((formData.chartStatus || "Open") === "Complete" ? 0.5 : 1), pointerEvents: timerStopped ? "none" : ((formData.chartStatus || "Open") === "Complete" ? "none" : "auto") }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                  Coder comments to client{isFieldRequired("coder_comments") && <span style={{ color: "#ef4444" }}> *</span>}
-                </label>
-                <textarea rows={3} value={formData.coderComments || ""} readOnly={timerStopped || (formData.chartStatus || "Open") === "Complete"} onChange={(e) => updateForm("coderComments", e.target.value)} style={{
-                  width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: `1px solid ${timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#d1d5db" : "#e2e8f0"}`,
-                  background: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#e5e7eb" : "#fff",
-                  fontSize: 13, color: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "#6b7280" : "#1a1d23",
-                  resize: "vertical", boxSizing: "border-box",
-                  cursor: timerStopped || (formData.chartStatus || "Open") === "Complete" ? "not-allowed" : "text",
-                }} />
-              </div>
-              )}
-              {/* Row 4: Rejection / Denial Comments */}
-              {isFieldVisible("rejection_comments") && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                  Rejection / Denial Comments{isFieldRequired("rejection_comments") && <span style={{ color: "#ef4444" }}> *</span>}
-                </label>
-                <textarea rows={3} value={formData.rejectionComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("rejectionComments", e.target.value)} style={{
-                  width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
-                  background: timerStopped ? "#e5e7eb" : "#fff",
-                  fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23", resize: "vertical", boxSizing: "border-box",
-                  cursor: timerStopped ? "not-allowed" : "text",
-                }} />
-              </div>
-              )}
-              {/* Row 5: Deficiency Comments */}
-              {isFieldVisible("deficiency_comments") && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>
-                  Deficiency Comments{isFieldRequired("deficiency_comments") && <span style={{ color: "#ef4444" }}> *</span>}
-                </label>
-                <textarea rows={3} value={formData.deficiencyComments || ""} readOnly={timerStopped} onChange={(e) => updateForm("deficiencyComments", e.target.value)} style={{
-                  width: "100%", padding: "10px 12px", borderRadius: 8,
-                  border: `1px solid ${timerStopped ? "#d1d5db" : "#e2e8f0"}`,
-                  background: timerStopped ? "#e5e7eb" : "#fff",
-                  fontSize: 13, color: timerStopped ? "#6b7280" : "#1a1d23", resize: "vertical", boxSizing: "border-box",
-                  cursor: timerStopped ? "not-allowed" : "text",
-                }} />
-              </div>
-              )}
-              {/* Row 6: Date of completion, Audit options, Coder QC Status */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <FormField label="Date of completion" value={new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })} readOnly />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 6 }}>Audit options<span style={{ color: "#ef4444" }}> *</span></label>
-                  <FormFieldMultiSelect
-                    value={formData.auditOption || []}
-                    onChange={(v) => updateForm("auditOption", v)}
-                    options={config?.audit_options?.map(a => a.audit_opt) || []}
-                    placeholder="Select..."
-                    readOnly={timerStopped}
-                  />
+                {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                  <FormField label="Allocate to auditor" value={formData.allocateAuditor} type="select" readOnly={timerStopped || !!formData.allocateCoder} onChange={(v) => updateForm("allocateAuditor", v)} placeholder="Select..." options={masterData?.auditors_active?.map(a => ({ value: a.name, label: a.name || "None" })) || []} />
+                  <FormField label="Allocate to Coder" value={formData.allocateCoder} type="select" readOnly={timerStopped} onChange={(v) => updateForm("allocateCoder", v)} placeholder="Select..." options={masterData?.coders_active?.map(c => ({ value: c.name, label: c.name || "None" })) || []} />
+                  <FormField label="Priority" value={formData.priority} type="select" readOnly={timerStopped || chart?.MilestoneId !== 4} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
                 </div>
-                <FormField label="Coder QC Status" value={formData.qcStatus} type="select" readOnly={!(chart?.coders?.length > 1) || timerStopped} onChange={(v) => updateForm("qcStatus", v)} options={masterData?.qc_status?.map(q => q.name) || []} placeholder="Select..." />
-              </div>
-              {/* Row 7: Allocate to auditor, Allocate to Coder, Priority */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                <FormField label="Allocate to auditor" value={formData.allocateAuditor} type="select" readOnly={timerStopped || !!formData.allocateCoder} onChange={(v) => updateForm("allocateAuditor", v)} placeholder="Select..." options={masterData?.auditors_active?.map(a => ({ value: a.name, label: a.name || "None" })) || []} />
-                <FormField label="Allocate to Coder" value={formData.allocateCoder} type="select" readOnly={timerStopped} onChange={(v) => updateForm("allocateCoder", v)} placeholder="Select..." options={masterData?.coders_active?.map(c => ({ value: c.name, label: c.name || "None" })) || []} />
-                <FormField label="Priority" value={formData.priority} type="select" readOnly={timerStopped || chart?.MilestoneId !== 4} onChange={(v) => updateForm("priority", v)} placeholder="Select..." options={["Critical", "High", "Medium", "Low"]} />
-              </div>
-              {renderCustomFields("Processing Info")}
+                {renderCustomFields("Processing Info")}
               </div>
             </CollapsibleCard>
 
@@ -2571,31 +2568,48 @@ export default function ProcessChart() {
                     const feedbackEnabled = !auditReadOnly && totalVal !== "" && correctVal !== "" && parseInt(correctVal, 10) < parseInt(totalVal, 10);
                     const feedbackDisabled = !feedbackEnabled;
                     return (
-                    <div key={row.key} style={{
-                      display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
-                      borderBottom: "1px solid #f0f1f3",
-                      alignItems: "center",
-                    }}>
-                      <div style={{
-                        padding: "8px 14px", fontSize: 13, fontWeight: 500, color: "#334155",
-                        borderRight: "1px dashed #e8eaed",
-                      }}>{row.label}</div>
-                      {/* Total Codes */}
-                      <div style={{ padding: "8px 12px" }}>
-                        {row.totalCodesOptions ? (
-                          <FormFieldDropdown
-                            value={totalVal}
-                            onChange={(v) => updateAuditField(row.key, "totalCodes", v)}
-                            options={row.totalCodesOptions}
-                            placeholder="Select..."
-                            readOnly={auditReadOnly}
-                          />
-                        ) : (
+                      <div key={row.key} style={{
+                        display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
+                        borderBottom: "1px solid #f0f1f3",
+                        alignItems: "center",
+                      }}>
+                        <div style={{
+                          padding: "8px 14px", fontSize: 13, fontWeight: 500, color: "#334155",
+                          borderRight: "1px dashed #e8eaed",
+                        }}>{row.label}</div>
+                        {/* Total Codes */}
+                        <div style={{ padding: "8px 12px" }}>
+                          {row.totalCodesOptions ? (
+                            <FormFieldDropdown
+                              value={totalVal}
+                              onChange={(v) => updateAuditField(row.key, "totalCodes", v)}
+                              options={row.totalCodesOptions}
+                              placeholder="Select..."
+                              readOnly={auditReadOnly}
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={totalVal}
+                              readOnly={auditReadOnly}
+                              onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "totalCodes", e.target.value)}
+                              style={{
+                                width: "100%", padding: "8px 10px", borderRadius: 6,
+                                border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
+                                background: auditReadOnly ? "#e5e7eb" : "#fff",
+                                fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
+                                boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
+                              }}
+                            />
+                          )}
+                        </div>
+                        {/* Correct Codes */}
+                        <div style={{ padding: "8px 12px" }}>
                           <input
                             type="text"
-                            value={totalVal}
+                            value={correctVal}
                             readOnly={auditReadOnly}
-                            onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "totalCodes", e.target.value)}
+                            onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "correctCodes", e.target.value)}
                             style={{
                               width: "100%", padding: "8px 10px", borderRadius: 6,
                               border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
@@ -2604,45 +2618,28 @@ export default function ProcessChart() {
                               boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
                             }}
                           />
-                        )}
+                        </div>
+                        {/* Feedback Category — disabled when totalCodes === correctCodes */}
+                        <div style={{ padding: "8px 12px" }}>
+                          {row.multiFeedback ? (
+                            <FormFieldMultiSelect
+                              value={auditData[row.key]?.feedbackCategory || []}
+                              onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
+                              options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
+                              placeholder="Select..."
+                              readOnly={feedbackDisabled}
+                            />
+                          ) : (
+                            <FormFieldDropdown
+                              value={auditData[row.key]?.feedbackCategory || ""}
+                              onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
+                              options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
+                              placeholder="Select..."
+                              readOnly={feedbackDisabled}
+                            />
+                          )}
+                        </div>
                       </div>
-                      {/* Correct Codes */}
-                      <div style={{ padding: "8px 12px" }}>
-                        <input
-                          type="text"
-                          value={correctVal}
-                          readOnly={auditReadOnly}
-                          onChange={auditReadOnly ? undefined : (e) => updateAuditField(row.key, "correctCodes", e.target.value)}
-                          style={{
-                            width: "100%", padding: "8px 10px", borderRadius: 6,
-                            border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
-                            background: auditReadOnly ? "#e5e7eb" : "#fff",
-                            fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
-                            boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
-                          }}
-                        />
-                      </div>
-                      {/* Feedback Category — disabled when totalCodes === correctCodes */}
-                      <div style={{ padding: "8px 12px" }}>
-                        {row.multiFeedback ? (
-                          <FormFieldMultiSelect
-                            value={auditData[row.key]?.feedbackCategory || []}
-                            onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
-                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
-                            placeholder="Select..."
-                            readOnly={feedbackDisabled}
-                          />
-                        ) : (
-                          <FormFieldDropdown
-                            value={auditData[row.key]?.feedbackCategory || ""}
-                            onChange={(v) => updateAuditField(row.key, "feedbackCategory", v)}
-                            options={config?.[row.feedKey]?.map(f => f.feedback_name) || []}
-                            placeholder="Select..."
-                            readOnly={feedbackDisabled}
-                          />
-                        )}
-                      </div>
-                    </div>
                     );
                   })}
                   {/* Dynamic feedback category rows */}
@@ -2653,55 +2650,55 @@ export default function ProcessChart() {
                     const feedbackEnabled = !auditReadOnly && totalVal !== "" && correctVal !== "" && parseInt(correctVal, 10) < parseInt(totalVal, 10);
                     const feedbackDisabled = !feedbackEnabled;
                     return (
-                    <div key={catKey} style={{
-                      display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
-                      borderBottom: "1px solid #f0f1f3",
-                      alignItems: "center",
-                    }}>
-                      <div style={{
-                        padding: "8px 14px", fontSize: 13, fontWeight: 500, color: "#334155",
-                        borderRight: "1px dashed #e8eaed",
-                      }}>{cat.name}</div>
-                      <div style={{ padding: "8px 12px" }}>
-                        <input
-                          type="text"
-                          value={totalVal}
-                          readOnly={auditReadOnly}
-                          onChange={auditReadOnly ? undefined : (e) => updateAuditField(catKey, "totalCodes", e.target.value)}
-                          style={{
-                            width: "100%", padding: "8px 10px", borderRadius: 6,
-                            border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
-                            background: auditReadOnly ? "#e5e7eb" : "#fff",
-                            fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
-                            boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
-                          }}
-                        />
+                      <div key={catKey} style={{
+                        display: "grid", gridTemplateColumns: "160px 1fr 1fr 1fr",
+                        borderBottom: "1px solid #f0f1f3",
+                        alignItems: "center",
+                      }}>
+                        <div style={{
+                          padding: "8px 14px", fontSize: 13, fontWeight: 500, color: "#334155",
+                          borderRight: "1px dashed #e8eaed",
+                        }}>{cat.name}</div>
+                        <div style={{ padding: "8px 12px" }}>
+                          <input
+                            type="text"
+                            value={totalVal}
+                            readOnly={auditReadOnly}
+                            onChange={auditReadOnly ? undefined : (e) => updateAuditField(catKey, "totalCodes", e.target.value)}
+                            style={{
+                              width: "100%", padding: "8px 10px", borderRadius: 6,
+                              border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
+                              background: auditReadOnly ? "#e5e7eb" : "#fff",
+                              fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
+                              boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
+                            }}
+                          />
+                        </div>
+                        <div style={{ padding: "8px 12px" }}>
+                          <input
+                            type="text"
+                            value={correctVal}
+                            readOnly={auditReadOnly}
+                            onChange={auditReadOnly ? undefined : (e) => updateAuditField(catKey, "correctCodes", e.target.value)}
+                            style={{
+                              width: "100%", padding: "8px 10px", borderRadius: 6,
+                              border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
+                              background: auditReadOnly ? "#e5e7eb" : "#fff",
+                              fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
+                              boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
+                            }}
+                          />
+                        </div>
+                        <div style={{ padding: "8px 12px" }}>
+                          <FormFieldDropdown
+                            value={auditData[catKey]?.feedbackCategory || ""}
+                            onChange={(v) => updateAuditField(catKey, "feedbackCategory", v)}
+                            options={cat.FeedbackCategoryDropdowns?.map(d => d.name) || []}
+                            placeholder="Select..."
+                            readOnly={feedbackDisabled}
+                          />
+                        </div>
                       </div>
-                      <div style={{ padding: "8px 12px" }}>
-                        <input
-                          type="text"
-                          value={correctVal}
-                          readOnly={auditReadOnly}
-                          onChange={auditReadOnly ? undefined : (e) => updateAuditField(catKey, "correctCodes", e.target.value)}
-                          style={{
-                            width: "100%", padding: "8px 10px", borderRadius: 6,
-                            border: `1px solid ${auditReadOnly ? "#d1d5db" : "#e2e8f0"}`,
-                            background: auditReadOnly ? "#e5e7eb" : "#fff",
-                            fontSize: 13, color: auditReadOnly ? "#6b7280" : "#1a1d23",
-                            boxSizing: "border-box", cursor: auditReadOnly ? "not-allowed" : "text",
-                          }}
-                        />
-                      </div>
-                      <div style={{ padding: "8px 12px" }}>
-                        <FormFieldDropdown
-                          value={auditData[catKey]?.feedbackCategory || ""}
-                          onChange={(v) => updateAuditField(catKey, "feedbackCategory", v)}
-                          options={cat.FeedbackCategoryDropdowns?.map(d => d.name) || []}
-                          placeholder="Select..."
-                          readOnly={feedbackDisabled}
-                        />
-                      </div>
-                    </div>
                     );
                   })}
                   {/* Total row — auto-computed, always disabled */}
@@ -3106,743 +3103,735 @@ export default function ProcessChart() {
         const isAiView = popupSidebarView === "ai-summary";
 
         return (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(true); setPopupSidebarView("documents"); }}
-        >
           <div
-            className="bg-white rounded-2xl shadow-2xl w-[94vw] h-[92vh] max-w-7xl flex overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(true); setPopupSidebarView("documents"); }}
           >
-            {/* ── Sidebar (open) ── */}
-            {docSidebarOpen && (
-              <div className="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Navigator</span>
-                  <button onClick={() => setDocSidebarOpen(false)} className="text-slate-400 hover:text-slate-600">
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-[94vw] h-[92vh] max-w-7xl flex overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* ── Sidebar (open) ── */}
+              {docSidebarOpen && (
+                <div className="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
+                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Navigator</span>
+                    <button onClick={() => setDocSidebarOpen(false)} className="text-slate-400 hover:text-slate-600">
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                    {/* Document items */}
+                    {aiData?.documents?.map((doc, idx) => {
+                      const isActive = !isAiView && doc.s3Url === docViewerUrl;
+                      const isPdf = doc.mimeType === 'application/pdf';
+                      const isImage = doc.mimeType?.startsWith('image/');
+                      const iconColor = isPdf ? 'text-red-500' : isImage ? 'text-purple-500' : 'text-blue-500';
+
+                      return (
+                        <button
+                          key={doc.id}
+                          onClick={() => { doc.s3Url && setDocViewerUrl(doc.s3Url); setPopupSidebarView("documents"); }}
+                          className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-amber-50 border border-amber-200' : 'hover:bg-slate-50 border border-transparent'
+                            }`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-amber-100' : 'bg-slate-100'}`}>
+                            {isImage
+                              ? <FileImage className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />
+                              : <FileText className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-medium truncate ${isActive ? 'text-amber-800' : 'text-slate-700'}`}>{doc.filename}</p>
+                            <span className="text-[10px] text-slate-400">
+                              {doc.fileSize < 1024 ? doc.fileSize + ' B' : doc.fileSize < 1048576 ? (doc.fileSize / 1024).toFixed(1) + ' KB' : (doc.fileSize / 1048576).toFixed(1) + ' MB'}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {/* AI Summary item */}
+                    <button
+                      onClick={() => setPopupSidebarView("ai-summary")}
+                      className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isAiView ? 'bg-purple-50 border border-purple-200' : 'hover:bg-slate-50 border border-transparent'
+                        }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isAiView ? 'bg-purple-100' : 'bg-slate-100'}`}>
+                        <Sparkles className={`w-4 h-4 ${isAiView ? 'text-purple-600' : 'text-slate-400'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-medium ${isAiView ? 'text-purple-800' : 'text-slate-700'}`}>AI Summary</p>
+                        <span className={`text-[10px] ${isAiView ? 'text-purple-500' : 'text-slate-400'}`}>
+                          {aiData?.aiStatus === 'ready' ? 'Results available' : aiData?.aiStatus || 'No data'}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                  {/* Document items */}
+              )}
+
+              {/* ── Sidebar (collapsed) ── */}
+              {!docSidebarOpen && (
+                <div className="w-14 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col items-center py-3 gap-2">
+                  <button onClick={() => setDocSidebarOpen(true)} className="w-10 h-10 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors" title="Expand panel">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <div className="w-8 border-t border-slate-200 my-1" />
                   {aiData?.documents?.map((doc, idx) => {
                     const isActive = !isAiView && doc.s3Url === docViewerUrl;
                     const isPdf = doc.mimeType === 'application/pdf';
-                    const isImage = doc.mimeType?.startsWith('image/');
-                    const iconColor = isPdf ? 'text-red-500' : isImage ? 'text-purple-500' : 'text-blue-500';
-
                     return (
                       <button
                         key={doc.id}
                         onClick={() => { doc.s3Url && setDocViewerUrl(doc.s3Url); setPopupSidebarView("documents"); }}
-                        className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                          isActive ? 'bg-amber-50 border border-amber-200' : 'hover:bg-slate-50 border border-transparent'
-                        }`}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-bold transition-colors ${isActive ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-transparent'
+                          }`}
+                        title={doc.filename}
                       >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-amber-100' : 'bg-slate-100'}`}>
-                          {isImage
-                            ? <FileImage className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />
-                            : <FileText className={`w-4 h-4 ${isActive ? 'text-amber-600' : iconColor}`} />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-medium truncate ${isActive ? 'text-amber-800' : 'text-slate-700'}`}>{doc.filename}</p>
-                          <span className="text-[10px] text-slate-400">
-                            {doc.fileSize < 1024 ? doc.fileSize + ' B' : doc.fileSize < 1048576 ? (doc.fileSize / 1024).toFixed(1) + ' KB' : (doc.fileSize / 1048576).toFixed(1) + ' MB'}
-                          </span>
-                        </div>
+                        {isPdf ? 'P' : 'D'}{idx + 1}
                       </button>
                     );
                   })}
-
-                  {/* AI Summary item */}
+                  <div className="w-8 border-t border-slate-200 my-1" />
                   <button
                     onClick={() => setPopupSidebarView("ai-summary")}
-                    className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      isAiView ? 'bg-purple-50 border border-purple-200' : 'hover:bg-slate-50 border border-transparent'
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isAiView ? 'bg-purple-100' : 'bg-slate-100'}`}>
-                      <Sparkles className={`w-4 h-4 ${isAiView ? 'text-purple-600' : 'text-slate-400'}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${isAiView ? 'text-purple-800' : 'text-slate-700'}`}>AI Summary</p>
-                      <span className={`text-[10px] ${isAiView ? 'text-purple-500' : 'text-slate-400'}`}>
-                        {aiData?.aiStatus === 'ready' ? 'Results available' : aiData?.aiStatus || 'No data'}
-                      </span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ── Sidebar (collapsed) ── */}
-            {!docSidebarOpen && (
-              <div className="w-14 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col items-center py-3 gap-2">
-                <button onClick={() => setDocSidebarOpen(true)} className="w-10 h-10 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors" title="Expand panel">
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-                <div className="w-8 border-t border-slate-200 my-1" />
-                {aiData?.documents?.map((doc, idx) => {
-                  const isActive = !isAiView && doc.s3Url === docViewerUrl;
-                  const isPdf = doc.mimeType === 'application/pdf';
-                  return (
-                    <button
-                      key={doc.id}
-                      onClick={() => { doc.s3Url && setDocViewerUrl(doc.s3Url); setPopupSidebarView("documents"); }}
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-bold transition-colors ${
-                        isActive ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-transparent'
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isAiView ? 'bg-purple-100 text-purple-700 border border-purple-300' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-transparent'
                       }`}
-                      title={doc.filename}
-                    >
-                      {isPdf ? 'P' : 'D'}{idx + 1}
-                    </button>
-                  );
-                })}
-                <div className="w-8 border-t border-slate-200 my-1" />
-                <button
-                  onClick={() => setPopupSidebarView("ai-summary")}
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                    isAiView ? 'bg-purple-100 text-purple-700 border border-purple-300' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-transparent'
-                  }`}
-                  title="AI Summary"
-                >
-                  <Sparkles className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            {/* ── Main content area ── */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50 flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isAiView ? 'bg-purple-50' : 'bg-red-50'}`}>
-                    {isAiView ? <Sparkles className="w-4 h-4 text-purple-500" /> : <FileText className="w-4 h-4 text-red-500" />}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-800 text-sm">{isAiView ? 'AI Summary' : 'Document Viewer'}</h3>
-                    {!isAiView && <p className="text-xs text-slate-400 truncate max-w-md">{docViewerUrl.split('/').pop()}</p>}
-                    {isAiView && <p className="text-xs text-slate-400">AI-generated analysis of uploaded documents</p>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!isAiView && (
-                    <a href={docViewerUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white rounded-lg hover:bg-slate-100 border border-slate-200 transition-colors">
-                      <ExternalLink className="w-3.5 h-3.5" /> New Tab
-                    </a>
-                  )}
-                  <button
-                    onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(true); setPopupSidebarView("documents"); }}
-                    className="w-8 h-8 rounded-lg bg-white hover:bg-red-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                    title="AI Summary"
                   >
-                    <X className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
+              )}
 
-              {/* Content */}
-              <div className="flex-1 overflow-hidden">
-                {/* Document iframe */}
-                {!isAiView && (
-                  <iframe src={docViewerUrl} title="Document Viewer" className="w-full h-full border-0" />
-                )}
+              {/* ── Main content area ── */}
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isAiView ? 'bg-purple-50' : 'bg-red-50'}`}>
+                      {isAiView ? <Sparkles className="w-4 h-4 text-purple-500" /> : <FileText className="w-4 h-4 text-red-500" />}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-800 text-sm">{isAiView ? 'AI Summary' : 'Document Viewer'}</h3>
+                      {!isAiView && <p className="text-xs text-slate-400 truncate max-w-md">{docViewerUrl.split('/').pop()}</p>}
+                      {isAiView && <p className="text-xs text-slate-400">AI-generated analysis of uploaded documents</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!isAiView && (
+                      <a href={docViewerUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white rounded-lg hover:bg-slate-100 border border-slate-200 transition-colors">
+                        <ExternalLink className="w-3.5 h-3.5" /> New Tab
+                      </a>
+                    )}
+                    <button
+                      onClick={() => { setDocViewerUrl(null); setDocSidebarOpen(true); setPopupSidebarView("documents"); }}
+                      className="w-8 h-8 rounded-lg bg-white hover:bg-red-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
 
-                {/* AI Summary content */}
-                {isAiView && (
-                  <div className="h-full overflow-y-auto p-8">
-                    {aiData?.aiStatus === 'ready' && aiData?.aiSummary ? (
-                      <div className="max-w-4xl mx-auto space-y-4">
-                        {/* Patient Demographics & Provider */}
-                        {(aiData.aiSummary.patient_demographics || aiData.aiSummary.attending_provider) && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center"><Sparkles className="w-3.5 h-3.5 text-blue-500" /></div>
-                              Patient Information
-                            </h4>
-                            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-700">
-                              {aiData.aiSummary.patient_demographics?.age && <span><span className="font-semibold text-slate-500">Age:</span> {str(aiData.aiSummary.patient_demographics.age)}</span>}
-                              {aiData.aiSummary.patient_demographics?.sex && <span><span className="font-semibold text-slate-500">Sex:</span> {str(aiData.aiSummary.patient_demographics.sex)}</span>}
-                              {aiData.aiSummary.patient_demographics?.weight && <span><span className="font-semibold text-slate-500">Weight:</span> {str(aiData.aiSummary.patient_demographics.weight)}</span>}
-                              {aiData.aiSummary.attending_provider && <span><span className="font-semibold text-slate-500">Attending:</span> {str(aiData.aiSummary.attending_provider)}</span>}
-                              {aiData.aiSummary.consulting_providers?.length > 0 && <span><span className="font-semibold text-slate-500">Consulting:</span> {aiData.aiSummary.consulting_providers.map(str).join(', ')}</span>}
-                            </div>
-                            {aiData.aiSummary.patient_demographics?.allergies?.length > 0 && (
-                              <div className="mt-3 flex flex-wrap gap-1.5">
-                                <span className="text-xs font-semibold text-red-600">Allergies:</span>
-                                {aiData.aiSummary.patient_demographics.allergies.map((a, i) => (
-                                  <span key={i} className="text-xs px-2 py-0.5 bg-red-50 text-red-700 rounded-full border border-red-100">{str(a)}</span>
-                                ))}
+                {/* Content */}
+                <div className="flex-1 overflow-hidden">
+                  {/* Document iframe */}
+                  {!isAiView && (
+                    <iframe src={docViewerUrl} title="Document Viewer" className="w-full h-full border-0" />
+                  )}
+
+                  {/* AI Summary content */}
+                  {isAiView && (
+                    <div className="h-full overflow-y-auto p-8">
+                      {aiData?.aiStatus === 'ready' && aiData?.aiSummary ? (
+                        <div className="max-w-4xl mx-auto space-y-4">
+                          {/* Patient Demographics & Provider */}
+                          {(aiData.aiSummary.patient_demographics || aiData.aiSummary.attending_provider) && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center"><Sparkles className="w-3.5 h-3.5 text-blue-500" /></div>
+                                Patient Information
+                              </h4>
+                              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-700">
+                                {aiData.aiSummary.patient_demographics?.age && <span><span className="font-semibold text-slate-500">Age:</span> {str(aiData.aiSummary.patient_demographics.age)}</span>}
+                                {aiData.aiSummary.patient_demographics?.sex && <span><span className="font-semibold text-slate-500">Sex:</span> {str(aiData.aiSummary.patient_demographics.sex)}</span>}
+                                {aiData.aiSummary.patient_demographics?.weight && <span><span className="font-semibold text-slate-500">Weight:</span> {str(aiData.aiSummary.patient_demographics.weight)}</span>}
+                                {aiData.aiSummary.attending_provider && <span><span className="font-semibold text-slate-500">Attending:</span> {str(aiData.aiSummary.attending_provider)}</span>}
+                                {aiData.aiSummary.consulting_providers?.length > 0 && <span><span className="font-semibold text-slate-500">Consulting:</span> {aiData.aiSummary.consulting_providers.map(str).join(', ')}</span>}
                               </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Chief Complaint */}
-                        {aiData.aiSummary.chief_complaint?.text && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center"><Sparkles className="w-3.5 h-3.5 text-purple-500" /></div>
-                              Chief Complaint
-                            </h4>
-                            <p className="text-sm text-slate-700 leading-relaxed">{str(aiData.aiSummary.chief_complaint.text)}</p>
-                            <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-xs text-slate-500">
-                              {aiData.aiSummary.chief_complaint.onset && aiData.aiSummary.chief_complaint.onset !== 'N/A' && <span><span className="font-semibold">Onset:</span> {str(aiData.aiSummary.chief_complaint.onset)}</span>}
-                              {aiData.aiSummary.chief_complaint.duration && aiData.aiSummary.chief_complaint.duration !== 'N/A' && <span><span className="font-semibold">Duration:</span> {str(aiData.aiSummary.chief_complaint.duration)}</span>}
-                              {aiData.aiSummary.chief_complaint.severity && aiData.aiSummary.chief_complaint.severity !== 'N/A' && <span><span className="font-semibold">Severity:</span> {str(aiData.aiSummary.chief_complaint.severity)}</span>}
-                            </div>
-                            {aiData.aiSummary.chief_complaint.associated_symptoms?.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-                                <span className="text-xs font-semibold text-slate-500">Associated:</span>
-                                {aiData.aiSummary.chief_complaint.associated_symptoms.map((s, i) => (
-                                  <span key={i} className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full">{str(s)}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* History of Present Illness */}
-                        {aiData.aiSummary.history_of_present_illness?.text && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">History of Present Illness</h4>
-                            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{str(aiData.aiSummary.history_of_present_illness.text)}</p>
-                            <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs text-slate-500">
-                              {aiData.aiSummary.history_of_present_illness.location && aiData.aiSummary.history_of_present_illness.location !== 'N/A' && <span><span className="font-semibold">Location:</span> {str(aiData.aiSummary.history_of_present_illness.location)}</span>}
-                              {aiData.aiSummary.history_of_present_illness.severity && aiData.aiSummary.history_of_present_illness.severity !== 'N/A' && <span><span className="font-semibold">Severity:</span> {str(aiData.aiSummary.history_of_present_illness.severity)}</span>}
-                              {aiData.aiSummary.history_of_present_illness.duration && aiData.aiSummary.history_of_present_illness.duration !== 'N/A' && <span><span className="font-semibold">Duration:</span> {str(aiData.aiSummary.history_of_present_illness.duration)}</span>}
-                              {aiData.aiSummary.history_of_present_illness.quality && aiData.aiSummary.history_of_present_illness.quality !== 'N/A' && <span><span className="font-semibold">Quality:</span> {str(aiData.aiSummary.history_of_present_illness.quality)}</span>}
-                              {aiData.aiSummary.history_of_present_illness.modifying_factors && aiData.aiSummary.history_of_present_illness.modifying_factors !== 'N/A' && <span><span className="font-semibold">Modifying Factors:</span> {str(aiData.aiSummary.history_of_present_illness.modifying_factors)}</span>}
-                            </div>
-                            {aiData.aiSummary.history_of_present_illness.associated_signs_symptoms && aiData.aiSummary.history_of_present_illness.associated_signs_symptoms !== 'N/A' && (
-                              <p className="text-xs text-slate-500 mt-1"><span className="font-semibold">Associated Signs/Symptoms:</span> {str(aiData.aiSummary.history_of_present_illness.associated_signs_symptoms)}</p>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Review of Systems */}
-                        {aiData.aiSummary.review_of_systems && Object.values(aiData.aiSummary.review_of_systems).some(v => v && v !== 'N/A') && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Review of Systems</h4>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                              {Object.entries(aiData.aiSummary.review_of_systems).filter(([, v]) => v && v !== 'N/A').map(([system, value]) => (
-                                <div key={system} className="text-sm">
-                                  <span className="font-semibold text-slate-500 capitalize">{str(system.replace(/_/g, ' '))}:</span>{' '}
-                                  <span className="text-slate-700">{str(value)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Physical Examination & Vitals */}
-                        {aiData.aiSummary.physical_examination && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Physical Examination</h4>
-                            {/* Vitals */}
-                            {aiData.aiSummary.physical_examination.vitals && Object.values(aiData.aiSummary.physical_examination.vitals).some(v => v && v !== 'N/A') && (
-                              <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                <p className="text-xs font-semibold text-blue-700 mb-2">Vitals</p>
-                                <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-                                  {aiData.aiSummary.physical_examination.vitals.blood_pressure && aiData.aiSummary.physical_examination.vitals.blood_pressure !== 'N/A' && <span><span className="font-semibold text-slate-500">BP:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.blood_pressure)}</span></span>}
-                                  {aiData.aiSummary.physical_examination.vitals.heart_rate && aiData.aiSummary.physical_examination.vitals.heart_rate !== 'N/A' && <span><span className="font-semibold text-slate-500">HR:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.heart_rate)}</span></span>}
-                                  {aiData.aiSummary.physical_examination.vitals.temperature && aiData.aiSummary.physical_examination.vitals.temperature !== 'N/A' && <span><span className="font-semibold text-slate-500">Temp:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.temperature)}</span></span>}
-                                  {aiData.aiSummary.physical_examination.vitals.respiratory_rate && aiData.aiSummary.physical_examination.vitals.respiratory_rate !== 'N/A' && <span><span className="font-semibold text-slate-500">RR:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.respiratory_rate)}</span></span>}
-                                  {aiData.aiSummary.physical_examination.vitals.oxygen_saturation && aiData.aiSummary.physical_examination.vitals.oxygen_saturation !== 'N/A' && <span><span className="font-semibold text-slate-500">SpO2:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.oxygen_saturation)}</span></span>}
-                                  {aiData.aiSummary.physical_examination.vitals.pain_score && aiData.aiSummary.physical_examination.vitals.pain_score !== 'N/A' && <span><span className="font-semibold text-slate-500">Pain:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.pain_score)}</span></span>}
-                                </div>
-                              </div>
-                            )}
-                            {/* Exam Systems */}
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                              {['general', 'heent', 'neck', 'cardiovascular', 'respiratory', 'abdomen', 'extremities', 'neurological', 'psychiatric', 'skin'].map(sys => (
-                                aiData.aiSummary.physical_examination[sys] && aiData.aiSummary.physical_examination[sys] !== 'N/A' ? (
-                                  <div key={sys} className="text-sm">
-                                    <span className="font-semibold text-slate-500 capitalize">{sys === 'heent' ? 'HEENT' : str(sys)}:</span>{' '}
-                                    <span className="text-slate-700">{str(aiData.aiSummary.physical_examination[sys])}</span>
-                                  </div>
-                                ) : null
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Past Medical History */}
-                        {aiData.aiSummary.past_medical_history && (aiData.aiSummary.past_medical_history.conditions?.length > 0 || aiData.aiSummary.past_medical_history.surgeries?.length > 0 || aiData.aiSummary.past_medical_history.hospitalizations?.length > 0) && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Past Medical History</h4>
-                            {aiData.aiSummary.past_medical_history.conditions?.length > 0 && (
-                              <div className="mb-2">
-                                <span className="text-xs font-semibold text-slate-500">Conditions: </span>
-                                <span className="text-sm text-slate-700">{aiData.aiSummary.past_medical_history.conditions.map(str).join(', ')}</span>
-                              </div>
-                            )}
-                            {aiData.aiSummary.past_medical_history.surgeries?.length > 0 && (
-                              <div className="mb-2">
-                                <span className="text-xs font-semibold text-slate-500">Surgeries: </span>
-                                <span className="text-sm text-slate-700">{aiData.aiSummary.past_medical_history.surgeries.map(str).join(', ')}</span>
-                              </div>
-                            )}
-                            {aiData.aiSummary.past_medical_history.hospitalizations?.length > 0 && (
-                              <div>
-                                <span className="text-xs font-semibold text-slate-500">Hospitalizations: </span>
-                                <span className="text-sm text-slate-700">{aiData.aiSummary.past_medical_history.hospitalizations.map(str).join(', ')}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Family History */}
-                        {aiData.aiSummary.family_history?.relevant_conditions?.length > 0 && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Family History</h4>
-                            <ul className="space-y-1.5">
-                              {aiData.aiSummary.family_history.relevant_conditions.map((cond, i) => (
-                                <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-2 flex-shrink-0" />
-                                  {str(cond)}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Social History */}
-                        {aiData.aiSummary.social_history && Object.values(aiData.aiSummary.social_history).some(v => v && v !== 'N/A') && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Social History</h4>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                              {Object.entries(aiData.aiSummary.social_history).filter(([, v]) => v && v !== 'N/A').map(([key, value]) => (
-                                <div key={key} className="text-sm">
-                                  <span className="font-semibold text-slate-500 capitalize">{str(key.replace(/_/g, ' '))}:</span>{' '}
-                                  <span className="text-slate-700">{str(value)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Assessment & Plan */}
-                        {aiData.aiSummary.assessment_and_plan && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-md bg-emerald-50 flex items-center justify-center"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /></div>
-                              Assessment & Plan
-                            </h4>
-                            {aiData.aiSummary.assessment_and_plan.assessment && (
-                              <p className="text-sm text-slate-700 leading-relaxed mb-2">{str(aiData.aiSummary.assessment_and_plan.assessment)}</p>
-                            )}
-                            {aiData.aiSummary.assessment_and_plan.plan && (
-                              <p className="text-sm text-slate-700 leading-relaxed mb-2"><span className="font-semibold">Plan:</span> {str(aiData.aiSummary.assessment_and_plan.plan)}</p>
-                            )}
-                            {aiData.aiSummary.assessment_and_plan.diagnoses?.length > 0 && (
-                              <div className="mt-2">
-                                <span className="text-xs font-semibold text-slate-500">Diagnoses:</span>
-                                <div className="flex flex-wrap gap-1.5 mt-1">
-                                  {aiData.aiSummary.assessment_and_plan.diagnoses.map((d, i) => (
-                                    <span key={i} className="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">{str(d)}</span>
+                              {aiData.aiSummary.patient_demographics?.allergies?.length > 0 && (
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                  <span className="text-xs font-semibold text-red-600">Allergies:</span>
+                                  {aiData.aiSummary.patient_demographics.allergies.map((a, i) => (
+                                    <span key={i} className="text-xs px-2 py-0.5 bg-red-50 text-red-700 rounded-full border border-red-100">{str(a)}</span>
                                   ))}
                                 </div>
-                              </div>
-                            )}
-                            {aiData.aiSummary.assessment_and_plan.follow_up && aiData.aiSummary.assessment_and_plan.follow_up !== 'N/A' && (
-                              <p className="text-xs text-slate-500 mt-2"><span className="font-semibold">Follow-up:</span> {str(aiData.aiSummary.assessment_and_plan.follow_up)}</p>
-                            )}
-                            {aiData.aiSummary.assessment_and_plan.disposition && aiData.aiSummary.assessment_and_plan.disposition !== 'N/A' && (
-                              <p className="text-xs text-slate-500 mt-1"><span className="font-semibold">Disposition:</span> {str(aiData.aiSummary.assessment_and_plan.disposition)}</p>
-                            )}
-                          </div>
-                        )}
+                              )}
+                            </div>
+                          )}
 
-                        {/* ICD-10 Diagnosis Codes */}
-                        {aiData.diagnosisCodes && (aiData.diagnosisCodes.principal_diagnosis || aiData.diagnosisCodes.primary_diagnosis?.length > 0 || aiData.diagnosisCodes.secondary_diagnoses?.length > 0 || aiData.diagnosisCodes.reason_for_admit?.length > 0) && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center"><Layers className="w-3.5 h-3.5 text-blue-500" /></div>
-                              ICD-10 Diagnosis Codes
-                            </h4>
-                            <div className="space-y-3">
-                              {/* Principal Diagnosis */}
-                              {aiData.diagnosisCodes.principal_diagnosis && (
-                                <div>
-                                  <p className="text-xs font-semibold text-violet-600 mb-1.5">Principal Diagnosis</p>
-                                  <div className="flex items-start gap-2 p-2.5 bg-violet-50 rounded-lg border border-violet-100">
-                                    <span className="text-xs font-mono font-bold text-violet-700 bg-white px-2 py-0.5 rounded border border-violet-200 shrink-0">{str(aiData.diagnosisCodes.principal_diagnosis.icd_10_code)}</span>
-                                    <span className="text-sm text-slate-700">{str(aiData.diagnosisCodes.principal_diagnosis.description)}</span>
-                                  </div>
-                                </div>
-                              )}
-                              {/* Reason for Admit */}
-                              {aiData.diagnosisCodes.reason_for_admit?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-cyan-600 mb-1.5">Reason for Admit</p>
-                                  <div className="space-y-1.5">
-                                    {aiData.diagnosisCodes.reason_for_admit.map((dx, i) => (
-                                      <div key={i} className="flex items-start gap-2 p-2.5 bg-cyan-50 rounded-lg border border-cyan-100">
-                                        <span className="text-xs font-mono font-bold text-cyan-700 bg-white px-2 py-0.5 rounded border border-cyan-200 shrink-0">{str(dx.icd_10_code)}</span>
-                                        <span className="text-sm text-slate-700">{str(dx.description)}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {/* Primary Diagnosis */}
-                              {aiData.diagnosisCodes.primary_diagnosis?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-blue-600 mb-1.5">Primary Diagnosis</p>
-                                  <div className="space-y-1.5">
-                                    {aiData.diagnosisCodes.primary_diagnosis.map((dx, i) => (
-                                      <div key={i} className="flex items-start gap-2 p-2.5 bg-blue-50 rounded-lg border border-blue-100">
-                                        <span className="text-xs font-mono font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200 shrink-0">{str(dx.icd_10_code)}</span>
-                                        <span className="text-sm text-slate-700">{str(dx.description)}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {/* Secondary Diagnoses */}
-                              {aiData.diagnosisCodes.secondary_diagnoses?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-slate-600 mb-1.5">Secondary Diagnoses</p>
-                                  <div className="space-y-1.5">
-                                    {aiData.diagnosisCodes.secondary_diagnoses.map((dx, i) => (
-                                      <div key={i} className="flex items-start gap-2 p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-                                        <span className="text-xs font-mono font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200 shrink-0">{str(dx.icd_10_code)}</span>
-                                        <span className="text-sm text-slate-700">{str(dx.description)}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {/* E/M Level */}
-                              {aiData.diagnosisCodes.ed_em_level?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-amber-600 mb-1.5">E/M Level</p>
-                                  <div className="space-y-1.5">
-                                    {aiData.diagnosisCodes.ed_em_level.map((em, i) => (
-                                      <div key={i} className="flex items-start gap-2 p-2.5 bg-amber-50 rounded-lg border border-amber-100">
-                                        <span className="text-xs font-mono font-bold text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-200 shrink-0">{str(em.code || em.icd_10_code)}</span>
-                                        <span className="text-sm text-slate-700">{str(em.description)}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {/* Modifiers */}
-                              {aiData.diagnosisCodes.modifiers?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-pink-600 mb-1.5">Modifiers</p>
-                                  <div className="space-y-1.5">
-                                    {aiData.diagnosisCodes.modifiers.map((mod, i) => (
-                                      <div key={i} className="flex items-start gap-2 p-2.5 bg-pink-50 rounded-lg border border-pink-100">
-                                        <span className="text-xs font-mono font-bold text-pink-700 bg-white px-2 py-0.5 rounded border border-pink-200 shrink-0">{str(mod.modifier_code)}</span>
-                                        <div>
-                                          <span className="text-sm text-slate-700">{str(mod.modifier_name)}</span>
-                                          {mod.applies_to_code && <p className="text-xs text-slate-500 mt-0.5">Applies to: <span className="font-mono">{str(mod.applies_to_code)}</span></p>}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
+                          {/* Chief Complaint */}
+                          {aiData.aiSummary.chief_complaint?.text && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center"><Sparkles className="w-3.5 h-3.5 text-purple-500" /></div>
+                                Chief Complaint
+                              </h4>
+                              <p className="text-sm text-slate-700 leading-relaxed">{str(aiData.aiSummary.chief_complaint.text)}</p>
+                              <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-xs text-slate-500">
+                                {aiData.aiSummary.chief_complaint.onset && aiData.aiSummary.chief_complaint.onset !== 'N/A' && <span><span className="font-semibold">Onset:</span> {str(aiData.aiSummary.chief_complaint.onset)}</span>}
+                                {aiData.aiSummary.chief_complaint.duration && aiData.aiSummary.chief_complaint.duration !== 'N/A' && <span><span className="font-semibold">Duration:</span> {str(aiData.aiSummary.chief_complaint.duration)}</span>}
+                                {aiData.aiSummary.chief_complaint.severity && aiData.aiSummary.chief_complaint.severity !== 'N/A' && <span><span className="font-semibold">Severity:</span> {str(aiData.aiSummary.chief_complaint.severity)}</span>}
+                              </div>
+                              {aiData.aiSummary.chief_complaint.associated_symptoms?.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  <span className="text-xs font-semibold text-slate-500">Associated:</span>
+                                  {aiData.aiSummary.chief_complaint.associated_symptoms.map((s, i) => (
+                                    <span key={i} className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full">{str(s)}</span>
+                                  ))}
                                 </div>
                               )}
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {/* Procedures (CPT Codes) */}
-                        {aiData.procedures?.length > 0 && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-md bg-teal-50 flex items-center justify-center"><ClipboardPaste className="w-3.5 h-3.5 text-teal-500" /></div>
-                              Procedures
-                            </h4>
-                            <div className="space-y-2.5">
-                              {aiData.procedures.map((proc, i) => (
-                                <div key={i} className="p-3 bg-teal-50 rounded-lg border border-teal-100">
-                                  <div className="flex items-start gap-2.5">
-                                    <span className="text-xs font-mono font-bold text-teal-700 bg-white px-2 py-0.5 rounded border border-teal-200 shrink-0">{str(proc.cpt_code)}</span>
-                                    <div>
-                                      <p className="text-sm font-medium text-slate-800">{str(proc.procedure_name)}</p>
-                                      {proc.description && <p className="text-xs text-slate-600 mt-0.5">{str(proc.description)}</p>}
+                          {/* History of Present Illness */}
+                          {aiData.aiSummary.history_of_present_illness?.text && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">History of Present Illness</h4>
+                              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{str(aiData.aiSummary.history_of_present_illness.text)}</p>
+                              <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs text-slate-500">
+                                {aiData.aiSummary.history_of_present_illness.location && aiData.aiSummary.history_of_present_illness.location !== 'N/A' && <span><span className="font-semibold">Location:</span> {str(aiData.aiSummary.history_of_present_illness.location)}</span>}
+                                {aiData.aiSummary.history_of_present_illness.severity && aiData.aiSummary.history_of_present_illness.severity !== 'N/A' && <span><span className="font-semibold">Severity:</span> {str(aiData.aiSummary.history_of_present_illness.severity)}</span>}
+                                {aiData.aiSummary.history_of_present_illness.duration && aiData.aiSummary.history_of_present_illness.duration !== 'N/A' && <span><span className="font-semibold">Duration:</span> {str(aiData.aiSummary.history_of_present_illness.duration)}</span>}
+                                {aiData.aiSummary.history_of_present_illness.quality && aiData.aiSummary.history_of_present_illness.quality !== 'N/A' && <span><span className="font-semibold">Quality:</span> {str(aiData.aiSummary.history_of_present_illness.quality)}</span>}
+                                {aiData.aiSummary.history_of_present_illness.modifying_factors && aiData.aiSummary.history_of_present_illness.modifying_factors !== 'N/A' && <span><span className="font-semibold">Modifying Factors:</span> {str(aiData.aiSummary.history_of_present_illness.modifying_factors)}</span>}
+                              </div>
+                              {aiData.aiSummary.history_of_present_illness.associated_signs_symptoms && aiData.aiSummary.history_of_present_illness.associated_signs_symptoms !== 'N/A' && (
+                                <p className="text-xs text-slate-500 mt-1"><span className="font-semibold">Associated Signs/Symptoms:</span> {str(aiData.aiSummary.history_of_present_illness.associated_signs_symptoms)}</p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Review of Systems */}
+                          {aiData.aiSummary.review_of_systems && Object.values(aiData.aiSummary.review_of_systems).some(v => v && v !== 'N/A') && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">Review of Systems</h4>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                                {Object.entries(aiData.aiSummary.review_of_systems).filter(([, v]) => v && v !== 'N/A').map(([system, value]) => (
+                                  <div key={system} className="text-sm">
+                                    <span className="font-semibold text-slate-500 capitalize">{str(system.replace(/_/g, ' '))}:</span>{' '}
+                                    <span className="text-slate-700">{str(value)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Physical Examination & Vitals */}
+                          {aiData.aiSummary.physical_examination && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">Physical Examination</h4>
+                              {/* Vitals */}
+                              {aiData.aiSummary.physical_examination.vitals && Object.values(aiData.aiSummary.physical_examination.vitals).some(v => v && v !== 'N/A') && (
+                                <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                  <p className="text-xs font-semibold text-blue-700 mb-2">Vitals</p>
+                                  <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                                    {aiData.aiSummary.physical_examination.vitals.blood_pressure && aiData.aiSummary.physical_examination.vitals.blood_pressure !== 'N/A' && <span><span className="font-semibold text-slate-500">BP:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.blood_pressure)}</span></span>}
+                                    {aiData.aiSummary.physical_examination.vitals.heart_rate && aiData.aiSummary.physical_examination.vitals.heart_rate !== 'N/A' && <span><span className="font-semibold text-slate-500">HR:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.heart_rate)}</span></span>}
+                                    {aiData.aiSummary.physical_examination.vitals.temperature && aiData.aiSummary.physical_examination.vitals.temperature !== 'N/A' && <span><span className="font-semibold text-slate-500">Temp:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.temperature)}</span></span>}
+                                    {aiData.aiSummary.physical_examination.vitals.respiratory_rate && aiData.aiSummary.physical_examination.vitals.respiratory_rate !== 'N/A' && <span><span className="font-semibold text-slate-500">RR:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.respiratory_rate)}</span></span>}
+                                    {aiData.aiSummary.physical_examination.vitals.oxygen_saturation && aiData.aiSummary.physical_examination.vitals.oxygen_saturation !== 'N/A' && <span><span className="font-semibold text-slate-500">SpO2:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.oxygen_saturation)}</span></span>}
+                                    {aiData.aiSummary.physical_examination.vitals.pain_score && aiData.aiSummary.physical_examination.vitals.pain_score !== 'N/A' && <span><span className="font-semibold text-slate-500">Pain:</span> <span className="text-slate-700">{str(aiData.aiSummary.physical_examination.vitals.pain_score)}</span></span>}
+                                  </div>
+                                </div>
+                              )}
+                              {/* Exam Systems */}
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                                {['general', 'heent', 'neck', 'cardiovascular', 'respiratory', 'abdomen', 'extremities', 'neurological', 'psychiatric', 'skin'].map(sys => (
+                                  aiData.aiSummary.physical_examination[sys] && aiData.aiSummary.physical_examination[sys] !== 'N/A' ? (
+                                    <div key={sys} className="text-sm">
+                                      <span className="font-semibold text-slate-500 capitalize">{sys === 'heent' ? 'HEENT' : str(sys)}:</span>{' '}
+                                      <span className="text-slate-700">{str(aiData.aiSummary.physical_examination[sys])}</span>
+                                    </div>
+                                  ) : null
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Past Medical History */}
+                          {aiData.aiSummary.past_medical_history && (aiData.aiSummary.past_medical_history.conditions?.length > 0 || aiData.aiSummary.past_medical_history.surgeries?.length > 0 || aiData.aiSummary.past_medical_history.hospitalizations?.length > 0) && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">Past Medical History</h4>
+                              {aiData.aiSummary.past_medical_history.conditions?.length > 0 && (
+                                <div className="mb-2">
+                                  <span className="text-xs font-semibold text-slate-500">Conditions: </span>
+                                  <span className="text-sm text-slate-700">{aiData.aiSummary.past_medical_history.conditions.map(str).join(', ')}</span>
+                                </div>
+                              )}
+                              {aiData.aiSummary.past_medical_history.surgeries?.length > 0 && (
+                                <div className="mb-2">
+                                  <span className="text-xs font-semibold text-slate-500">Surgeries: </span>
+                                  <span className="text-sm text-slate-700">{aiData.aiSummary.past_medical_history.surgeries.map(str).join(', ')}</span>
+                                </div>
+                              )}
+                              {aiData.aiSummary.past_medical_history.hospitalizations?.length > 0 && (
+                                <div>
+                                  <span className="text-xs font-semibold text-slate-500">Hospitalizations: </span>
+                                  <span className="text-sm text-slate-700">{aiData.aiSummary.past_medical_history.hospitalizations.map(str).join(', ')}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Family History */}
+                          {aiData.aiSummary.family_history?.relevant_conditions?.length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">Family History</h4>
+                              <ul className="space-y-1.5">
+                                {aiData.aiSummary.family_history.relevant_conditions.map((cond, i) => (
+                                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-2 flex-shrink-0" />
+                                    {str(cond)}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Social History */}
+                          {aiData.aiSummary.social_history && Object.values(aiData.aiSummary.social_history).some(v => v && v !== 'N/A') && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">Social History</h4>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                                {Object.entries(aiData.aiSummary.social_history).filter(([, v]) => v && v !== 'N/A').map(([key, value]) => (
+                                  <div key={key} className="text-sm">
+                                    <span className="font-semibold text-slate-500 capitalize">{str(key.replace(/_/g, ' '))}:</span>{' '}
+                                    <span className="text-slate-700">{str(value)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Assessment & Plan */}
+                          {aiData.aiSummary.assessment_and_plan && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-emerald-50 flex items-center justify-center"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /></div>
+                                Assessment & Plan
+                              </h4>
+                              {aiData.aiSummary.assessment_and_plan.assessment && (
+                                <p className="text-sm text-slate-700 leading-relaxed mb-2">{str(aiData.aiSummary.assessment_and_plan.assessment)}</p>
+                              )}
+                              {aiData.aiSummary.assessment_and_plan.plan && (
+                                <p className="text-sm text-slate-700 leading-relaxed mb-2"><span className="font-semibold">Plan:</span> {str(aiData.aiSummary.assessment_and_plan.plan)}</p>
+                              )}
+                              {aiData.aiSummary.assessment_and_plan.diagnoses?.length > 0 && (
+                                <div className="mt-2">
+                                  <span className="text-xs font-semibold text-slate-500">Diagnoses:</span>
+                                  <div className="flex flex-wrap gap-1.5 mt-1">
+                                    {aiData.aiSummary.assessment_and_plan.diagnoses.map((d, i) => (
+                                      <span key={i} className="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">{str(d)}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {aiData.aiSummary.assessment_and_plan.follow_up && aiData.aiSummary.assessment_and_plan.follow_up !== 'N/A' && (
+                                <p className="text-xs text-slate-500 mt-2"><span className="font-semibold">Follow-up:</span> {str(aiData.aiSummary.assessment_and_plan.follow_up)}</p>
+                              )}
+                              {aiData.aiSummary.assessment_and_plan.disposition && aiData.aiSummary.assessment_and_plan.disposition !== 'N/A' && (
+                                <p className="text-xs text-slate-500 mt-1"><span className="font-semibold">Disposition:</span> {str(aiData.aiSummary.assessment_and_plan.disposition)}</p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* ICD-10 Diagnosis Codes */}
+                          {aiData.diagnosisCodes && (aiData.diagnosisCodes.principal_diagnosis || aiData.diagnosisCodes.primary_diagnosis?.length > 0 || aiData.diagnosisCodes.secondary_diagnoses?.length > 0 || aiData.diagnosisCodes.reason_for_admit?.length > 0) && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center"><Layers className="w-3.5 h-3.5 text-blue-500" /></div>
+                                ICD-10 Diagnosis Codes
+                              </h4>
+                              <div className="space-y-3">
+                                {/* Principal Diagnosis */}
+                                {aiData.diagnosisCodes.principal_diagnosis && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-violet-600 mb-1.5">Principal Diagnosis</p>
+                                    <div className="flex items-start gap-2 p-2.5 bg-violet-50 rounded-lg border border-violet-100">
+                                      <span className="text-xs font-mono font-bold text-violet-700 bg-white px-2 py-0.5 rounded border border-violet-200 shrink-0">{str(aiData.diagnosisCodes.principal_diagnosis.icd_10_code)}</span>
+                                      <span className="text-sm text-slate-700">{str(aiData.diagnosisCodes.principal_diagnosis.description)}</span>
                                     </div>
                                   </div>
-                                  <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-xs text-slate-500">
-                                    {proc.date && <span><span className="font-semibold">Date:</span> {str(proc.date)}</span>}
-                                    {proc.provider && <span><span className="font-semibold">Provider:</span> {str(proc.provider)}</span>}
-                                    {proc.confidence && <span><span className="font-semibold">Confidence:</span> {str(proc.confidence)}</span>}
-                                  </div>
-                                  {proc.findings?.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-1.5">
-                                      {proc.findings.map((f, j) => (
-                                        <span key={j} className="text-xs px-2 py-0.5 bg-white text-teal-700 rounded-full border border-teal-200">{str(f)}</span>
+                                )}
+                                {/* Reason for Admit */}
+                                {aiData.diagnosisCodes.reason_for_admit?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-cyan-600 mb-1.5">Reason for Admit</p>
+                                    <div className="space-y-1.5">
+                                      {aiData.diagnosisCodes.reason_for_admit.map((dx, i) => (
+                                        <div key={i} className="flex items-start gap-2 p-2.5 bg-cyan-50 rounded-lg border border-cyan-100">
+                                          <span className="text-xs font-mono font-bold text-cyan-700 bg-white px-2 py-0.5 rounded border border-cyan-200 shrink-0">{str(dx.icd_10_code)}</span>
+                                          <span className="text-sm text-slate-700">{str(dx.description)}</span>
+                                        </div>
                                       ))}
                                     </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Medications */}
-                        {(aiData.medications?.length > 0 || aiData.aiSummary.medications?.current?.length > 0) && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Medications</h4>
-                            {aiData.medications?.length > 0 ? (
-                              <div className="space-y-1.5">
-                                {aiData.medications.map((med, i) => (
-                                  <div key={i} className="flex items-center gap-2 text-sm">
-                                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${med.new_or_existing === 'new' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                      {str(med.new_or_existing === 'new' ? 'New' : 'Existing')}
-                                    </span>
-                                    <span className="text-slate-800 font-medium">{str(med.name)}</span>
-                                    <span className="text-slate-500">{str(med.dose)}</span>
-                                    {med.route && <span className="text-xs text-slate-400">{str(med.route)}</span>}
-                                    {med.frequency && <span className="text-xs text-slate-400">({str(med.frequency)})</span>}
                                   </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="flex flex-wrap gap-2">
-                                {aiData.aiSummary.medications.current.map((med, i) => (
-                                  <span key={i} className="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full font-medium">{str(med)}</span>
-                                ))}
-                              </div>
-                            )}
-                            {aiData.aiSummary.medications?.allergies?.length > 0 && (
-                              <div className="mt-3 pt-3 border-t border-slate-100">
-                                <span className="text-xs font-semibold text-red-600">Allergies: </span>
-                                {aiData.aiSummary.medications.allergies.map((a, i) => (
-                                  <span key={i} className="text-xs px-2 py-0.5 bg-red-50 text-red-700 rounded-full border border-red-100 ml-1">{str(a)}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Timeline of Care */}
-                        {aiData.aiSummary.timeline_of_care?.length > 0 && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-md bg-amber-50 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-amber-500" /></div>
-                              Timeline of Care
-                            </h4>
-                            <div className="space-y-3">
-                              {aiData.aiSummary.timeline_of_care.map((event, i) => (
-                                <div key={i} className="flex gap-3 relative">
-                                  <div className="flex flex-col items-center">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                                    {i < aiData.aiSummary.timeline_of_care.length - 1 && <div className="w-0.5 flex-1 bg-amber-200 mt-1" />}
+                                )}
+                                {/* Primary Diagnosis */}
+                                {aiData.diagnosisCodes.primary_diagnosis?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-blue-600 mb-1.5">Primary Diagnosis</p>
+                                    <div className="space-y-1.5">
+                                      {aiData.diagnosisCodes.primary_diagnosis.map((dx, i) => (
+                                        <div key={i} className="flex items-start gap-2 p-2.5 bg-blue-50 rounded-lg border border-blue-100">
+                                          <span className="text-xs font-mono font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200 shrink-0">{str(dx.icd_10_code)}</span>
+                                          <span className="text-sm text-slate-700">{str(dx.description)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                  <div className="pb-3">
-                                    <p className="text-xs font-semibold text-amber-700">{str(event.time)}</p>
-                                    <p className="text-sm font-medium text-slate-800">{str(event.event)}</p>
-                                    {event.description && <p className="text-xs text-slate-600 mt-0.5">{str(event.description)}</p>}
-                                    {event.provider && <p className="text-xs text-slate-400 mt-0.5">{str(event.provider)}</p>}
+                                )}
+                                {/* Secondary Diagnoses */}
+                                {aiData.diagnosisCodes.secondary_diagnoses?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-600 mb-1.5">Secondary Diagnoses</p>
+                                    <div className="space-y-1.5">
+                                      {aiData.diagnosisCodes.secondary_diagnoses.map((dx, i) => (
+                                        <div key={i} className="flex items-start gap-2 p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                                          <span className="text-xs font-mono font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200 shrink-0">{str(dx.icd_10_code)}</span>
+                                          <span className="text-sm text-slate-700">{str(dx.description)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Clinical Alerts */}
-                        {aiData.aiSummary.clinical_alerts?.length > 0 && (
-                          <div className="bg-white rounded-xl border border-amber-200 p-5">
-                            <h4 className="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-md bg-amber-50 flex items-center justify-center"><AlertCircle className="w-3.5 h-3.5 text-amber-500" /></div>
-                              Clinical Alerts
-                            </h4>
-                            {aiData.aiSummary.clinical_alerts.map((alert, i) => (
-                              <div key={i} className="p-2.5 bg-amber-50 rounded-lg border border-amber-100 mb-2 last:mb-0">
-                                <div className="flex items-start gap-2">
-                                  {alert.severity && (
-                                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
-                                      alert.severity === 'high' ? 'bg-red-100 text-red-700' :
-                                      alert.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                      'bg-slate-100 text-slate-600'
-                                    }`}>{str(alert.severity)}</span>
-                                  )}
-                                  <p className="text-sm text-amber-900 font-medium">{str(alert.alert)}</p>
-                                </div>
-                                {alert.action_required && (
-                                  <p className="text-xs text-amber-700 mt-1.5 ml-0.5"><span className="font-semibold">Action:</span> {str(alert.action_required)}</p>
+                                )}
+                                {/* E/M Level */}
+                                {aiData.diagnosisCodes.ed_em_level?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-amber-600 mb-1.5">E/M Level</p>
+                                    <div className="space-y-1.5">
+                                      {aiData.diagnosisCodes.ed_em_level.map((em, i) => (
+                                        <div key={i} className="flex items-start gap-2 p-2.5 bg-amber-50 rounded-lg border border-amber-100">
+                                          <span className="text-xs font-mono font-bold text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-200 shrink-0">{str(em.code || em.icd_10_code)}</span>
+                                          <span className="text-sm text-slate-700">{str(em.description)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {/* Modifiers */}
+                                {aiData.diagnosisCodes.modifiers?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-pink-600 mb-1.5">Modifiers</p>
+                                    <div className="space-y-1.5">
+                                      {aiData.diagnosisCodes.modifiers.map((mod, i) => (
+                                        <div key={i} className="flex items-start gap-2 p-2.5 bg-pink-50 rounded-lg border border-pink-100">
+                                          <span className="text-xs font-mono font-bold text-pink-700 bg-white px-2 py-0.5 rounded border border-pink-200 shrink-0">{str(mod.modifier_code)}</span>
+                                          <div>
+                                            <span className="text-sm text-slate-700">{str(mod.modifier_name)}</span>
+                                            {mod.applies_to_code && <p className="text-xs text-slate-500 mt-0.5">Applies to: <span className="font-mono">{str(mod.applies_to_code)}</span></p>}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-                            ))}
-                          </div>
-                        )}
+                            </div>
+                          )}
 
-                        {/* Diagnostic Results */}
-                        {aiData.aiSummary.diagnostic_results && (aiData.aiSummary.diagnostic_results.labs?.length > 0 || aiData.aiSummary.diagnostic_results.imaging?.length > 0 || aiData.aiSummary.diagnostic_results.other_tests?.length > 0 || (aiData.aiSummary.diagnostic_results.ekg && aiData.aiSummary.diagnostic_results.ekg !== 'N/A')) && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Diagnostic Results</h4>
-                            {aiData.aiSummary.diagnostic_results.ekg && aiData.aiSummary.diagnostic_results.ekg !== 'N/A' && (
-                              <p className="text-sm text-slate-700 mb-2"><span className="font-semibold text-slate-500">EKG:</span> {str(aiData.aiSummary.diagnostic_results.ekg)}</p>
-                            )}
-                            {aiData.aiSummary.diagnostic_results.labs?.length > 0 && (
-                              <div className="mb-2">
-                                <p className="text-xs font-semibold text-slate-500 mb-1">Labs</p>
-                                <ul className="space-y-1">
-                                  {aiData.aiSummary.diagnostic_results.labs.map((lab, i) => (
-                                    <li key={i} className="text-sm text-slate-700">{str(typeof lab === 'string' ? lab : lab?.test ? `${lab.test}: ${lab.result || ''}` : JSON.stringify(lab))}</li>
-                                  ))}
-                                </ul>
+                          {/* Procedures (CPT Codes) */}
+                          {aiData.procedures?.length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-teal-50 flex items-center justify-center"><ClipboardPaste className="w-3.5 h-3.5 text-teal-500" /></div>
+                                Procedures
+                              </h4>
+                              <div className="space-y-2.5">
+                                {aiData.procedures.map((proc, i) => (
+                                  <div key={i} className="p-3 bg-teal-50 rounded-lg border border-teal-100">
+                                    <div className="flex items-start gap-2.5">
+                                      <span className="text-xs font-mono font-bold text-teal-700 bg-white px-2 py-0.5 rounded border border-teal-200 shrink-0">{str(proc.cpt_code)}</span>
+                                      <div>
+                                        <p className="text-sm font-medium text-slate-800">{str(proc.procedure_name)}</p>
+                                        {proc.description && <p className="text-xs text-slate-600 mt-0.5">{str(proc.description)}</p>}
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-xs text-slate-500">
+                                      {proc.date && <span><span className="font-semibold">Date:</span> {str(proc.date)}</span>}
+                                      {proc.provider && <span><span className="font-semibold">Provider:</span> {str(proc.provider)}</span>}
+                                      {proc.confidence && <span><span className="font-semibold">Confidence:</span> {str(proc.confidence)}</span>}
+                                    </div>
+                                    {proc.findings?.length > 0 && (
+                                      <div className="mt-2 flex flex-wrap gap-1.5">
+                                        {proc.findings.map((f, j) => (
+                                          <span key={j} className="text-xs px-2 py-0.5 bg-white text-teal-700 rounded-full border border-teal-200">{str(f)}</span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
-                            )}
-                            {aiData.aiSummary.diagnostic_results.imaging?.length > 0 && (
-                              <div className="mb-2">
-                                <p className="text-xs font-semibold text-slate-500 mb-1">Imaging</p>
-                                <ul className="space-y-1">
-                                  {aiData.aiSummary.diagnostic_results.imaging.map((img, i) => (
-                                    <li key={i} className="text-sm text-slate-700">{str(typeof img === 'string' ? img : img?.test ? `${img.test}: ${img.result || ''}` : JSON.stringify(img))}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {aiData.aiSummary.diagnostic_results.other_tests?.length > 0 && (
-                              <div>
-                                <p className="text-xs font-semibold text-slate-500 mb-1">Other Tests</p>
-                                <ul className="space-y-1">
-                                  {aiData.aiSummary.diagnostic_results.other_tests.map((test, i) => (
-                                    <li key={i} className="text-sm text-slate-700">{str(typeof test === 'string' ? test : test?.test ? `${test.test}: ${test.result || ''}` : JSON.stringify(test))}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                            </div>
+                          )}
 
-                        {/* Coding Notes */}
-                        {aiData.codingNotes && Object.keys(aiData.codingNotes).length > 0 && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-5">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-3">Coding Notes</h4>
-                            <div className="space-y-4">
-                              {aiData.codingNotes.coding_tips?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-indigo-600 mb-2">Coding Tips</p>
-                                  <div className="space-y-2">
-                                    {aiData.codingNotes.coding_tips.map((item, i) => (
-                                      <div key={i} className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
-                                        <p className="text-sm text-slate-800 font-medium">{str(item.tip)}</p>
-                                        {item.related_code && (
-                                          <p className="text-xs text-slate-500 mt-1">
-                                            <span className="font-medium">Related Code:</span> <span className="font-mono bg-white px-1.5 py-0.5 rounded text-indigo-700">{str(item.related_code)}</span>
-                                          </p>
-                                        )}
-                                        {item.potential_impact && (
-                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Impact:</span> {str(item.potential_impact)}</p>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
+                          {/* Medications */}
+                          {(aiData.medications?.length > 0 || aiData.aiSummary.medications?.current?.length > 0) && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">Medications</h4>
+                              {aiData.medications?.length > 0 ? (
+                                <div className="space-y-1.5">
+                                  {aiData.medications.map((med, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-sm">
+                                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${med.new_or_existing === 'new' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                        {str(med.new_or_existing === 'new' ? 'New' : 'Existing')}
+                                      </span>
+                                      <span className="text-slate-800 font-medium">{str(med.name)}</span>
+                                      <span className="text-slate-500">{str(med.dose)}</span>
+                                      {med.route && <span className="text-xs text-slate-400">{str(med.route)}</span>}
+                                      {med.frequency && <span className="text-xs text-slate-400">({str(med.frequency)})</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="flex flex-wrap gap-2">
+                                  {aiData.aiSummary.medications.current.map((med, i) => (
+                                    <span key={i} className="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full font-medium">{str(med)}</span>
+                                  ))}
                                 </div>
                               )}
-                              {aiData.codingNotes.compliance_alerts?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-amber-600 mb-2">Compliance Alerts</p>
-                                  <div className="space-y-2">
-                                    {aiData.codingNotes.compliance_alerts.map((item, i) => (
-                                      <div key={i} className="bg-amber-50 rounded-lg p-3 border border-amber-100">
-                                        <div className="flex items-start gap-2">
-                                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                                            item.severity === 'high' ? 'bg-red-100 text-red-700' :
-                                            item.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                            'bg-slate-100 text-slate-600'
-                                          }`}>{str(item.severity)}</span>
-                                          <p className="text-sm text-slate-800 font-medium">{str(item.alert)}</p>
-                                        </div>
-                                        {item.regulation && (
-                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Regulation:</span> {str(item.regulation)}</p>
-                                        )}
-                                        {item.recommended_action && (
-                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Action:</span> {str(item.recommended_action)}</p>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {aiData.codingNotes.documentation_gaps?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-rose-600 mb-2">Documentation Gaps</p>
-                                  <div className="space-y-2">
-                                    {aiData.codingNotes.documentation_gaps.map((item, i) => (
-                                      <div key={i} className="bg-rose-50 rounded-lg p-3 border border-rose-100">
-                                        <div className="flex items-start gap-2">
-                                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
-                                            item.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                            item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                            'bg-slate-100 text-slate-600'
-                                          }`}>{str(item.priority)}</span>
-                                          <p className="text-sm text-slate-800 font-medium">{str(item.gap)}</p>
-                                        </div>
-                                        {item.impact && (
-                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Impact:</span> {str(item.impact)}</p>
-                                        )}
-                                        {item.suggestion && (
-                                          <p className="text-xs text-emerald-700 mt-1 bg-emerald-50 px-2 py-1 rounded"><span className="font-medium">Suggestion:</span> {str(item.suggestion)}</p>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {aiData.codingNotes.physician_queries_needed?.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-semibold text-violet-600 mb-2">Physician Queries Needed</p>
-                                  <div className="space-y-2">
-                                    {aiData.codingNotes.physician_queries_needed.map((item, i) => (
-                                      <div key={i} className="bg-violet-50 rounded-lg p-3 border border-violet-100">
-                                        <div className="flex items-start gap-2">
-                                          {item.priority && (
-                                            <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
-                                              item.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                              item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                              'bg-slate-100 text-slate-600'
-                                            }`}>{str(item.priority)}</span>
-                                          )}
-                                          <p className="text-sm text-slate-800 font-medium">{str(item.query)}</p>
-                                        </div>
-                                        {item.reason && (
-                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Reason:</span> {str(item.reason)}</p>
-                                        )}
-                                        {item.impact_on_coding && (
-                                          <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Coding Impact:</span> {str(item.impact_on_coding)}</p>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
+                              {aiData.aiSummary.medications?.allergies?.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-slate-100">
+                                  <span className="text-xs font-semibold text-red-600">Allergies: </span>
+                                  {aiData.aiSummary.medications.allergies.map((a, i) => (
+                                    <span key={i} className="text-xs px-2 py-0.5 bg-red-50 text-red-700 rounded-full border border-red-100 ml-1">{str(a)}</span>
+                                  ))}
                                 </div>
                               )}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : aiData?.aiStatus === 'processing' || aiData?.aiStatus === 'queued' ? (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <Loader2 className="w-10 h-10 text-amber-500 animate-spin mb-4" />
-                        <p className="text-base font-medium text-slate-700">AI is processing...</p>
-                        <p className="text-sm text-slate-400 mt-1">Summary will appear here when ready</p>
-                      </div>
-                    ) : aiData?.aiStatus === 'failed' ? (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <AlertCircle className="w-10 h-10 text-red-400 mb-4" />
-                        <p className="text-base font-medium text-red-700">Processing Failed</p>
-                        <p className="text-sm text-red-500 mt-1">{str(aiData?.lastError) || 'An error occurred'}</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <Sparkles className="w-10 h-10 text-slate-300 mb-4" />
-                        <p className="text-base font-medium text-slate-500">No AI Summary</p>
-                        <p className="text-sm text-slate-400 mt-1">Upload and process documents to generate AI insights</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                          )}
+
+                          {/* Timeline of Care */}
+                          {aiData.aiSummary.timeline_of_care?.length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-amber-50 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-amber-500" /></div>
+                                Timeline of Care
+                              </h4>
+                              <div className="space-y-3">
+                                {aiData.aiSummary.timeline_of_care.map((event, i) => (
+                                  <div key={i} className="flex gap-3 relative">
+                                    <div className="flex flex-col items-center">
+                                      <div className="w-2.5 h-2.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                                      {i < aiData.aiSummary.timeline_of_care.length - 1 && <div className="w-0.5 flex-1 bg-amber-200 mt-1" />}
+                                    </div>
+                                    <div className="pb-3">
+                                      <p className="text-xs font-semibold text-amber-700">{str(event.time)}</p>
+                                      <p className="text-sm font-medium text-slate-800">{str(event.event)}</p>
+                                      {event.description && <p className="text-xs text-slate-600 mt-0.5">{str(event.description)}</p>}
+                                      {event.provider && <p className="text-xs text-slate-400 mt-0.5">{str(event.provider)}</p>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Clinical Alerts */}
+                          {aiData.aiSummary.clinical_alerts?.length > 0 && (
+                            <div className="bg-white rounded-xl border border-amber-200 p-5">
+                              <h4 className="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-amber-50 flex items-center justify-center"><AlertCircle className="w-3.5 h-3.5 text-amber-500" /></div>
+                                Clinical Alerts
+                              </h4>
+                              {aiData.aiSummary.clinical_alerts.map((alert, i) => (
+                                <div key={i} className="p-2.5 bg-amber-50 rounded-lg border border-amber-100 mb-2 last:mb-0">
+                                  <div className="flex items-start gap-2">
+                                    {alert.severity && (
+                                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${alert.severity === 'high' ? 'bg-red-100 text-red-700' :
+                                          alert.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                            'bg-slate-100 text-slate-600'
+                                        }`}>{str(alert.severity)}</span>
+                                    )}
+                                    <p className="text-sm text-amber-900 font-medium">{str(alert.alert)}</p>
+                                  </div>
+                                  {alert.action_required && (
+                                    <p className="text-xs text-amber-700 mt-1.5 ml-0.5"><span className="font-semibold">Action:</span> {str(alert.action_required)}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Diagnostic Results */}
+                          {aiData.aiSummary.diagnostic_results && (aiData.aiSummary.diagnostic_results.labs?.length > 0 || aiData.aiSummary.diagnostic_results.imaging?.length > 0 || aiData.aiSummary.diagnostic_results.other_tests?.length > 0 || (aiData.aiSummary.diagnostic_results.ekg && aiData.aiSummary.diagnostic_results.ekg !== 'N/A')) && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">Diagnostic Results</h4>
+                              {aiData.aiSummary.diagnostic_results.ekg && aiData.aiSummary.diagnostic_results.ekg !== 'N/A' && (
+                                <p className="text-sm text-slate-700 mb-2"><span className="font-semibold text-slate-500">EKG:</span> {str(aiData.aiSummary.diagnostic_results.ekg)}</p>
+                              )}
+                              {aiData.aiSummary.diagnostic_results.labs?.length > 0 && (
+                                <div className="mb-2">
+                                  <p className="text-xs font-semibold text-slate-500 mb-1">Labs</p>
+                                  <ul className="space-y-1">
+                                    {aiData.aiSummary.diagnostic_results.labs.map((lab, i) => (
+                                      <li key={i} className="text-sm text-slate-700">{str(typeof lab === 'string' ? lab : lab?.test ? `${lab.test}: ${lab.result || ''}` : JSON.stringify(lab))}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {aiData.aiSummary.diagnostic_results.imaging?.length > 0 && (
+                                <div className="mb-2">
+                                  <p className="text-xs font-semibold text-slate-500 mb-1">Imaging</p>
+                                  <ul className="space-y-1">
+                                    {aiData.aiSummary.diagnostic_results.imaging.map((img, i) => (
+                                      <li key={i} className="text-sm text-slate-700">{str(typeof img === 'string' ? img : img?.test ? `${img.test}: ${img.result || ''}` : JSON.stringify(img))}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {aiData.aiSummary.diagnostic_results.other_tests?.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-slate-500 mb-1">Other Tests</p>
+                                  <ul className="space-y-1">
+                                    {aiData.aiSummary.diagnostic_results.other_tests.map((test, i) => (
+                                      <li key={i} className="text-sm text-slate-700">{str(typeof test === 'string' ? test : test?.test ? `${test.test}: ${test.result || ''}` : JSON.stringify(test))}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Coding Notes */}
+                          {aiData.codingNotes && Object.keys(aiData.codingNotes).length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-3">Coding Notes</h4>
+                              <div className="space-y-4">
+                                {aiData.codingNotes.coding_tips?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-indigo-600 mb-2">Coding Tips</p>
+                                    <div className="space-y-2">
+                                      {aiData.codingNotes.coding_tips.map((item, i) => (
+                                        <div key={i} className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                                          <p className="text-sm text-slate-800 font-medium">{str(item.tip)}</p>
+                                          {item.related_code && (
+                                            <p className="text-xs text-slate-500 mt-1">
+                                              <span className="font-medium">Related Code:</span> <span className="font-mono bg-white px-1.5 py-0.5 rounded text-indigo-700">{str(item.related_code)}</span>
+                                            </p>
+                                          )}
+                                          {item.potential_impact && (
+                                            <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Impact:</span> {str(item.potential_impact)}</p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {aiData.codingNotes.compliance_alerts?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-amber-600 mb-2">Compliance Alerts</p>
+                                    <div className="space-y-2">
+                                      {aiData.codingNotes.compliance_alerts.map((item, i) => (
+                                        <div key={i} className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+                                          <div className="flex items-start gap-2">
+                                            <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${item.severity === 'high' ? 'bg-red-100 text-red-700' :
+                                                item.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                                  'bg-slate-100 text-slate-600'
+                                              }`}>{str(item.severity)}</span>
+                                            <p className="text-sm text-slate-800 font-medium">{str(item.alert)}</p>
+                                          </div>
+                                          {item.regulation && (
+                                            <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Regulation:</span> {str(item.regulation)}</p>
+                                          )}
+                                          {item.recommended_action && (
+                                            <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Action:</span> {str(item.recommended_action)}</p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {aiData.codingNotes.documentation_gaps?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-rose-600 mb-2">Documentation Gaps</p>
+                                    <div className="space-y-2">
+                                      {aiData.codingNotes.documentation_gaps.map((item, i) => (
+                                        <div key={i} className="bg-rose-50 rounded-lg p-3 border border-rose-100">
+                                          <div className="flex items-start gap-2">
+                                            <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${item.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                                item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                                  'bg-slate-100 text-slate-600'
+                                              }`}>{str(item.priority)}</span>
+                                            <p className="text-sm text-slate-800 font-medium">{str(item.gap)}</p>
+                                          </div>
+                                          {item.impact && (
+                                            <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Impact:</span> {str(item.impact)}</p>
+                                          )}
+                                          {item.suggestion && (
+                                            <p className="text-xs text-emerald-700 mt-1 bg-emerald-50 px-2 py-1 rounded"><span className="font-medium">Suggestion:</span> {str(item.suggestion)}</p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {aiData.codingNotes.physician_queries_needed?.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-violet-600 mb-2">Physician Queries Needed</p>
+                                    <div className="space-y-2">
+                                      {aiData.codingNotes.physician_queries_needed.map((item, i) => (
+                                        <div key={i} className="bg-violet-50 rounded-lg p-3 border border-violet-100">
+                                          <div className="flex items-start gap-2">
+                                            {item.priority && (
+                                              <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${item.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                                  item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                                    'bg-slate-100 text-slate-600'
+                                                }`}>{str(item.priority)}</span>
+                                            )}
+                                            <p className="text-sm text-slate-800 font-medium">{str(item.query)}</p>
+                                          </div>
+                                          {item.reason && (
+                                            <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Reason:</span> {str(item.reason)}</p>
+                                          )}
+                                          {item.impact_on_coding && (
+                                            <p className="text-xs text-slate-500 mt-1"><span className="font-medium">Coding Impact:</span> {str(item.impact_on_coding)}</p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : aiData?.aiStatus === 'processing' || aiData?.aiStatus === 'queued' ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center">
+                          <Loader2 className="w-10 h-10 text-amber-500 animate-spin mb-4" />
+                          <p className="text-base font-medium text-slate-700">AI is processing...</p>
+                          <p className="text-sm text-slate-400 mt-1">Summary will appear here when ready</p>
+                        </div>
+                      ) : aiData?.aiStatus === 'failed' ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center">
+                          <AlertCircle className="w-10 h-10 text-red-400 mb-4" />
+                          <p className="text-base font-medium text-red-700">Processing Failed</p>
+                          <p className="text-sm text-red-500 mt-1">{str(aiData?.lastError) || 'An error occurred'}</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-center">
+                          <Sparkles className="w-10 h-10 text-slate-300 mb-4" />
+                          <p className="text-base font-medium text-slate-500">No AI Summary</p>
+                          <p className="text-sm text-slate-400 mt-1">Upload and process documents to generate AI insights</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
         );
       })()}
 
@@ -4092,8 +4081,8 @@ export default function ProcessChart() {
                           {doc.mimeType === 'application/pdf'
                             ? <FileText style={{ width: 12, height: 12 }} />
                             : doc.mimeType?.startsWith('image/')
-                            ? <FileImage style={{ width: 12, height: 12 }} />
-                            : <FileIcon style={{ width: 12, height: 12 }} />
+                              ? <FileImage style={{ width: 12, height: 12 }} />
+                              : <FileIcon style={{ width: 12, height: 12 }} />
                           }
                           {doc.filename || `Document ${idx + 1}`}
                         </button>
@@ -4697,49 +4686,50 @@ export default function ProcessChart() {
                             return sortedCategories.map(category => {
                               const isWide = category === 'Secondary' || (grouped[category]?.length > 3);
                               return (
-                              <div key={category} style={isWide ? { gridColumn: "1 / -1" } : {}}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
-                                  <span style={{
-                                    width: 6, height: 6, borderRadius: "50%",
-                                    background: categoryColors[category]?.dot || '#d946ef',
-                                  }} />
-                                  <span style={{
-                                    fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
-                                    color: categoryColors[category]?.label || '#86198f',
-                                  }}>
-                                    {category} ({grouped[category].length})
-                                  </span>
+                                <div key={category} style={isWide ? { gridColumn: "1 / -1" } : {}}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
+                                    <span style={{
+                                      width: 6, height: 6, borderRadius: "50%",
+                                      background: categoryColors[category]?.dot || '#d946ef',
+                                    }} />
+                                    <span style={{
+                                      fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5,
+                                      color: categoryColors[category]?.label || '#86198f',
+                                    }}>
+                                      {category} ({grouped[category].length})
+                                    </span>
+                                  </div>
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 11 }}>
+                                    {grouped[category].map((code) => {
+                                      const style = getBadgeStyle(code);
+                                      const decision = codeDecisions[code._key];
+                                      const displayCode = decision?.editedCode || code._code;
+                                      return (
+                                        <button
+                                          key={code._key}
+                                          onClick={() => { setSelectedCode(code); setEditingCode(null); }}
+                                          style={{
+                                            display: "inline-flex", alignItems: "center", gap: 4,
+                                            padding: "3px 8px", borderRadius: 6,
+                                            border: code._isCustom ? `2px dashed #d946ef` : `1.5px solid ${style.border}`,
+                                            background: style.bg, color: style.color,
+                                            fontSize: 11, fontWeight: 600, cursor: "pointer",
+                                            transition: "all 0.15s",
+                                            outline: selectedCode?._key === code._key ? `2px solid #f59e0b` : "none",
+                                            outlineOffset: 1,
+                                            boxShadow: code._isCustom ? "0 0 0 1px rgba(217, 70, 239, 0.15)" : "none",
+                                          }}
+                                        >
+                                          {code._isCustom && <Plus style={{ width: 10, height: 10 }} />}
+                                          {getStatusIcon(code)}
+                                          {displayCode}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
-                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 11 }}>
-                                  {grouped[category].map((code) => {
-                                    const style = getBadgeStyle(code);
-                                    const decision = codeDecisions[code._key];
-                                    const displayCode = decision?.editedCode || code._code;
-                                    return (
-                                      <button
-                                        key={code._key}
-                                        onClick={() => { setSelectedCode(code); setEditingCode(null); }}
-                                        style={{
-                                          display: "inline-flex", alignItems: "center", gap: 4,
-                                          padding: "3px 8px", borderRadius: 6,
-                                          border: code._isCustom ? `2px dashed #d946ef` : `1.5px solid ${style.border}`,
-                                          background: style.bg, color: style.color,
-                                          fontSize: 11, fontWeight: 600, cursor: "pointer",
-                                          transition: "all 0.15s",
-                                          outline: selectedCode?._key === code._key ? `2px solid #f59e0b` : "none",
-                                          outlineOffset: 1,
-                                          boxShadow: code._isCustom ? "0 0 0 1px rgba(217, 70, 239, 0.15)" : "none",
-                                        }}
-                                      >
-                                        {code._isCustom && <Plus style={{ width: 10, height: 10 }} />}
-                                        {getStatusIcon(code)}
-                                        {displayCode}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            );});
+                              );
+                            });
                           })()}
                         </div>
 
