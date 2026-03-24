@@ -1485,8 +1485,8 @@ export default function ProcessChart() {
           SubSpecialtyId: subSpecialtyId,
           StatusId: statusId,
           AuditOptions: auditOptionIds,
-          // QcStatusId: qcStatusId,
-          qc_status_id: qcStatusId,
+          QCStatusId: qcStatusId,
+          // qc_status_id: qcStatusId,
           comment_msg: formData.coderComments || null,
           chartInfoCustomFields: customFieldValues,
         };
