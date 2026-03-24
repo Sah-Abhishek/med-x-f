@@ -1485,7 +1485,8 @@ export default function ProcessChart() {
           SubSpecialtyId: subSpecialtyId,
           StatusId: statusId,
           AuditOptions: auditOptionIds,
-          QcStatusId: qcStatusId,
+          // QcStatusId: qcStatusId,
+          qc_status_id: qcStatusId,
           comment_msg: formData.coderComments || null,
           chartInfoCustomFields: customFieldValues,
         };
@@ -2259,9 +2260,9 @@ export default function ProcessChart() {
                       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${aiData.aiStatus === 'ready' ? 'bg-emerald-50' :
-                              aiData.aiStatus === 'failed' ? 'bg-red-50' :
-                                aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50' :
-                                  'bg-slate-50'
+                            aiData.aiStatus === 'failed' ? 'bg-red-50' :
+                              aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50' :
+                                'bg-slate-50'
                             }`}>
                             {aiData.aiStatus === 'ready' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> :
                               aiData.aiStatus === 'failed' ? <AlertCircle className="w-5 h-5 text-red-500" /> :
@@ -2281,10 +2282,10 @@ export default function ProcessChart() {
                           </div>
                         </div>
                         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${aiData.aiStatus === 'ready' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                            aiData.aiStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
-                              aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                aiData.aiStatus === 'submitted' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                  'bg-slate-50 text-slate-600 border border-slate-200'
+                          aiData.aiStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
+                            aiData.aiStatus === 'processing' || aiData.aiStatus === 'queued' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                              aiData.aiStatus === 'submitted' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                'bg-slate-50 text-slate-600 border border-slate-200'
                           }`}>
                           {aiData.aiStatus?.toUpperCase()}
                         </span>
@@ -2343,8 +2344,8 @@ export default function ProcessChart() {
                                       </span>
                                       {doc.ocrStatus && (
                                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${doc.ocrStatus === 'completed' ? 'bg-emerald-50 text-emerald-600' :
-                                            doc.ocrStatus === 'failed' ? 'bg-red-50 text-red-600' :
-                                              'bg-amber-50 text-amber-600'
+                                          doc.ocrStatus === 'failed' ? 'bg-red-50 text-red-600' :
+                                            'bg-amber-50 text-amber-600'
                                           }`}>
                                           OCR: {doc.ocrStatus}
                                         </span>
@@ -3650,8 +3651,8 @@ export default function ProcessChart() {
                                   <div className="flex items-start gap-2">
                                     {alert.severity && (
                                       <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${alert.severity === 'high' ? 'bg-red-100 text-red-700' :
-                                          alert.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                            'bg-slate-100 text-slate-600'
+                                        alert.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                          'bg-slate-100 text-slate-600'
                                         }`}>{str(alert.severity)}</span>
                                     )}
                                     <p className="text-sm text-amber-900 font-medium">{str(alert.alert)}</p>
@@ -3737,8 +3738,8 @@ export default function ProcessChart() {
                                         <div key={i} className="bg-amber-50 rounded-lg p-3 border border-amber-100">
                                           <div className="flex items-start gap-2">
                                             <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${item.severity === 'high' ? 'bg-red-100 text-red-700' :
-                                                item.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                                  'bg-slate-100 text-slate-600'
+                                              item.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                                'bg-slate-100 text-slate-600'
                                               }`}>{str(item.severity)}</span>
                                             <p className="text-sm text-slate-800 font-medium">{str(item.alert)}</p>
                                           </div>
@@ -3761,8 +3762,8 @@ export default function ProcessChart() {
                                         <div key={i} className="bg-rose-50 rounded-lg p-3 border border-rose-100">
                                           <div className="flex items-start gap-2">
                                             <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${item.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                                item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                                  'bg-slate-100 text-slate-600'
+                                              item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                                'bg-slate-100 text-slate-600'
                                               }`}>{str(item.priority)}</span>
                                             <p className="text-sm text-slate-800 font-medium">{str(item.gap)}</p>
                                           </div>
@@ -3786,8 +3787,8 @@ export default function ProcessChart() {
                                           <div className="flex items-start gap-2">
                                             {item.priority && (
                                               <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${item.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                                  item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-slate-100 text-slate-600'
+                                                item.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                                  'bg-slate-100 text-slate-600'
                                                 }`}>{str(item.priority)}</span>
                                             )}
                                             <p className="text-sm text-slate-800 font-medium">{str(item.query)}</p>
