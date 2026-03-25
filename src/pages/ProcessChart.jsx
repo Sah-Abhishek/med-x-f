@@ -1151,6 +1151,16 @@ export default function ProcessChart() {
   useEffect(() => {
     if (!chart || isAnotherChartProcessing === null) return;
 
+    // If coding is already done (MilestoneId === 4), block timer entirely
+    if (chart.MilestoneId === 4) {
+      setTimerSeconds(0);
+      setTimerRunning(false);
+      setTimerStopped(true);
+      setTimerStartTime(null);
+      setTimerMessage("Coding is already done for this chart");
+      return;
+    }
+
     // Check if THIS chart is the one currently being processed (via userstats)
     const isThisChartActive = currentChartStats?.chartId?.toString() === id?.toString()
       && currentChartStats?.timer;
@@ -1504,6 +1514,12 @@ export default function ProcessChart() {
 
   const handleTimerStart = async () => {
     if (timerRunning) return;
+
+    // Block if coding is already done
+    if (chart?.MilestoneId === 4) {
+      showToast("Coding is already done for this chart.", "warning");
+      return;
+    }
 
     if (isAuditor) {
       // Auditor flow: verify this chart is assigned to the auditor
