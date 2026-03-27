@@ -2419,7 +2419,7 @@ export default function ProcessChart() {
                 {/* Row 2: Admit date, Discharge date */}
                 {(isFieldVisible("admit_date") || isFieldVisible("discharge_date")) && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
-                    {isFieldVisible("admit_date") && <FormField label="Admit date" value={formData.admitDate} required={isFieldRequired("admit_date")} readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />}
+                    {isFieldVisible("admit_date") && <FormField label="Admit date" type="date" value={formData.admitDate} required={isFieldRequired("admit_date")} readOnly={timerStopped} onChange={(v) => updateForm("admitDate", v)} />}
                     {isFieldVisible("discharge_date") && <FormField label="Discharge date" value={formData.dischargeDate} required={isFieldRequired("discharge_date")} readOnly={timerStopped} onChange={(v) => updateForm("dischargeDate", v)} />}
                     <div />
                   </div>
