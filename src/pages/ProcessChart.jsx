@@ -1471,7 +1471,7 @@ export default function ProcessChart() {
         const auditOptionIds = (formData.auditOption || []).map(name => config?.audit_options?.find(a => a.audit_opt === name)?.id).filter(Boolean);
 
         const payload = {
-          admit_date: formData.admitDate || null,
+          admit_date: formData.admitDate ? new Date(formData.admitDate + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }) : null,
           chart_no: formData.chartNo || null,
           coder_comments: null,
           date_of_completion: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
