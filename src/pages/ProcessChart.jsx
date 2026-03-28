@@ -941,6 +941,13 @@ export default function ProcessChart() {
     }
   };
 
+  const toDateInput = (val) => {
+    if (!val) return "";
+    const d = new Date(val);
+    if (isNaN(d)) return "";
+    return d.toISOString().slice(0, 10);
+  };
+
   const fetchChart = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -952,8 +959,8 @@ export default function ProcessChart() {
         setFormData({
           chartNo: c.ChartNo || "",
           mrNo: c.MR_No || "",
-          dateOfService: c.DateOfService || "",
-          admitDate: c.AdmitDate || "",
+          dateOfService: toDateInput(c.DateOfService),
+          admitDate: toDateInput(c.AdmitDate),
           dischargeDate: c.DischargeDate || "",
           disposition: c.Disposition || "",
           em: c.EM || "",
@@ -1475,7 +1482,7 @@ export default function ProcessChart() {
           chart_no: formData.chartNo || null,
           coder_comments: null,
           date_of_completion: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
-          date_of_service: formData.dateOfService || null,
+          date_of_service: formData.dateOfService ? new Date(formData.dateOfService + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }) : null,
           discharge_date: formData.dischargeDate || null,
           em: formData.em || null,
           mr_no: formData.mrNo || null,
@@ -2414,7 +2421,7 @@ export default function ProcessChart() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
                   {isFieldVisible("chart_no") && <FormField label="Chart #" value={formData.chartNo} required={isFieldRequired("chart_no")} readOnly={timerStopped} onChange={(v) => updateForm("chartNo", v)} />}
                   {isFieldVisible("mr_no") && <FormField label="MR#" value={formData.mrNo} required={isFieldRequired("mr_no")} readOnly={timerStopped} onChange={(v) => updateForm("mrNo", v)} />}
-                  {isFieldVisible("date_of_service") && <FormField label="Date of Service" value={formData.dateOfService} required={isFieldRequired("date_of_service")} readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />}
+                  {isFieldVisible("date_of_service") && <FormField label="Date of Service" type="date" value={formData.dateOfService} required={isFieldRequired("date_of_service")} readOnly={timerStopped} onChange={(v) => updateForm("dateOfService", v)} />}
                 </div>
                 {/* Row 2: Admit date, Discharge date */}
                 {(isFieldVisible("admit_date") || isFieldVisible("discharge_date")) && (
